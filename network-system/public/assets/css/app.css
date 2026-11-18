@@ -1257,11 +1257,13 @@ body.sidebar-hidden .topbar-brand { display: inline-flex; }
 }
 @media (prefers-reduced-motion: reduce) { .madix-orb, .madix-dialog[open] .madix-card { animation: none; } }
 .madix-close {
-  position: absolute; top: 16px; left: 16px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
+  position: absolute; top: 16px; inset-inline-end: 16px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer;
   border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .06); color: #cbd5e1; transition: background .2s, transform .2s;
 }
 .madix-close:hover { background: rgba(255, 255, 255, .14); transform: rotate(90deg); }
-.madix-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+.madix-head { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; padding-inline-end: 42px; } /* مساحة زر الإغلاق فلا يقع فوق الاسم */
+.madix-titles { min-width: 0; }
+@media (max-width: 380px) { .madix-name { font-size: 19px; letter-spacing: .1em; } }
 .madix-logo { position: relative; flex: none; width: 62px; height: 62px; border-radius: 19px; display: grid; place-items: center; background: rgba(255, 255, 255, .05); box-shadow: 0 0 0 1px rgba(255, 255, 255, .1), 0 14px 34px -8px rgba(14, 165, 233, .65); }
 .madix-logo img { border-radius: 17px; display: block; }
 .madix-titles { text-align: left; }
@@ -1285,8 +1287,9 @@ body.sidebar-hidden .topbar-brand { display: inline-flex; }
 .is-facebook:hover { border-color: rgba(24, 119, 242, .5); box-shadow: 0 10px 30px -12px rgba(24, 119, 242, .55); }
 .madix-action-text { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .madix-action-text b { font-size: 14.5px; font-weight: 700; }
-.madix-action-text small { font-size: 12px; color: #94a3b8; }
+.madix-action-text small { font-size: 12px; color: #94a3b8; overflow-wrap: anywhere; }
 .madix-action-text small[dir="ltr"] { text-align: right; }
+html[dir="ltr"] .madix-action-text small[dir="ltr"] { text-align: left; }
 .madix-arrow { display: grid; place-items: center; color: #64748b; transition: transform .2s, color .2s; }
 .madix-action:hover .madix-arrow { color: #e2e8f0; transform: translateX(-3px); }
 .madix-product { border-color: rgba(245, 208, 138, .28); background: linear-gradient(135deg, rgba(245, 208, 138, .10), rgba(255, 255, 255, .03)); }
@@ -3243,3 +3246,24 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
    على الهاتف، أي عنصر أعرض من الشاشة يوسّع مساحة العرض كلها فتنزاح القائمة والشريط السفلي وتظهر حافة فارغة.
    القص هنا (clip وليس hidden) لا ينشئ حاوية تمرير، فيبقى الشريط العلوي ملتصقاً بالأعلى. */
 .main { overflow-x: clip; }
+
+/* ---------------- ألوان الحالة المصمتة بنص أبيض ----------------
+   في الوضع الداكن يصبح الأحمر والأخضر أفتح ليظهرا كنص فوق الخلفية الداكنة، فلا يصلحان خلفيةً لنص أبيض.
+   الأزرار والشارات المصمتة تستخدم درجة أعمق تُقرأ فوقها الكتابة البيضاء في الوضعين. */
+:root { --danger-solid: #c62828; --success-solid: #15803d; }
+[data-theme="dark"] { --danger-solid: #c93a3a; --success-solid: #1f8a52; }
+.btn-danger { --btn-bg: var(--danger-solid); --btn-border: var(--danger-solid); }
+.btn-danger:hover { background: color-mix(in srgb, var(--danger-solid) 88%, #000); }
+.btn-success { --btn-bg: var(--success-solid); --btn-border: var(--success-solid); }
+.btn-success:hover { background: color-mix(in srgb, var(--success-solid) 88%, #000); }
+.nav-badge.is-danger, .icon-btn .dot { background: var(--danger-solid); }
+.step.is-done .step-num { background: var(--success-solid); }
+
+/* شارة بنص طويل (رسالة خطأ): تلتف على أكثر من سطر بدل أن تخرج عن الشاشة */
+.badge.badge-wrap { height: auto; min-height: 23px; padding-block: 3px; white-space: normal; line-height: 1.5; max-width: 100%; overflow-wrap: anywhere; }
+
+/* زر بعرض كامل بنص طويل (خاصة بالإنجليزية): يلتف النص داخل الزر بدل أن يخرج منه */
+.btn-block { white-space: normal; height: auto; min-height: 38px; padding-block: 7px; line-height: 1.4; text-align: center; }
+.btn-block.btn-sm { min-height: 32px; padding-block: 5px; }
+.btn-block.btn-lg { min-height: 44px; padding-block: 9px; }
+.btn-block > .icon { flex: none; }

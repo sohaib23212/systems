@@ -48,6 +48,7 @@
   --brand-600: #0240f8;
   --brand-500: #0b6dff;
   --cyan: #00c6f6;
+  --word-end: #0e7490;
   --teal: #05adc1;
   --brand-ink: #0a35d0;
   --teal-ink: #07879a;
@@ -93,6 +94,7 @@
     --ink-2: #b6c3ea;
     --muted: #8595c3;
     --word: #ffffff;
+    --word-end: #00c6f6;
     --brand-ink: #8fb2ff;
     --teal-ink: #4fd8e8;
     --tint: #132459;
@@ -126,6 +128,7 @@
   --ink-2: #b6c3ea;
   --muted: #8595c3;
   --word: #ffffff;
+  --word-end: #00c6f6;
   --brand-ink: #8fb2ff;
   --teal-ink: #4fd8e8;
   --tint: #132459;
@@ -319,7 +322,8 @@ svg.i { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor;
 .word b {
   font-weight: 700;
   color: var(--brand-500);
-  background: linear-gradient(90deg, var(--brand-500), var(--cyan));
+  /* نهاية التدرّج أعمق في الوضع الفاتح: السماوي الفاتح لا يُقرأ فوق السماء الفاتحة */
+  background: linear-gradient(90deg, var(--brand-500), var(--word-end, #0e7490));
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -728,7 +732,7 @@ html.lock, html.lock body { overflow: hidden; }
 .live i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; animation: mx-pulse 2s ease-out infinite; }
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .tile-s { min-width: 0; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 20px; background: var(--surface); box-shadow: var(--shadow-sm); }
-.tile-s .lbl { display: flex; align-items: center; gap: 7px; color: var(--ink-2); font-size: 13px; font-weight: 500; line-height: 1.4; }
+.tile-s .lbl { display: flex; flex-wrap: wrap; align-items: center; gap: 0 7px; color: var(--ink-2); font-size: 13px; font-weight: 500; line-height: 1.4; }
 .tile-s .lbl svg { width: 17px; height: 17px; color: var(--brand-500); }
 .tile-s .lbl em { font-style: normal; color: var(--muted); font-size: 11.5px; }
 .val { display: block; margin-top: 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 18px; font-size: clamp(16px, 4.8vw, 20px); font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -760,7 +764,7 @@ body.has-pv { padding-bottom: 76px; }
   z-index: 60;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   padding: 10px max(10px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px));
   overflow-x: auto;
@@ -769,6 +773,9 @@ body.has-pv { padding-bottom: 76px; }
   backdrop-filter: blur(10px);
 }
 .pv a, .pv span { flex: none; padding: 7px 12px; border-radius: 999px; color: #c9d6ff; font-size: 13px; font-weight: 500; }
+/* التوسيط بهوامش تلقائية لا بـ justify-content: عند ضيق الشاشة يبدأ الشريط من أوله ويُمرَّر، فلا يُقص أول عنصر بلا رجعة */
+.pv > :first-child { margin-inline-start: auto; }
+.pv > :last-child { margin-inline-end: auto; }
 .pv span { color: #ffd27a; font-weight: 700; }
 .pv a[aria-current="page"] { background: #fff; color: #0327d5; font-weight: 700; }
 

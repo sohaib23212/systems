@@ -54,6 +54,21 @@ window.__uiAudit = function (opts) {
     clipCache.set(el, r);
     return r;
   }
+  // مثل clipOf لكن يتجاهل القصّ الأفقي لحاوية غير قابلة للتمرير تمتد بعرض الشاشة كلها
+  function looseClip(el) {
+    var r = { l: -1e9, t: -1e9, r: 1e9, b: 1e9 }, p = el.parentElement;
+    while (p && p !== de) {
+      var pcs = getComputedStyle(p);
+      if (pcs.overflowX !== 'visible') {
+        var b = p.getBoundingClientRect();
+        var scroller = pcs.overflowX === 'auto' || pcs.overflowX === 'scroll';
+        if (scroller || b.left > 0.5 || b.right < vw - 0.5) { r.l = Math.max(r.l, b.left); r.r = Math.min(r.r, b.right); }
+      }
+      if (pcs.position === 'fixed') { break; }
+      p = p.parentElement;
+    }
+    return r;
+  }
   function inter(a, b) {
     var l = Math.max(a.l, b.l), t = Math.max(a.t, b.t), r = Math.min(a.r, b.r), bt = Math.min(a.b, b.b);
     return r > l && bt > t ? { l: l, t: t, r: r, b: bt } : null;
@@ -73,6 +88,7 @@ window.__uiAudit = function (opts) {
   all.forEach(function (el) {
     if (el.closest('script, style, noscript, template, svg defs, .toasts')) { return; }
     if (el.closest('dialog') && !el.closest('dialog[open]')) { return; }
+    if (opts.scope && !el.closest(opts.scope)) { return; } // فحص نافذة واحدة فقط
     var cs = getComputedStyle(el);
     if (!visible(el, cs)) { return; }
     // يستبعد ما لا يرسمه المتصفح: داخل <details> مغلق أو تبويب مخفي أو أب شفاف أو غير ظاهر
@@ -85,6 +101,11 @@ window.__uiAudit = function (opts) {
     // 2) خارج الشاشة أفقياً
     if ((vis.l < -1 || vis.r > vw + 1) && !el.closest('.sr-only, .visually-hidden')) {
       offenders.add(el);
+    }
+    // نص أو زر يقصّه عند حافة الشاشة أبٌ بعرض الصفحة كلها (مثل body بـ overflow-x): مقصوص أمام المستخدم
+    else if (/^(BUTTON|INPUT|SELECT|TEXTAREA|A|IMG|SUMMARY|LABEL)$/.test(el.tagName) || Array.prototype.some.call(el.childNodes, function (n) { return n.nodeType === 3 && n.nodeValue.trim(); })) {
+      var lc = looseClip(el), lv = inter(r, lc);
+      if (lv && (lv.l < -1 || lv.r > vw + 1)) { offenders.add(el); }
     }
     var own = false;
     for (var i = 0; i < el.childNodes.length; i++) {
@@ -206,9 +227,9 @@ window.__uiAudit = function (opts) {
     return m || [];
   }
   // كل الخلفيات المحتملة تحت العنصر (قائمة ألوان)، أو null إن كانت صورة لا يمكن قياسها
-  var gradientBg = false;
+  var gradientBg = false, imageBg = false;
   function backgrounds(el) {
-    gradientBg = false;
+    gradientBg = false; imageBg = false;
     var chain = [], n = el;
     while (n && n.nodeType === 1) { chain.push(n); n = n.parentElement; }
     var layers = [];
@@ -217,7 +238,7 @@ window.__uiAudit = function (opts) {
       var bi = cs.backgroundImage;
       var bc = rgba(cs.backgroundColor);
       if (bi && bi !== 'none') {
-        if (/url\(/.test(bi)) { return null; }
+        if (/url\(/.test(bi)) { imageBg = true; return null; }
         var st = stops(bi).map(rgba);
         if (st.length > 1) { gradientBg = true; }
         if (st.length) { layers.push({ multi: st, base: bc }); if (st.every(function (s) { return s[3] >= 0.99; })) { break; } }
@@ -244,13 +265,28 @@ window.__uiAudit = function (opts) {
       if (el.closest('[disabled], .is-disabled, [aria-disabled="true"]')) { return; }
       var own2 = Array.prototype.map.call(el.childNodes, function (n) { return n.nodeType === 3 ? n.nodeValue : ''; }).join('').trim();
       if (!/[\p{L}\p{N}]/u.test(own2)) { return; } // فواصل وزخارف (— · •) لا تحمل معلومة
-      if (el.closest('.card-preview, .print-sheet, .tpl-canvas, .dz-canvas, .leaflet-container, .qr, canvas')) { return; } // تصاميم الكروت والخرائط ألوانها من المستخدم
       seen++;
       var op = 1, n = el;
       while (n && n.nodeType === 1) { op *= parseFloat(getComputedStyle(n).opacity); n = n.parentElement; }
       var fg = rgba(cs.color);
+      // نص ملوّن بتدرّج (background-clip: text): لون الحروف هو ألوان التدرّج، والخلفية ما تحت العنصر
+      if ((cs.webkitBackgroundClip === 'text' || cs.backgroundClip === 'text') && cs.backgroundImage !== 'none') {
+        var tstops = stops(cs.backgroundImage).map(rgba);
+        var under = el.parentElement ? backgrounds(el.parentElement) : null;
+        var worstT = 99;
+        if (under) { tstops.forEach(function (st) { under.forEach(function (bg) { worstT = Math.min(worstT, ratio(over(st, bg), bg)); }); }); }
+        if (!under || worstT < 3) {
+          issues.push({ type: 'contrast', sel: desc(el), detail: (under ? worstT.toFixed(2) + ':1 ' : '') + 'gradient text', text: text(el),
+            verify: { idx: Array.prototype.indexOf.call(all, el), clipText: true, stops: tstops.map(function (c) { return [c[0], c[1], c[2]]; }) } });
+        }
+        return;
+      }
       var bgs = backgrounds(el);
-      if (!bgs) { return; }
+      if (!bgs) {
+        // خلفية صورة: لا تُحسب من الأنماط، فتُقاس على البكسلات
+        if (imageBg) { issues.push({ type: 'contrast', sel: desc(el), detail: 'over image · color ' + cs.color, text: text(el), verify: { idx: Array.prototype.indexOf.call(all, el), fg: [fg[0], fg[1], fg[2]] } }); }
+        return;
+      }
       var worst = 99;
       bgs.forEach(function (bg) {
         var f = over([fg[0], fg[1], fg[2], fg[3] * op], bg);
@@ -259,7 +295,8 @@ window.__uiAudit = function (opts) {
       if (worst < 3) {
         var tb = c.r;
         issues.push({ type: 'contrast', sel: desc(el), detail: worst.toFixed(2) + ':1 color ' + cs.color, text: text(el),
-          verify: gradientBg ? { idx: Array.prototype.indexOf.call(all, el), fg: [fg[0], fg[1], fg[2]], rect: [tb.l, tb.t, tb.r - tb.l, tb.b - tb.t] } : undefined });
+          // كل قراءة منخفضة تُثبَّت على البكسلات الفعلية (النص قد يكون فوق صورة أو عنصر شقيق لا فوق خلفية أبيه)
+          verify: { idx: Array.prototype.indexOf.call(all, el), fg: [fg[0], fg[1], fg[2]], rect: [tb.l, tb.t, tb.r - tb.l, tb.b - tb.t] } });
       }
     });
   }

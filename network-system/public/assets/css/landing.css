@@ -351,3 +351,13 @@ html, a, button, summary, label, input, select, textarea, [role="button"], [tabi
 @media (max-width: 760px) { .lp-nav-cta .lp-lang { display: none; } }
 [dir="ltr"] .icon:has(use[href$="#i-chevron-left"]), [dir="ltr"] .icon:has(use[href$="#i-chevron-right"]),
 [dir="ltr"] .icon:has(use[href$="#i-arrow-left"]), [dir="ltr"] .icon:has(use[href$="#i-arrow-right"]) { transform: scaleX(-1); }
+
+/* الهاتف الضيق: الشعار والأزرار في سطر واحد دون أن يتراكب اسم المنصة فوق زر الدخول أو يخرج زر القائمة عن الشاشة */
+@media (max-width: 400px) {
+  .lp-brand .wordmark span { display: none; }
+  .lp-kpi { padding-inline: 7px; }
+  .lp-kpi b { font-size: clamp(11px, 3.6vw, 15px); }
+}
+@media (max-width: 350px) {
+  .lp-brand .wordmark { display: none; }
+}

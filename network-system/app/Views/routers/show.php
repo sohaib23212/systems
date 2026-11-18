@@ -40,7 +40,7 @@ if (!can('cards.import') && !can('subscribers.manage')) {
 <div class="flex items-center gap-2 wrap mb-2">
   <?= $statusBadge ?>
   <?php if (!$router['is_active']): ?><span class="badge badge-outline">معطّل في النظام</span><?php endif; ?>
-  <?php if ($router['last_error']): ?><span class="badge badge-warning" title="<?= e($router['last_error']) ?>"><?= icon('triangle-alert') ?><?= e(str_limit($router['last_error'], 70)) ?></span><?php endif; ?>
+  <?php if ($router['last_error']): ?><span class="badge badge-warning badge-wrap" title="<?= e($router['last_error']) ?>"><?= icon('triangle-alert') ?><?= e(str_limit($router['last_error'], 70)) ?></span><?php endif; ?>
   <span class="text-muted text-sm">آخر مزامنة: <?= e(time_ago($router['last_polled_at'])) ?></span>
 </div>
 <div class="panel">
