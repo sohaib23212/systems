@@ -2278,7 +2278,8 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
 }
 /* .segmented.mt-types: أقوى من .segmented.is-block (flex) التي كانت تلغي الشبكة فيخرج آخر خيار عن الشاشة على الهاتف */
 .segmented.mt-types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.mt-types label span { justify-content: center; white-space: nowrap; }
+.segmented.mt-types > label { min-width: 0; }
+.mt-types label span { justify-content: center; white-space: normal; text-align: center; height: 100%; }
 @media (max-width: 520px) { .segmented.mt-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ==========================================================================
@@ -3267,3 +3268,6 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
 .btn-block.btn-sm { min-height: 32px; padding-block: 5px; }
 .btn-block.btn-lg { min-height: 44px; padding-block: 9px; }
 .btn-block > .icon { flex: none; }
+
+/* مجموعة أزرار مجزّأة لا تتسع لها الشاشة (بالإنجليزية خاصة): تنتقل إلى سطر ثانٍ بدل أن تخرج عن الشاشة */
+.segmented { max-width: 100%; flex-wrap: wrap; }
