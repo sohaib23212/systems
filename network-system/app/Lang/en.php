@@ -578,6 +578,7 @@ return [
     'اختياري)' => 'optional)',
     'ادخل إلى حسابك من أي جهاز، مع الدخول بالبصمة والطباعة المباشرة.' => 'Sign in from any device, with fingerprint login and direct printing.',
     'اربط أجهزة' => 'Connect devices',
+    'اربط أجهزة MikroTik' => 'Connect MikroTik devices',
     'ارفع صورة التحويل.' => 'Upload a photo of the transfer.',
     'استبدال الأرقام المختصرة الحالية' => 'Replace the current short numbers',
     'استبدال الأرقام الموجودة' => 'Replace existing numbers',
