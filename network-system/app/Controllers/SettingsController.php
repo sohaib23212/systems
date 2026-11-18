@@ -28,6 +28,7 @@ final class SettingsController extends Controller
             'general.address'       => ['nullable|max:200', 'العنوان'],
             'general.panel_url'     => ['nullable|max:255|regex:#^https?://#i', 'الرابط العام للنظام'],
             'ui.sidebar_hidden'     => ['bool', 'إخفاء القائمة الجانبية'],
+            'map.google_key'        => ['nullable|max:120|regex:/^[A-Za-z0-9_\-]*$/', 'مفتاح خرائط Google'],
         ],
         'security' => [
             'security.idle_minutes'       => ['required|int|between:5,1440', 'مهلة الخمول'],

@@ -126,7 +126,7 @@ if (!can('cards.import') && !can('subscribers.manage')) {
   btn.addEventListener('click', function () { if (typeof m.showModal === 'function' && !m.open) { m.showModal(); } run(); });
   m.querySelector('[data-check-again]').addEventListener('click', run);
   m.querySelector('[data-check-copy]').addEventListener('click', function () {
-    if (navigator.clipboard) { navigator.clipboard.writeText(last).then(function () { SN.toast('تم النسخ.', 'success'); }); }
+    if (navigator.clipboard) { navigator.clipboard.writeText(last).then(function () { SN.toast('success', 'تم النسخ.'); }); }
   });
 })();
 </script>

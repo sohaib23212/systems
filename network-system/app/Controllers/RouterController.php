@@ -257,7 +257,8 @@ final class RouterController extends Controller
         } else {
             Session::release();
             try {
-                $data += $this->loadTab($router, $tab);
+                // بيانات الجهاز تحل محل القيم الافتراضية (rows الفارغة)؛ «+=» كان يُبقي الفارغة فتظهر التبويبات بلا بيانات
+                $data = array_replace($data, $this->loadTab($router, $tab));
             } catch (MikroTikException $e) {
                 $data['error'] = $e->friendly();
             }
@@ -307,6 +308,7 @@ final class RouterController extends Controller
                 break;
             case 'interfaces':
                 $out['rows'] = $gw->interfaces();
+                $out['locked'] = Auth::can('routers.control') ? $gw->lockedInterfaces() : [];
                 break;
             case 'queues':
                 $out['rows'] = $gw->queues();
@@ -469,6 +471,33 @@ final class RouterController extends Controller
                 case 'user_reset':
                     $c->exec('/ip/hotspot/user/reset-counters', ['.id' => $request->str('ref')]);
                     $msg = 'تم تصفير العدّادات.';
+                    break;
+                case 'iface_toggle':
+                    // تعطيل منفذ أو تشغيله: يُقرأ المنفذ من الجهاز نفسه، ولا يُعطَّل منفذ يقطع الإنترنت أو اتصال النظام بالجهاز
+                    $ref = $request->str('ref');
+                    $iface = null;
+                    foreach ($gw->interfaces() as $i) {
+                        if ($i['id'] === $ref) {
+                            $iface = $i;
+                        }
+                    }
+                    if ($iface === null) {
+                        throw new \InvalidArgumentException('المنفذ غير موجود على الجهاز. حدّث الصفحة.');
+                    }
+                    $disable = $request->bool('disable');
+                    if ($iface['dynamic']) {
+                        throw new \InvalidArgumentException('هذه واجهة مؤقتة ينشئها الجهاز تلقائياً، فلا تُعطَّل.');
+                    }
+                    if ($disable) {
+                        $locked = $gw->lockedInterfaces();
+                        if (isset($locked[$iface['name']])) {
+                            throw new \InvalidArgumentException($iface['name'] . ': ' . $locked[$iface['name']]);
+                        }
+                    }
+                    if ($iface['disabled'] !== $disable) {
+                        $gw->setInterfaceDisabled($iface['id'], $disable);
+                    }
+                    $msg = ($disable ? 'تم تعطيل المنفذ ' : 'تم تشغيل المنفذ ') . $iface['name'] . '.';
                     break;
                 case 'ppp_toggle':
                     $c->set('/ppp/secret', $request->str('ref'), ['disabled' => $request->bool('disable') ? 'yes' : 'no']);

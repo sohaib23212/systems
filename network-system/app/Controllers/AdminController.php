@@ -724,13 +724,13 @@ final class AdminController extends Controller
         $d = $this->validate($request, [
             'platform_name' => 'required|max:60', 'whatsapp' => 'nullable|max:30', 'whatsapp_intl' => 'nullable|max:20', 'facebook' => 'nullable|max:255',
             'trial_days' => 'required|int|between:1,90', 'timezone' => 'required|max:64', 'announcement' => 'nullable|max:300', 'announcement_level' => 'required|in:info,warning,success',
-            'currency' => 'required|max:8',
-        ], ['platform_name' => 'اسم المنصة', 'trial_days' => 'أيام التجربة', 'announcement' => 'الإعلان', 'currency' => 'عملة الاشتراكات']);
+            'currency' => 'required|max:8', 'google_maps_key' => 'nullable|max:120|regex:/^[A-Za-z0-9_\-]*$/',
+        ], ['platform_name' => 'اسم المنصة', 'trial_days' => 'أيام التجربة', 'announcement' => 'الإعلان', 'currency' => 'عملة الاشتراكات', 'google_maps_key' => 'مفتاح خرائط Google']);
         Platform::setSettings([
             'platform.name' => $d['platform_name'], 'platform.whatsapp' => (string) $d['whatsapp'], 'platform.whatsapp_intl' => preg_replace('/\D/', '', (string) $d['whatsapp_intl']),
             'platform.facebook' => (string) $d['facebook'], 'platform.trial_days' => (string) $d['trial_days'], 'platform.timezone' => $d['timezone'],
             'platform.signup' => $request->bool('signup') ? '1' : '0', 'platform.announcement' => (string) $d['announcement'], 'platform.announcement_level' => $d['announcement_level'],
-            'platform.currency' => $d['currency'],
+            'platform.currency' => $d['currency'], 'maps.google_key' => trim((string) $d['google_maps_key']),
         ]);
         Platform::log(null, 'admin', 'platform.settings', 'تعديل إعدادات المنصة', AdminAuth::user()['name']);
         return $this->ok('تم حفظ الإعدادات.', '/admin/settings');

@@ -542,7 +542,7 @@ final class Gateway
     public function interfaces(): array
     {
         $rows = $this->client()->print('/interface', [], [
-            '.id', 'name', 'type', 'mac-address', 'running', 'disabled', 'comment', 'rx-byte', 'tx-byte', 'last-link-up-time', 'link-downs',
+            '.id', 'name', 'type', 'mac-address', 'running', 'disabled', 'comment', 'rx-byte', 'tx-byte', 'last-link-up-time', 'link-downs', 'dynamic',
         ]);
         return array_map(static fn ($r) => [
             'id'        => $r['.id'] ?? '',
@@ -556,7 +556,80 @@ final class Gateway
             'tx_byte'   => (int) ($r['tx-byte'] ?? 0),
             'link_up'   => $r['last-link-up-time'] ?? '',
             'link_downs'=> (int) ($r['link-downs'] ?? 0),
+            'dynamic'   => ($r['dynamic'] ?? 'false') === 'true',
         ], $rows);
+    }
+
+    /**
+     * الواجهات التي لا يجوز تعطيلها من النظام لأن تعطيلها يقطع اتصال النظام بالجهاز أو الإنترنت عن الشبكة:
+     * واجهة الإنترنت (WAN) المحددة للجهاز، ونفق MADIX، والمنافذ التي يمر عبرها اتصال النظام (managementPorts)،
+     * والواجهة التي تحمل عنوان الجهاز الذي يتصل به النظام، والواجهة التي تقع في شبكتها عناوين جلسات API.
+     * @return array<string, string> اسم الواجهة => سبب المنع
+     */
+    public function lockedInterfaces(): array
+    {
+        $client = $this->client();
+        $read = static function (callable $fn): array {
+            try {
+                return $fn();
+            } catch (MikroTikException $e) {
+                if ($e->isConnection()) {
+                    throw $e;
+                }
+                return [];
+            }
+        };
+        $mgmt = 'اتصال النظام بالجهاز يمر عبر هذه الواجهة: تعطيلها يقطع الاتصال بالجهاز.';
+        $out = [];
+        $wan = (string) ($this->router['wan_interface'] ?? '');
+        if ($wan !== '') {
+            $out[$wan] = 'واجهة الإنترنت (WAN) للجهاز: تعطيلها يقطع الإنترنت عن الشبكة واتصال النظام بالجهاز.';
+        }
+        $out[\App\Services\Tunnel::INTERFACE] = 'نفق الاتصال بالنظام: تعطيله يقطع الاتصال بالجهاز.';
+        foreach ($this->managementPorts() as $port) {
+            $out[$port] ??= $mgmt;
+        }
+        $host = (string) ($this->router['host'] ?? '');
+        $sessions = [];
+        foreach ($read(fn () => $client->print('/user/active', [], ['address', 'via'])) as $r) {
+            if (str_starts_with((string) ($r['via'] ?? ''), 'api') && filter_var($r['address'] ?? '', FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $sessions[] = (string) $r['address'];
+            }
+        }
+        foreach ($read(fn () => $client->print('/ip/address', [], ['address', 'network', 'interface', 'disabled'])) as $a) {
+            $if = (string) ($a['interface'] ?? '');
+            [$ip, $bits] = array_pad(explode('/', (string) ($a['address'] ?? ''), 2), 2, '32');
+            if ($if === '' || !filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                continue;
+            }
+            if ($ip === $host) {
+                $out[$if] ??= $mgmt;
+                continue;
+            }
+            // عنوان نقطة لنقطة (مثل /32 network=10.77.0.1) أو شبكة عادية تضم عنوان جلسة API
+            $peer = (string) ($a['network'] ?? '');
+            foreach ($sessions as $s) {
+                if ($s === $peer || self::inSubnet($s, $ip, (int) $bits)) {
+                    $out[$if] ??= $mgmt;
+                }
+            }
+        }
+        return $out;
+    }
+
+    private static function inSubnet(string $ip, string $net, int $bits): bool
+    {
+        if ($bits <= 0 || $bits > 32) {
+            return false;
+        }
+        $mask = $bits === 32 ? -1 : ~((1 << (32 - $bits)) - 1);
+        return (ip2long($ip) & $mask) === (ip2long($net) & $mask);
+    }
+
+    /** تعطيل واجهة أو تشغيلها بمعرّفها (.id) من قائمة /interface */
+    public function setInterfaceDisabled(string $id, bool $disabled): void
+    {
+        $this->client()->set('/interface', $id, ['disabled' => $disabled ? 'yes' : 'no']);
     }
 
     // ---------------------------------------------------------------------

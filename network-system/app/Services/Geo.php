@@ -66,6 +66,41 @@ final class Geo
         return self::DEFAULT_VIEW;
     }
 
+    /**
+     * مفتاح خرائط Google (Map Tiles API): مفتاح الحساب إن وُضع، وإلا مفتاح المنصة الذي يضعه مسؤولها لكل الحسابات.
+     * المفتاح يُستخدم من المتصفح، فيُقيَّد في Google Cloud بنطاق النظام.
+     */
+    public static function googleKey(): string
+    {
+        $key = trim((string) Settings::get('map.google_key', ''));
+        if ($key === '' && \App\Core\Platform::enabled()) {
+            try {
+                $key = trim(\App\Core\Platform::setting('maps.google_key', ''));
+            } catch (\Throwable) {
+                $key = '';
+            }
+        }
+        return preg_match('/^[A-Za-z0-9_\-]{20,120}$/', $key) ? $key : '';
+    }
+
+    /** رمز المنطقة لخرائط Google من المنطقة الزمنية للحساب (يؤثر في الحدود وأسماء الأماكن) */
+    public static function googleRegion(): string
+    {
+        $tz = (string) Settings::get('general.timezone', date_default_timezone_get());
+        return [
+            'Asia/Gaza' => 'PS', 'Asia/Hebron' => 'PS', 'Asia/Jerusalem' => 'PS', 'Asia/Amman' => 'JO', 'Africa/Cairo' => 'EG',
+            'Asia/Riyadh' => 'SA', 'Asia/Baghdad' => 'IQ', 'Asia/Damascus' => 'SY', 'Asia/Beirut' => 'LB', 'Asia/Dubai' => 'AE',
+            'Europe/Istanbul' => 'TR',
+        ][$tz] ?? 'PS';
+    }
+
+    /** إعدادات الخرائط للمتصفح (تقرأها geo.js) */
+    public static function clientConfig(): string
+    {
+        $cfg = ['google' => self::googleKey(), 'lang' => \App\Core\Lang::isEn() ? 'en' : 'ar', 'region' => self::googleRegion()];
+        return '<script type="application/json" data-sn-geo>' . json_encode($cfg, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) . '</script>';
+    }
+
     /** قائمة المواقع لحقول الاختيار */
     public static function sitePairs(): array
     {

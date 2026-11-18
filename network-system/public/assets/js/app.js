@@ -534,13 +534,37 @@
   });
 
   // التبويب النشط يظهر كاملاً في شريط التبويبات القابل للتمرير (على الجوال)، بلا تحريك الصفحة
-  function revealTab(el) {
-    var g = el && el.closest('[data-tabs]');
+  // center: يوضع التبويب في وسط الشريط إن كان مخفياً (عند فتح الصفحة)
+  function revealTab(el, center) {
+    var g = el && el.closest('[data-tabs], .tabs');
     if (!g || g.scrollWidth <= g.clientWidth + 1) { return; }
     var gr = g.getBoundingClientRect(), r = el.getBoundingClientRect();
-    if (r.left < gr.left) { g.scrollLeft -= gr.left - r.left + 16; }
-    else if (r.right > gr.right) { g.scrollLeft += r.right - gr.right + 16; }
+    if (r.left >= gr.left - 1 && r.right <= gr.right + 1) { return; }
+    if (center) { g.scrollLeft += (r.left + r.width / 2) - (gr.left + gr.width / 2); }
+    else if (r.left < gr.left) { g.scrollLeft -= gr.left - r.left + 16; }
+    else { g.scrollLeft += r.right - gr.right + 16; }
   }
+
+  // أشرطة التبويبات التي تنقل بين الصفحات (روابط ?tab=): يُحفظ موضع تمرير الشريط للجلسة ويُستعاد فور فتح الصفحة التالية،
+  // ثم يُتأكد أن التبويب المختار ظاهر كاملاً، فلا يرجع الشريط إلى أول التبويبات عند الاختيار ولا بعد تحديث الصفحة
+  (function () {
+    $$('.tabs').forEach(function (g, i) {
+      var key = 'sn-tabs:' + location.pathname + ':' + i, timer = null;
+      var save = function () { try { sessionStorage.setItem(key, String(Math.round(g.scrollLeft))); } catch (err) {} };
+      var active = $('.tab.is-active', g);
+      if (g.scrollWidth > g.clientWidth + 1) {
+        var saved = null;
+        try { saved = sessionStorage.getItem(key); } catch (err) {}
+        if (saved !== null && isFinite(+saved)) { g.scrollLeft = +saved; }
+        if (active) { revealTab(active, true); }
+      }
+      // تغيّر عرض النص بعد تحميل الخطوط يغيّر مواضع التبويبات
+      if (active && doc.fonts && doc.fonts.ready) { doc.fonts.ready.then(function () { revealTab(active, true); }); }
+      g.addEventListener('scroll', function () { clearTimeout(timer); timer = setTimeout(save, 120); }, { passive: true });
+      g.addEventListener('click', save);
+      window.addEventListener('pagehide', save);
+    });
+  })();
 
   // التبويبات داخل الصفحة
   on(doc, 'click', '[data-tab]', function (e, el) {
@@ -808,7 +832,7 @@
         Array.prototype.forEach.call(el.children, function (c) {
           if (c.matches('.stack')) { Array.prototype.forEach.call(c.children, pick); } else { pick(c); }
         });
-      } else if (!el.matches('script, dialog, style')) { pick(el); }
+      } else if (!el.matches('script, dialog, style, .app-footer')) { pick(el); }
     });
     list.slice(0, 16).forEach(function (el, i) { el.style.setProperty('--i', i); el.classList.add('mx'); });
     var rows = content.querySelectorAll('.table tbody tr, .list > .list-item');

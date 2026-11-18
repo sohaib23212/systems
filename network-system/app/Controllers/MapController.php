@@ -17,11 +17,61 @@ final class MapController extends Controller
 {
     public function index(Request $request): Response
     {
+        [$rScope, $rParams] = Auth::routerScope('r.id');
         return view('map/index', [
             'view' => Geo::view(),
             'areas' => DB::pairs('SELECT id, name FROM areas ORDER BY name'),
             'sites' => Geo::sitePairs(),
+            // أجهزة MikroTik للإضافة على الخريطة: ما ليس له موقع أولاً
+            'routers' => array_map(static fn ($r) => ['id' => (int) $r['id'], 'name' => $r['name'], 'placed' => (bool) $r['placed']], DB::rows(
+                "SELECT r.id, r.name, (COALESCE(r.lat, s.lat) IS NOT NULL) AS placed FROM routers r LEFT JOIN sites s ON s.id = r.site_id WHERE 1 = 1$rScope ORDER BY placed, r.name",
+                $rParams
+            )),
         ]);
+    }
+
+    /** وضع جهاز MikroTik على الخريطة (أو نقله)، مع تعديل اسمه لمن يملك صلاحية إدارة الأجهزة */
+    public function placeRouter(Request $request): Response
+    {
+        $id = $request->int('id');
+        $router = DB::row('SELECT id, name FROM routers WHERE id = ?', [$id]);
+        if (!$router) {
+            return json_response(['ok' => false, 'message' => 'اختر جهاز MikroTik.'], 422);
+        }
+        if (!Auth::canRouter($id)) {
+            throw new HttpException(403);
+        }
+        $lat = trim(latin_digits($request->str('lat')));
+        $lng = trim(latin_digits($request->str('lng')));
+        if (!is_numeric($lat) || !is_numeric($lng) || (float) $lat < -90 || (float) $lat > 90 || (float) $lng < -180 || (float) $lng > 180) {
+            return json_response(['ok' => false, 'message' => 'الإحداثيات غير صحيحة.'], 422);
+        }
+        $update = ['lat' => round((float) $lat, 7), 'lng' => round((float) $lng, 7), 'updated_at' => now()];
+        $name = trim($request->str('name'));
+        if ($name !== '' && $name !== $router['name'] && can('routers.manage')) {
+            if (mb_strlen($name) > 100) {
+                return json_response(['ok' => false, 'message' => 'الاسم طويل (100 حرف على الأكثر).'], 422);
+            }
+            $update['name'] = $name;
+        }
+        DB::update('routers', $update, 'id = ?', [$id]);
+        Audit::log('map.move', 'وضع جهاز MikroTik ' . ($update['name'] ?? $router['name']) . ' على الخريطة' . (isset($update['name']) ? ' (كان اسمه ' . $router['name'] . ')' : ''), 'router', $id);
+        return json_response(['ok' => true, 'id' => $id, 'name' => $update['name'] ?? $router['name'], 'message' => 'تمت إضافة الجهاز إلى الخريطة.']);
+    }
+
+    /** إزالة الموقع الخاص بجهاز MikroTik (يعود إلى موقع برجه إن كان له برج على الخريطة) */
+    public function unplaceRouter(Request $request, int $id): Response
+    {
+        $router = DB::row('SELECT id, name FROM routers WHERE id = ?', [$id]);
+        if (!$router) {
+            throw new HttpException(404);
+        }
+        if (!Auth::canRouter($id)) {
+            throw new HttpException(403);
+        }
+        DB::update('routers', ['lat' => null, 'lng' => null, 'updated_at' => now()], 'id = ?', [$id]);
+        Audit::log('map.move', 'إزالة جهاز MikroTik ' . $router['name'] . ' من الخريطة', 'router', $id);
+        return json_response(['ok' => true, 'message' => 'تمت إزالة الجهاز من الخريطة.']);
     }
 
     /** بيانات الخريطة: المواقع، أجهزة MikroTik بحالتها، المشتركون، الروابط */

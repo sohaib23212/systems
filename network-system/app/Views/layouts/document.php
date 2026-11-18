@@ -54,7 +54,7 @@ $back = $back ?? '/';
     <?= $content ?>
     <footer class="doc-foot">
       <span>أُعدّ في <?= ltr(e(date('Y-m-d H:i'))) ?><?= $user ? ' · ' . e($user['name']) : '' ?></span>
-      <span class="doc-powered" dir="ltr">Powered by <?= Brand::mark(12) ?><b>Madix</b> — Developed by <b>Sohaib Qudeih</b></span>
+      <span class="doc-powered" dir="ltr">Powered by <?= Brand::mark(12) ?><b>Madix</b> — Developed by <?= Brand::developer(12) ?></span>
     </footer>
   </article>
 </div>

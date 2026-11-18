@@ -17,8 +17,37 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { menu.removeAttribute('open'); } });
   }
 
-  // حركة دخول قصيرة عند اقتراب العنصر من الشاشة (العنصر ظاهر أصلاً قبلها وبعدها)
   var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fine = window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // إضاءة تتبع المؤشر فوق البطاقات (الحاسوب فقط)
+  if (fine) {
+    document.addEventListener('pointermove', function (e) {
+      var card = e.target.closest && e.target.closest('.lp-spot');
+      if (!card) { return; }
+      var r = card.getBoundingClientRect();
+      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+    }, { passive: true });
+  }
+
+  // لوحة التحكم المعروضة تميل قليلاً مع المؤشر (الحاسوب فقط، وبلا حركة لمن يفضّل تقليلها)
+  var stage = document.querySelector('[data-lp-tilt]');
+  if (stage && fine && !reduce) {
+    var raf = 0, rx = 0, ry = 0;
+    var rtl = document.documentElement.dir === 'rtl';
+    var apply = function () { raf = 0; stage.style.setProperty('--rx', rx.toFixed(2) + 'deg'); stage.style.setProperty('--ry', ry.toFixed(2) + 'deg'); };
+    stage.addEventListener('pointermove', function (e) {
+      var r = stage.getBoundingClientRect();
+      var x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+      rx = 6 - y * 8;
+      ry = (rtl ? -6 : 6) + x * 10;
+      if (!raf) { raf = requestAnimationFrame(apply); }
+    });
+    stage.addEventListener('pointerleave', function () { stage.style.removeProperty('--rx'); stage.style.removeProperty('--ry'); });
+  }
+
+  // حركة دخول قصيرة عند اقتراب العنصر من الشاشة (العنصر ظاهر أصلاً قبلها وبعدها)
   if (reduce || !('IntersectionObserver' in window)) { return; }
   var io = new IntersectionObserver(function (entries) {
     entries.forEach(function (en) {

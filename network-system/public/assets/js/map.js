@@ -66,7 +66,10 @@
     return '<div class="pop"><div class="pop-title">' + esc(r.name) + '</div>' +
       '<div class="pop-sub"><span class="badge ' + st[1] + '">' + st[0] + '</span>' + (r.site ? ' · ' + esc(r.site) : '') + '</div>' +
       '<div class="pop-stats"><span>' + SN.icon('users') + SN.fmtNum(r.clients) + ' متصل</span>' + (r.cpu !== null ? '<span>' + SN.icon('cpu') + r.cpu + '%</span>' : '') + '</div>' +
-      '<div class="pop-actions"><a class="btn btn-xs" href="' + url('/routers/' + r.id) + '">' + SN.icon('router') + 'فتح جهاز MikroTik</a></div></div>';
+      '<div class="pop-actions"><a class="btn btn-xs" href="' + url('/routers/' + r.id) + '">' + SN.icon('router') + 'فتح جهاز MikroTik</a>' +
+      (cfg.canManage ? '<button type="button" class="btn btn-xs" data-pop="edit-router" data-id="' + r.id + '">' + SN.icon('pencil') + 'الاسم والموقع</button>' : '') +
+      (cfg.canManage && r.own ? '<button type="button" class="btn btn-xs text-danger" data-pop="unplace-router" data-id="' + r.id + '">' + SN.icon('trash-2') + 'إزالة من الخريطة</button>' : '') +
+      '</div></div>';
   }
 
   function subPopup(s) {
@@ -124,17 +127,69 @@
       var m = L.marker([s.lat, s.lng], { icon: siteIcon(s), draggable: mode === 'move', zIndexOffset: 200 }).bindPopup(sitePopup(s));
       m.on('click', function () { if (mode === 'link') { pickLinkEnd(s); } });
       bindDrag(m, 'site', s.id);
+      label(m, s.name, 'is-site', 20);
       return m;
-    }, function (m, s) { m.setLatLng([s.lat, s.lng]); m.setIcon(siteIcon(s)); m.setPopupContent(sitePopup(s)); });
+    }, function (m, s) { m.setLatLng([s.lat, s.lng]); m.setIcon(siteIcon(s)); m.setPopupContent(sitePopup(s)); label(m, s.name, 'is-site', 20); });
     sync('routers', data.routers, function (r) {
       var m = L.marker([r.lat, r.lng], { icon: routerIcon(r), draggable: mode === 'move', zIndexOffset: 400 }).bindPopup(routerPopup(r));
       bindDrag(m, 'router', r.id);
+      label(m, r.name, 'is-router ' + (ROUTER_STATUS[r.status] || ROUTER_STATUS.unknown)[2], 17);
       return m;
-    }, function (m, r) { m.setLatLng([r.lat, r.lng]); m.setIcon(routerIcon(r)); m.setPopupContent(routerPopup(r)); });
+    }, function (m, r) { m.setLatLng([r.lat, r.lng]); m.setIcon(routerIcon(r)); m.setPopupContent(routerPopup(r)); label(m, r.name, 'is-router ' + (ROUTER_STATUS[r.status] || ROUTER_STATUS.unknown)[2], 17); });
 
     ['sites', 'routers', 'subscribers', 'links'].forEach(function (k) {
       var el = document.querySelector('[data-count="' + k + '"]');
       if (el) { el.textContent = SN.fmtNum(data[k].length); }
+    });
+    declutterSoon();
+  }
+
+  // ------------------------------------------------------------------------
+  // أسماء الأجهزة والمواقع على الخريطة: ظاهرة دائماً تحت العلامة، وما يتصادم منها يُخفى كما في خرائط Google
+  // (أجهزة MikroTik أولاً ثم المواقع)، وتظهر عند التكبير أو بالمرور على العلامة
+  // ------------------------------------------------------------------------
+  function label(m, text, cls, dy) {
+    var t = m.getTooltip();
+    if (t && m._snLabel === text + cls) { return; }
+    if (t) { m.unbindTooltip(); }
+    m._snLabel = text + cls;
+    m.bindTooltip(esc(text), { permanent: true, direction: 'bottom', offset: [0, dy], className: 'mk-label ' + cls, opacity: 1, interactive: false });
+  }
+
+  var labelsOn = true;
+  var declutterTimer = null;
+  function declutterSoon() {
+    clearTimeout(declutterTimer);
+    declutterTimer = setTimeout(declutter, 60);
+  }
+  function declutter() {
+    holder.classList.toggle('hide-labels', !labelsOn);
+    if (!labelsOn) { return; }
+    var box = holder.getBoundingClientRect();
+    var taken = Array.prototype.map.call(holder.querySelectorAll('.leaflet-control'), function (c) { return c.getBoundingClientRect(); });
+    var overlaps = function (a, b) { return a.left < b.right + 2 && a.right > b.left - 2 && a.top < b.bottom + 2 && a.bottom > b.top - 2; };
+    ['routers', 'sites'].forEach(function (kind) {
+      if (!map.hasLayer(groups[kind])) { return; }
+      Object.keys(markers[kind]).forEach(function (id) {
+        var t = markers[kind][id].getTooltip(), el = t && t.getElement();
+        if (!el) { return; }
+        el.classList.remove('is-clash');
+        var r = el.getBoundingClientRect();
+        var outside = r.left < box.left || r.right > box.right || r.top < box.top || r.bottom > box.bottom;
+        if (outside || taken.some(function (o) { return overlaps(r, o); })) { el.classList.add('is-clash'); return; }
+        taken.push(r);
+      });
+    });
+  }
+  map.on('zoomend moveend', declutterSoon);
+  var labelsBox = document.querySelector('[data-map-labels]');
+  if (labelsBox) {
+    try { if (localStorage.getItem('sn-map-labels') === '0') { labelsBox.checked = false; } } catch (e) { /* التخزين غير متاح */ }
+    labelsOn = labelsBox.checked;
+    labelsBox.addEventListener('change', function () {
+      labelsOn = labelsBox.checked;
+      try { localStorage.setItem('sn-map-labels', labelsOn ? '1' : '0'); } catch (e) { /* التخزين غير متاح */ }
+      declutter();
     });
   }
 
@@ -203,6 +258,7 @@
       var g = groups[cb.getAttribute('data-layer')];
       if (cb.checked) { map.addLayer(g); } else { map.removeLayer(g); }
       try { localStorage.setItem(key, cb.checked ? '1' : '0'); } catch (e) { /* التخزين غير متاح */ }
+      if (typeof declutterSoon === 'function') { declutterSoon(); }
     };
     cb.addEventListener('change', apply);
     apply();
@@ -247,6 +303,11 @@
       });
     });
     if (mode !== 'link') { markLinkFrom(null); }
+    var hint = {
+      add: 'اضغط على الخريطة في مكان الموقع الجديد.', router: 'اضغط على الخريطة في مكان الجهاز.',
+      link: 'اضغط على الموقع الأول ثم على الموقع الثاني.', move: 'اسحب العلامات إلى أماكنها، ويُحفظ كل موقع فوراً.'
+    }[mode];
+    if (hint) { SN.toast('info', hint); }
   }
 
   /** تمييز الموقع الأول عند رسم رابط */
@@ -308,7 +369,52 @@
 
   map.on('click', function (e) {
     if (mode === 'add') { setMode('add'); openSite(null, e.latlng); }
+    else if (mode === 'router') { setMode('router'); openRouter(null, e.latlng); }
   });
+
+  // ------------------------------------------------------------------------
+  // إضافة جهاز MikroTik إلى الخريطة: اختيار الجهاز وتعديل اسمه، أو إضافة جهاز جديد للنظام بهذا الموقع
+  // ------------------------------------------------------------------------
+  var routerForm = document.querySelector('[data-router-form]');
+  function routerName(id) {
+    var r = (cfg.routers || []).filter(function (x) { return x.id === id; })[0];
+    return r ? r.name : '';
+  }
+  function openRouter(id, latlng) {
+    if (!routerForm) { return; }
+    routerForm.reset();
+    var lat = Math.round(latlng.lat * 1e7) / 1e7, lng = Math.round(latlng.lng * 1e7) / 1e7;
+    routerForm.lat.value = lat;
+    routerForm.lng.value = lng;
+    routerForm.querySelector('[data-router-coords]').textContent = lat.toFixed(6) + ', ' + lng.toFixed(6);
+    if (routerForm.id) {
+      if (!id) {
+        var free = (cfg.routers || []).filter(function (x) { return !x.placed; })[0];
+        id = free ? free.id : null;
+      }
+      routerForm.id.value = id ? String(id) : '';
+      routerForm.name.value = id ? routerName(id) : '';
+    }
+    var add = routerForm.querySelector('[data-router-new]');
+    if (add) { add.href = url('/routers/create') + '?lat=' + lat + '&lng=' + lng; }
+    SN.openModal('router-modal');
+  }
+  if (routerForm) {
+    if (routerForm.id) {
+      routerForm.id.addEventListener('change', function () { routerForm.name.value = routerName(parseInt(routerForm.id.value, 10)); });
+    }
+    routerForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      SN.api(cfg.routerUrl, { method: 'POST', form: routerForm }).then(function (r) {
+        SN.toast('success', r.message);
+        SN.closeModal(document.getElementById('router-modal'));
+        (cfg.routers || []).forEach(function (x) { if (x.id === r.id) { x.placed = true; x.name = r.name; } });
+        var opt = routerForm.id.querySelector('option[value="' + r.id + '"]');
+        if (opt) { opt.textContent = r.name + ' · على الخريطة'; }
+        load().then(function () { reveal('routers', r.id); });
+      });
+    });
+  }
 
   document.addEventListener('click', function (e) {
     var act = e.target.closest('[data-map-act]');
@@ -333,6 +439,19 @@
       if (mode !== 'link') { setMode('link'); }
       markLinkFrom(id);
       map.closePopup();
+    } else if (kind === 'edit-router') {
+      var rr = data.routers.filter(function (x) { return x.id === id; })[0];
+      map.closePopup();
+      if (rr) { openRouter(id, L.latLng(rr.lat, rr.lng)); }
+    } else if (kind === 'unplace-router') {
+      SN.confirm('إزالة الجهاز من الخريطة؟ يبقى الجهاز في النظام، ويعود إلى موقع برجه إن كان له برج.').then(function (ok) {
+        if (!ok) { return; }
+        SN.api(url('/map/router/' + id + '/remove'), { method: 'POST', data: {} }).then(function (r) {
+          SN.toast('success', r.message);
+          map.closePopup();
+          load();
+        });
+      });
     } else if (kind === 'del-link') {
       SN.confirm('حذف هذا الرابط؟').then(function (ok) {
         if (!ok) { return; }

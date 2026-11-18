@@ -4,7 +4,7 @@ $isEdit = $router !== null;
 $v->title = $isEdit ? 'تعديل جهاز MikroTik' : 'إضافة جهاز MikroTik';
 $v->breadcrumbs = [['أجهزة MikroTik', '/routers'], [$v->title, null]];
 $req = App\Core\Request::current();
-$val = static fn (string $k, $d = '') => old($k, $router[$k] ?? (!$isEdit && $req && in_array($k, ['host', 'name'], true) && $req->str($k) !== '' ? $req->str($k) : $d));
+$val = static fn (string $k, $d = '') => old($k, $router[$k] ?? (!$isEdit && $req && in_array($k, ['host', 'name', 'lat', 'lng'], true) && $req->str($k) !== '' ? $req->str($k) : $d));
 $tunnels = can('routers.manage') && App\Services\Tunnel::available() ? App\Services\Tunnel::all() : [];
 ?>
 <form method="post" action="<?= e(url($isEdit ? '/routers/' . $router['id'] : '/routers')) ?>" autocomplete="off" id="router-form">

@@ -237,6 +237,8 @@ return static function (Router $r): void {
     $r->get('/map/data', [MapController::class, 'data'], ['perm' => 'map.view']);
     $r->post('/map/position', [MapController::class, 'position'], ['perm' => 'map.manage']);
     $r->post('/map/view', [MapController::class, 'saveView'], ['perm' => 'map.manage']);
+    $r->post('/map/router', [MapController::class, 'placeRouter'], ['perm' => 'map.manage']);
+    $r->post('/map/router/{id}/remove', [MapController::class, 'unplaceRouter'], ['perm' => 'map.manage']);
     $r->get('/sites', [SiteController::class, 'index'], ['perm' => 'map.view']);
     $r->post('/sites/links', [SiteController::class, 'linkStore'], ['perm' => 'map.manage']);
     $r->post('/sites/links/{id}/delete', [SiteController::class, 'linkDestroy'], ['perm' => 'map.manage']);

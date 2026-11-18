@@ -7,7 +7,129 @@
   if (!window.L) { return; }
   var L = window.L;
 
-  /** طبقتا الخريطة: شوارع وقمر صناعي (مع أسماء الأماكن) */
+  // ------------------------------------------------------------------------
+  // خرائط Google (Map Tiles API): تعمل حين يضع مسؤول المنصة أو صاحب الحساب مفتاح Google،
+  // وإلا تبقى الخرائط المفتوحة كما هي. الجلسة تُحفظ في المتصفح حتى انتهائها فلا تُطلب مع كل صفحة.
+  // ------------------------------------------------------------------------
+  var geoCfg = (function () {
+    var n = document.querySelector('[data-sn-geo]');
+    try { return n ? JSON.parse(n.textContent) : {}; } catch (e) { return {}; }
+  })();
+  var GKEY = geoCfg.google || '';
+  var GAPI = 'https://tile.googleapis.com';
+  var sessions = {};
+  var googleFailed = false;
+
+  function googleSession(kind) {
+    if (sessions[kind]) { return sessions[kind]; }
+    var body = { mapType: kind === 'hybrid' ? 'satellite' : kind, language: geoCfg.lang === 'en' ? 'en' : 'ar', region: geoCfg.region || 'PS' };
+    if (kind === 'hybrid') { body.layerTypes = ['layerRoadmap']; }
+    if (kind === 'terrain') { body.layerTypes = ['layerRoadmap']; }
+    if ((window.devicePixelRatio || 1) > 1.4) { body.scale = 'scaleFactor2x'; body.highDpi = true; }
+    var store = 'sn-gtiles:' + GKEY.slice(-8) + ':' + JSON.stringify(body);
+    try {
+      var saved = JSON.parse(localStorage.getItem(store) || 'null');
+      if (saved && saved.session && +saved.expiry - 3600 > Date.now() / 1000) {
+        sessions[kind] = Promise.resolve(saved);
+        return sessions[kind];
+      }
+    } catch (e) { /* التخزين غير متاح */ }
+    sessions[kind] = fetch(GAPI + '/v1/createSession?key=' + encodeURIComponent(GKEY), {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (j) {
+        if (!r.ok || !j.session) { throw new Error((j.error && j.error.message) || ('HTTP ' + r.status)); }
+        try { localStorage.setItem(store, JSON.stringify(j)); } catch (e) { /* التخزين غير متاح */ }
+        return j;
+      });
+    });
+    sessions[kind].catch(function () { delete sessions[kind]; });
+    return sessions[kind];
+  }
+
+  var GoogleLayer = L.TileLayer.extend({
+    initialize: function (kind, options) {
+      this._kind = kind;
+      L.TileLayer.prototype.initialize.call(this, '', L.extend({ maxZoom: 21, maxNativeZoom: kind === 'roadmap' ? 21 : 20, className: 'tiles-google tiles-' + kind }, options));
+    },
+    createTile: function (coords, done) {
+      var tile = document.createElement('img');
+      L.DomEvent.on(tile, 'load', L.Util.bind(this._tileOnLoad, this, done, tile));
+      L.DomEvent.on(tile, 'error', L.Util.bind(this._tileOnError, this, done, tile));
+      tile.alt = '';
+      tile.setAttribute('role', 'presentation');
+      var z = this._getZoomForUrl();
+      googleSession(this._kind).then(function (s) {
+        tile.src = GAPI + '/v1/2dtiles/' + z + '/' + coords.x + '/' + coords.y + '?session=' + encodeURIComponent(s.session) + '&key=' + encodeURIComponent(GKEY);
+      }, function (err) { done(err, tile); });
+      return tile;
+    },
+    onAdd: function (map) {
+      L.TileLayer.prototype.onAdd.call(this, map);
+      var self = this;
+      this._credit = function () { self._updateCredit(); };
+      map.on('moveend', this._credit);
+      googleLogo(map, this._kind === 'roadmap' || this._kind === 'terrain');
+      googleSession(this._kind).then(function () { self._updateCredit(); }, function (err) { googleFallback(map, err); });
+    },
+    onRemove: function (map) {
+      map.off('moveend', this._credit);
+      if (map.attributionControl && this._copy) { map.attributionControl.removeAttribution(this._copy); this._copy = null; }
+      googleLogo(map, null);
+      L.TileLayer.prototype.onRemove.call(this, map);
+    },
+    // حقوق البيانات للمنطقة الظاهرة من Google (شرط في استخدام الخرائط)
+    _updateCredit: function () {
+      var map = this._map, self = this;
+      if (!map) { return; }
+      clearTimeout(this._creditTimer);
+      this._creditTimer = setTimeout(function () {
+        googleSession(self._kind).then(function (s) {
+          var b = map.getBounds();
+          var q = '?session=' + encodeURIComponent(s.session) + '&key=' + encodeURIComponent(GKEY) + '&zoom=' + Math.round(map.getZoom()) +
+            '&north=' + b.getNorth().toFixed(6) + '&south=' + b.getSouth().toFixed(6) + '&east=' + b.getEast().toFixed(6) + '&west=' + b.getWest().toFixed(6);
+          return fetch(GAPI + '/tile/v1/viewport' + q).then(function (r) { return r.ok ? r.json() : {}; });
+        }).then(function (v) {
+          if (!self._map || !map.attributionControl) { return; }
+          var text = (v && v.copyright) ? String(v.copyright).replace(/[<>&"]/g, '') : 'Map data © Google';
+          if (self._copy) { map.attributionControl.removeAttribution(self._copy); }
+          self._copy = text;
+          map.attributionControl.addAttribution(text);
+        }).catch(function () { /* تبقى الحقوق السابقة */ });
+      }, 250);
+    }
+  });
+
+  // شعار Google أسفل الخريطة (شرط في استخدام الخرائط): أبيض فوق الصور الجوية، وملون فوق الخريطة
+  function googleLogo(map, light) {
+    var box = map.getContainer().querySelector('.gmaps-logo');
+    if (light === null) { if (box) { box.remove(); } return; }
+    if (!box) {
+      box = document.createElement('span');
+      box.className = 'gmaps-logo';
+      box.innerHTML = '<img alt="Google" width="59" height="18">';
+      map.getContainer().appendChild(box);
+    }
+    box.querySelector('img').src = 'https://developers.google.com/static/maps/documentation/images/' + (light ? 'google_on_white.png' : 'google_on_non_white.png');
+  }
+
+  // مفتاح غير صالح أو الخدمة غير مفعّلة: يُعاد إلى الخريطة المفتوحة مع رسالة واحدة
+  function googleFallback(map, err) {
+    if (!map._snLayers) { return; }
+    var open = map._snLayers[STREET];
+    Object.keys(map._snLayers).forEach(function (k) { if (map.hasLayer(map._snLayers[k]) && map._snLayers[k] !== open) { map.removeLayer(map._snLayers[k]); } });
+    if (!map.hasLayer(open)) { open.addTo(map); }
+    if (!googleFailed && window.SN) {
+      googleFailed = true;
+      SN.toast('warning', 'تعذّر تحميل خرائط Google، فتظهر الخريطة العادية. تحقق من مفتاح Google وتفعيل Map Tiles API.');
+    }
+    if (window.console) { console.warn('Google Map Tiles:', err && err.message); }
+  }
+
+  var STREET = 'خريطة';
+  var G_ROAD = 'خرائط Google', G_HYBRID = 'Google قمر صناعي', G_TERRAIN = 'Google تضاريس';
+
+  /** طبقات الخريطة: خرائط Google (عند ضبط المفتاح)، والشوارع والقمر الصناعي المفتوحة */
   function baseLayers() {
     var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, className: 'tiles-street',
@@ -19,17 +141,28 @@
     var labels = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 19, pane: 'overlayPane'
     });
-    return { 'خريطة': street, 'قمر صناعي': L.layerGroup([imagery, labels]) };
+    var out = {};
+    if (GKEY) {
+      out[G_ROAD] = new GoogleLayer('roadmap');
+      out[G_HYBRID] = new GoogleLayer('hybrid');
+      out[G_TERRAIN] = new GoogleLayer('terrain');
+    }
+    out[STREET] = street;
+    out['قمر صناعي'] = L.layerGroup([imagery, labels]);
+    return out;
   }
 
   function savedBase() {
-    try { return localStorage.getItem('sn-map-base') || 'خريطة'; } catch (e) { return 'خريطة'; }
+    try { return localStorage.getItem('sn-map-base') || ''; } catch (e) { return ''; }
   }
 
-  /** إضافة الطبقات للخريطة مع تذكّر آخر اختيار */
+  /** إضافة الطبقات للخريطة مع تذكّر آخر اختيار (وخرائط Google أولاً عند ضبط مفتاحها) */
   function attachLayers(map) {
     var layers = baseLayers();
-    var name = layers[savedBase()] ? savedBase() : 'خريطة';
+    map._snLayers = layers;
+    var name = savedBase();
+    if (!layers[name]) { name = GKEY ? G_ROAD : STREET; }
+    if (googleFailed && layers[name] instanceof GoogleLayer) { name = STREET; }
     layers[name].addTo(map);
     L.control.layers(layers, null, { position: 'topleft' }).addTo(map);
     map.on('baselayerchange', function (e) {
@@ -143,5 +276,5 @@
     (picker || buildPicker()).open(btn.closest('[data-location]'));
   });
 
-  window.SNGeo = { attachLayers: attachLayers, baseLayers: baseLayers, icon: icon, dot: dot };
+  window.SNGeo = { attachLayers: attachLayers, baseLayers: baseLayers, icon: icon, dot: dot, google: !!GKEY };
 })(window, document);

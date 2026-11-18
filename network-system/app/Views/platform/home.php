@@ -37,14 +37,14 @@ $cta = $signup ? url('/signup') : url('/login');
 <a class="lp-skip" href="#main">تخطَّ إلى المحتوى</a>
 
 <header class="lp-nav" data-lp-nav>
-  <div class="lp-wrap lp-nav-in">
-    <a class="lp-brand" href="<?= e(url('/')) ?>" aria-label="<?= e(Brand::NAME) ?>"><?= Brand::mark(36) ?><?= Brand::wordmark() ?></a>
+  <div class="lp-nav-in">
+    <a class="lp-brand" href="<?= e(url('/')) ?>" aria-label="<?= e(Brand::NAME) ?>"><?= Brand::mark(34) ?><?= Brand::wordmark() ?></a>
     <nav class="lp-links" aria-label="أقسام الصفحة">
       <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
     </nav>
     <div class="lp-nav-cta">
-      <?php if (\App\Core\Lang::switchable()): ?><a class="lp-btn lp-btn-line lp-lang" href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>" title="Language / اللغة"><?= icon('globe') ?><?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
-      <a class="lp-btn lp-btn-line" href="<?= e(url('/login')) ?>"><?= e(L::get('cta_secondary')) ?></a>
+      <?php if (\App\Core\Lang::switchable()): ?><a class="lp-btn lp-btn-ghost lp-lang" href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>" title="Language / اللغة"><?= icon('globe') ?><?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
+      <a class="lp-btn lp-btn-ghost lp-nav-login" href="<?= e(url('/login')) ?>"><?= e(L::get('cta_secondary')) ?></a>
       <?php if ($signup): ?><a class="lp-btn lp-btn-primary lp-nav-signup" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
     </div>
     <?php if ($links): ?>
@@ -52,6 +52,7 @@ $cta = $signup ? url('/signup') : url('/login');
       <summary aria-label="القائمة"><?= icon('menu') ?></summary>
       <nav class="lp-menu-panel" aria-label="أقسام الصفحة">
         <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
+        <a href="<?= e(url('/login')) ?>"><?= icon('log-in') ?> <?= e(L::get('cta_secondary')) ?></a>
         <?php if ($signup): ?><a class="lp-btn lp-btn-primary" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
         <?php if (\App\Core\Lang::switchable()): ?><a href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>"><?= icon('globe') ?> <?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
       </nav>
@@ -62,26 +63,30 @@ $cta = $signup ? url('/signup') : url('/login');
 
 <main id="main">
 <section class="lp-hero">
-  <div class="lp-hero-bg" aria-hidden="true"><span class="lp-glow lp-glow-a"></span><span class="lp-glow lp-glow-b"></span><span class="lp-grid"></span></div>
+  <div class="lp-hero-bg" aria-hidden="true">
+    <span class="lp-aurora lp-aurora-a"></span><span class="lp-aurora lp-aurora-b"></span><span class="lp-aurora lp-aurora-c"></span>
+    <span class="lp-stars"></span>
+    <span class="lp-floor"><i></i></span>
+  </div>
   <div class="lp-wrap lp-hero-in">
     <div class="lp-hero-text">
       <span class="lp-eyebrow"><span class="lp-pulse"></span><?= e(L::get('hero_badge')) ?></span>
-      <h1><?= e(L::get('hero_title')) ?></h1>
+      <h1 class="lp-title"><?= e(L::get('hero_title')) ?></h1>
       <p class="lp-lead"><?= e(L::get('hero_text')) ?></p>
       <div class="lp-hero-cta">
-        <a class="lp-btn lp-btn-primary lp-btn-lg" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?><?= icon('chevron-left') ?></a>
+        <a class="lp-btn lp-btn-primary lp-btn-lg lp-btn-shine" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?><?= icon('chevron-left', 'lp-arrow') ?></a>
         <?php if ($signup): ?><a class="lp-btn lp-btn-glass lp-btn-lg" href="<?= e(url('/login')) ?>"><?= icon('log-in') ?><?= e(L::get('cta_secondary')) ?></a><?php endif; ?>
       </div>
       <?php if ($signup): ?><div class="lp-note"><?= icon('circle-check') ?><span><?= e(L::get('trial_note')) ?></span></div><?php endif; ?>
     </div>
 
-    <div class="lp-preview" aria-hidden="true">
+    <div class="lp-stage" aria-hidden="true" data-lp-tilt>
       <div class="lp-window">
-        <div class="lp-window-bar"><i></i><i></i><i></i><span class="lp-window-url" dir="ltr">nexus / <b>sohaib</b></span></div>
+        <div class="lp-window-bar"><i></i><i></i><i></i><span class="lp-window-url" dir="ltr">madix.org / <b>nexus</b></span></div>
         <div class="lp-app">
-          <div class="lp-app-side"><span class="lp-app-logo"></span><i class="on"></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="lp-app-side"><span class="lp-app-logo"><?= Brand::mark(22) ?></span><i class="on"></i><i></i><i></i><i></i><i></i></div>
           <div class="lp-app-main">
-            <div class="lp-app-top"><b>لوحة التحكم</b><span>اليوم</span></div>
+            <div class="lp-app-top"><b>لوحة التحكم</b><span class="lp-live"><i></i>مباشر</span></div>
             <div class="lp-kpis">
               <div class="lp-kpi"><small>المتصلون الآن</small><b dir="ltr">248</b><em class="up" dir="ltr">+12%</em></div>
               <div class="lp-kpi"><small>مبيعات اليوم</small><b dir="ltr">1,350 <?= e($currency) ?></b><em class="up" dir="ltr">+8%</em></div>
@@ -90,9 +95,9 @@ $cta = $signup ? url('/signup') : url('/login');
             <div class="lp-chart-card">
               <div class="lp-chart-head"><span>مبيعات هذا الأسبوع</span><b dir="ltr">8,420 <?= e($currency) ?></b></div>
               <svg class="lp-chart" viewBox="0 0 320 84" preserveAspectRatio="none">
-                <defs><linearGradient id="lp-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b82f6" stop-opacity=".34"/><stop offset="1" stop-color="#3b82f6" stop-opacity="0"/></linearGradient></defs>
+                <defs><linearGradient id="lp-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".38"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
                 <path d="M0 62 C26 58 38 40 64 44 S104 66 128 50 168 18 192 26 232 48 256 34 296 10 320 14 V84 H0 Z" fill="url(#lp-area)"/>
-                <path d="M0 62 C26 58 38 40 64 44 S104 66 128 50 168 18 192 26 232 48 256 34 296 10 320 14" fill="none" stroke="#2563eb" stroke-width="2.4" stroke-linecap="round"/>
+                <path class="lp-chart-line" d="M0 62 C26 58 38 40 64 44 S104 66 128 50 168 18 192 26 232 48 256 34 296 10 320 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" pathLength="1"/>
               </svg>
             </div>
             <div class="lp-rows">
@@ -103,8 +108,17 @@ $cta = $signup ? url('/signup') : url('/login');
           </div>
         </div>
       </div>
-      <div class="lp-float lp-float-a"><?= icon('ticket') ?><span>بيع 50 كرتاً</span></div>
-      <div class="lp-float lp-float-b"><?= icon('zap') ?><span>بطارية برج الشمال <b dir="ltr">26.4 V</b></span></div>
+      <div class="lp-float lp-float-a"><span class="lp-float-icon"><?= icon('ticket') ?></span><span>بيع 50 كرتاً</span></div>
+      <div class="lp-float lp-float-b"><span class="lp-float-icon is-warm"><?= icon('zap') ?></span><span>بطارية برج الشمال <b dir="ltr">26.4 V</b></span></div>
+    </div>
+  </div>
+  <div class="lp-wrap lp-marquee" aria-hidden="true">
+    <div class="lp-marquee-track">
+      <?php for ($r = 0; $r < 2; $r++): ?>
+      <?php foreach ([['router', 'MikroTik'], ['wifi', 'Hotspot'], ['cable', 'PPPoE'], ['shield-check', 'WireGuard'], ['send', 'Telegram'], ['message-circle', 'SMS'], ['smartphone', 'Android'], ['monitor', 'Windows'], ['map', 'Google Maps'], ['printer', 'QR']] as [$ic, $t]): ?>
+      <span class="lp-chip"><?= icon($ic) ?><span dir="ltr"><?= e($t) ?></span></span>
+      <?php endforeach; ?>
+      <?php endfor; ?>
     </div>
   </div>
 </section>
@@ -125,13 +139,13 @@ $cta = $signup ? url('/signup') : url('/login');
 <section class="lp-section" id="features">
   <div class="lp-wrap">
     <div class="lp-head">
-      <span class="lp-kicker">المميزات</span>
+      <span class="lp-kicker"><?= icon('sparkles') ?>المميزات</span>
       <h2><?= e(L::get('features_title')) ?></h2>
       <p><?= e(L::get('features_text')) ?></p>
     </div>
-    <div class="lp-features">
+    <div class="lp-bento">
       <?php foreach ($features as $i => [$title, $text]): ?>
-      <article class="lp-feature" data-lp-anim style="--i:<?= $i % 3 ?>">
+      <article class="lp-feature lp-spot" data-lp-anim style="--i:<?= $i % 3 ?>">
         <span class="lp-feature-icon is-<?= $i % 6 ?>"><?= icon($featureIcons[$i] ?? 'zap') ?></span>
         <h3><?= e($title) ?></h3>
         <p><?= e($text) ?></p>
@@ -143,10 +157,10 @@ $cta = $signup ? url('/signup') : url('/login');
 <?php endif; ?>
 
 <?php if ($steps): ?>
-<section class="lp-section lp-section-tint" id="steps">
+<section class="lp-section lp-section-alt" id="steps">
   <div class="lp-wrap">
     <div class="lp-head">
-      <span class="lp-kicker">طريقة العمل</span>
+      <span class="lp-kicker"><?= icon('zap') ?>طريقة العمل</span>
       <h2><?= e(L::get('steps_title')) ?></h2>
     </div>
     <ol class="lp-steps">
@@ -166,21 +180,21 @@ $cta = $signup ? url('/signup') : url('/login');
 <section class="lp-section" id="pricing">
   <div class="lp-wrap">
     <div class="lp-head">
-      <span class="lp-kicker">الباقات والأسعار</span>
+      <span class="lp-kicker"><?= icon('ticket') ?>الباقات والأسعار</span>
       <h2><?= e(L::get('pricing_title')) ?></h2>
       <p><?= e(L::get('pricing_text')) ?></p>
     </div>
     <div class="lp-plans">
       <?php foreach ($plans as $i => $p): $hot = (int) $p['is_featured'] === 1; ?>
-      <article class="lp-plan<?= $hot ? ' is-hot' : '' ?>" data-lp-anim style="--i:<?= $i ?>">
-        <?php if ($hot): ?><span class="lp-plan-tag">الأكثر طلباً</span><?php endif; ?>
+      <article class="lp-plan lp-spot<?= $hot ? ' is-hot' : '' ?>" data-lp-anim style="--i:<?= $i ?>">
+        <?php if ($hot): ?><span class="lp-plan-tag"><?= icon('sparkles') ?>الأكثر طلباً</span><?php endif; ?>
         <h3><?= e($p['name']) ?></h3>
         <?php if ($p['tagline']): ?><p class="lp-plan-sub"><?= e($p['tagline']) ?></p><?php endif; ?>
         <div class="lp-plan-price"><b dir="ltr"><?= e($price($p['price'])) ?></b><span><?= e($currency) ?> / <?= e(Billing::monthsLabel((int) $p['months'])) ?></span></div>
         <ul class="lp-plan-list">
           <?php foreach (array_merge(Billing::planLimits($p), Billing::planFeatures($p)) as $line): ?><li><?= icon('check') ?><span><?= e($line) ?></span></li><?php endforeach; ?>
         </ul>
-        <a class="lp-btn <?= $hot ? 'lp-btn-primary' : 'lp-btn-soft' ?> lp-btn-block" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?></a>
+        <a class="lp-btn <?= $hot ? 'lp-btn-primary lp-btn-shine' : 'lp-btn-glass' ?> lp-btn-block" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?></a>
       </article>
       <?php endforeach; ?>
     </div>
@@ -189,10 +203,10 @@ $cta = $signup ? url('/signup') : url('/login');
 <?php endif; ?>
 
 <?php if ($apps): ?>
-<section class="lp-section lp-section-tint" id="apps">
+<section class="lp-section lp-section-alt" id="apps">
   <div class="lp-wrap lp-apps">
     <div class="lp-apps-text">
-      <span class="lp-kicker">التطبيقات</span>
+      <span class="lp-kicker"><?= icon('smartphone') ?>التطبيقات</span>
       <h2><?= e(L::get('apps_title')) ?></h2>
       <p><?= e(L::get('apps_text')) ?></p>
       <div class="lp-badges">
@@ -226,7 +240,7 @@ $cta = $signup ? url('/signup') : url('/login');
 <section class="lp-section" id="faq">
   <div class="lp-wrap lp-faq-wrap">
     <div class="lp-head">
-      <span class="lp-kicker">الأسئلة الشائعة</span>
+      <span class="lp-kicker"><?= icon('message-circle') ?>الأسئلة الشائعة</span>
       <h2><?= e(L::get('faq_title')) ?></h2>
     </div>
     <div class="lp-faq">
@@ -244,6 +258,7 @@ $cta = $signup ? url('/signup') : url('/login');
 <section class="lp-section lp-section-cta">
   <div class="lp-wrap">
     <div class="lp-cta">
+      <span class="lp-cta-glow" aria-hidden="true"></span>
       <div class="lp-cta-text">
         <h2><?= e(L::get('cta_title')) ?></h2>
         <p><?= e(L::get('cta_text')) ?></p>
@@ -283,7 +298,7 @@ $cta = $signup ? url('/signup') : url('/login');
   </div>
   <div class="lp-wrap lp-footer-bar">
     <span>&copy; <?= date('Y') ?> <span dir="ltr"><?= e(Brand::NAME) ?></span></span>
-    <span class="lp-credit" dir="ltr">Powered by <?= Brand::mark(14) ?><b>Madix</b> — Developed by <b>Sohaib Qudeih</b></span>
+    <span class="lp-credit" dir="ltr">Powered by <?= Brand::mark(14) ?><b>Madix</b> — Developed by <?= Brand::developer(14) ?></span>
   </div>
 </footer>
 

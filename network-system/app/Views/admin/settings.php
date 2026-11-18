@@ -21,6 +21,13 @@ $zones = ['Asia/Gaza', 'Asia/Hebron', 'Asia/Jerusalem', 'Asia/Amman', 'Africa/Ca
         <div class="field col-6"><label>عملة الاشتراكات</label><input class="input" name="currency" value="<?= e(old('currency', Platform::setting('platform.currency'))) ?>" required maxlength="8"><?= error_html('currency') ?></div>
         <div class="field col-6"><label>المنطقة الزمنية للحسابات الجديدة</label><select class="input" name="timezone"><?php foreach ($zones as $z): ?><option value="<?= e($z) ?>"<?= selected(Platform::setting('platform.timezone'), $z) ?>><?= e($z) ?></option><?php endforeach; ?></select></div>
         <div class="field col-12"><label class="switch"><input type="checkbox" name="signup" value="1"<?= checked(Platform::setting('platform.signup') === '1') ?>><span class="track"></span><span>السماح بإنشاء حسابات جديدة</span></label></div>
+        <div class="form-section-title"><?= icon('map') ?>خرائط Google</div>
+        <div class="field col-12">
+          <label for="gmk">مفتاح خرائط Google لكل الحسابات</label>
+          <input class="input input-ltr" id="gmk" name="google_maps_key" value="<?= e(old('google_maps_key', Platform::setting('maps.google_key'))) ?>" maxlength="120" autocomplete="off" spellcheck="false" placeholder="AIza...">
+          <?= error_html('google_maps_key') ?>
+          <span class="hint">من Google Cloud: فعّل Map Tiles API وأنشئ مفتاحاً مقيّداً بنطاق المنصة. تظهر بعده خرائط Google (خريطة، قمر صناعي، تضاريس) في خريطة الشبكة واختيار المواقع، ويمكن لكل حساب وضع مفتاحه الخاص من إعداداته.</span>
+        </div>
         <div class="form-section-title"><?= icon('megaphone') ?>إعلان لكل الأنظمة</div>
         <div class="field col-9"><label>نص الإعلان</label><input class="input" name="announcement" value="<?= e(old('announcement', Platform::setting('platform.announcement'))) ?>" maxlength="300"></div>
         <div class="field col-3"><label>النوع</label><select class="input" name="announcement_level"><?php foreach (['info' => 'معلومة', 'success' => 'إيجابي', 'warning' => 'تنبيه'] as $k => $l): ?><option value="<?= $k ?>"<?= selected(Platform::setting('platform.announcement_level'), $k) ?>><?= $l ?></option><?php endforeach; ?></select></div>

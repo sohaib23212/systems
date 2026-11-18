@@ -12,7 +12,7 @@ $dialog = $dialog ?? true;
   <img src="<?= e(asset('img/brand/mark.svg')) ?>" width="16" height="16" alt="">
   <b>Madix</b>
   <span class="madix-credit-sep">—</span>
-  <span>Developed by <b>Sohaib Qudeih</b></span>
+  <span class="madix-credit-dev">Developed by <?= Brand::developer(14) ?></span>
 </button>
 <?php if ($dialog): ?>
 <dialog class="madix-dialog" id="madix-about" aria-label="Madix">
@@ -25,7 +25,7 @@ $dialog = $dialog ?? true;
       <span class="madix-logo"><img src="<?= e(asset('img/brand/mark.svg')) ?>" width="58" height="58" alt="Madix"></span>
       <div class="madix-titles" dir="ltr">
         <div class="madix-name">MADIX <span>NEXUS</span></div>
-        <div class="madix-by">Developed by <b>Sohaib Qudeih</b></div>
+        <div class="madix-by">Developed by <?= Brand::developer(17) ?></div>
       </div>
     </div>
     <div class="madix-divider"><span>تواصل معنا</span></div>

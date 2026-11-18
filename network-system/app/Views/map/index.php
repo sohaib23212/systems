@@ -10,8 +10,9 @@ $v->script('js/map.js');
 $canManage = can('map.manage');
 if ($canManage) {
     $v->actions = '<button type="button" class="btn" data-map-act="move" aria-pressed="false">' . icon('move') . 'تحريك</button>'
-        . '<button type="button" class="btn" data-map-act="link">' . icon('waypoints') . 'رابط جديد</button>'
-        . '<button type="button" class="btn btn-primary" data-map-act="add">' . icon('plus') . 'موقع جديد</button>';
+        . '<button type="button" class="btn" data-map-act="link" aria-pressed="false">' . icon('waypoints') . 'رابط جديد</button>'
+        . '<button type="button" class="btn" data-map-act="router" aria-pressed="false">' . icon('router') . 'إضافة جهاز</button>'
+        . '<button type="button" class="btn btn-primary" data-map-act="add" aria-pressed="false">' . icon('plus') . 'موقع جديد</button>';
 }
 $config = [
     'view' => $view,
@@ -26,9 +27,13 @@ $config = [
     'canSubs' => can('subscribers.view'),
     'siteTypes' => array_map(static fn ($t) => ['label' => $t[0], 'icon' => $t[1]], Geo::SITE_TYPES),
     'linkTypes' => Geo::LINK_TYPES,
+    'routers' => $routers,
+    'routerUrl' => url('/map/router'),
+    'canRename' => can('routers.manage'),
 ];
 ?>
 <link rel="stylesheet" href="<?= e(asset('vendor/leaflet/leaflet.css')) ?>">
+<?= Geo::clientConfig() ?>
 <div class="map-shell">
   <div class="map-canvas panel" id="net-map" data-mode=""></div>
   <aside class="map-panel panel">
@@ -44,6 +49,7 @@ $config = [
         <label class="map-layer"><input type="checkbox" data-layer="subscribers" checked><span class="mk-dot is-active"></span><span class="grow">المشتركون</span><b data-count="subscribers">0</b></label>
         <?php endif; ?>
         <label class="map-layer"><input type="checkbox" data-layer="links" checked><span class="map-line is-wireless"></span><span class="grow">الروابط</span><b data-count="links">0</b></label>
+        <label class="map-layer"><input type="checkbox" data-map-labels checked><span class="map-label-sample"><?= icon('tag') ?></span><span class="grow">أسماء الأجهزة والمواقع</span></label>
       </div>
       <div class="map-legend">
         <div class="map-legend-title">أجهزة MikroTik</div>
@@ -94,6 +100,38 @@ $config = [
       <span class="grow"></span>
       <button type="button" class="btn" data-modal-close>إلغاء</button>
       <button type="submit" class="btn btn-primary"><?= icon('check') ?>حفظ</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog class="modal" id="router-modal">
+  <form data-router-form>
+    <div class="modal-head"><h3><?= icon('router') ?>إضافة جهاز MikroTik إلى الخريطة</h3><button type="button" class="btn btn-ghost btn-icon btn-sm" data-modal-close><?= icon('x') ?></button></div>
+    <div class="modal-body">
+      <input type="hidden" name="lat"><input type="hidden" name="lng">
+      <?php if ($routers): ?>
+      <div class="form-grid">
+        <div class="field col-12"><label for="rm-id">الجهاز</label>
+          <select class="input" id="rm-id" name="id" required>
+            <option value="">—</option>
+            <?php foreach ($routers as $r): ?><option value="<?= (int) $r['id'] ?>"><?= e($r['name']) ?><?= $r['placed'] ? ' · على الخريطة' : '' ?></option><?php endforeach; ?>
+          </select>
+        </div>
+        <div class="field col-12"><label for="rm-name">الاسم على الخريطة</label>
+          <input class="input" id="rm-name" name="name" maxlength="100" required<?= can('routers.manage') ? '' : ' readonly' ?>>
+          <span class="hint"><?= can('routers.manage') ? 'يتغير اسم الجهاز في النظام كله.' : 'تعديل الاسم لمن يملك صلاحية إدارة أجهزة MikroTik.' ?></span>
+        </div>
+      </div>
+      <?php else: ?>
+      <div class="empty" style="padding:18px 0"><?= icon('router') ?><div>لا توجد أجهزة MikroTik في النظام بعد.</div></div>
+      <?php endif; ?>
+      <div class="map-coords"><?= icon('map-pin') ?><span class="mono" dir="ltr" data-router-coords>—</span></div>
+    </div>
+    <div class="modal-foot">
+      <?php if (can('routers.manage')): ?><a class="btn btn-ghost" href="<?= e(url('/routers/create')) ?>" data-router-new><?= icon('plus') ?>جهاز جديد</a><?php endif; ?>
+      <span class="grow"></span>
+      <button type="button" class="btn" data-modal-close>إلغاء</button>
+      <?php if ($routers): ?><button type="submit" class="btn btn-primary"><?= icon('check') ?>إضافة</button><?php endif; ?>
     </div>
   </form>
 </dialog>

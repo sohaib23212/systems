@@ -65,6 +65,18 @@ final class Brand
         return '<img class="' . e(trim('brand-logo ' . $class)) . '" src="' . e(asset('img/brand/mark.svg')) . '" width="' . $size . '" height="' . $size . '" alt="' . self::NAME . '">';
     }
 
+    /** علامة التوثيق الزرقاء بجانب اسم المطوّر (بنمط علامة التوثيق في إنستغرام) */
+    public static function verified(int $size = 14): string
+    {
+        return '<img class="verified-badge" src="' . e(asset('img/brand/verified.svg')) . '" width="' . $size . '" height="' . $size . '" alt="Verified" title="Verified" decoding="async">';
+    }
+
+    /** اسم المطوّر مع علامة التوثيق: لا ينفصلان عند التفاف السطر */
+    public static function developer(int $size = 14): string
+    {
+        return '<span class="dev-name"><b>Sohaib Qudeih</b>' . self::verified($size) . '</span>';
+    }
+
     /** اسم النظام بخطّين */
     public static function wordmark(string $class = ''): string
     {

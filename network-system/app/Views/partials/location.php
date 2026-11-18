@@ -16,6 +16,7 @@ $v->script('js/geo.js');
 $fmt = static fn ($x) => $x === null || $x === '' ? '' : rtrim(rtrim(number_format((float) $x, 7, '.', ''), '0'), '.');
 ?>
 <link rel="stylesheet" href="<?= e(asset('vendor/leaflet/leaflet.css')) ?>">
+<?= Geo::clientConfig() ?>
 <?php if ($withSite ?? true): ?>
 <div class="field col-6">
   <label for="site_id">البرج / الموقع</label>
