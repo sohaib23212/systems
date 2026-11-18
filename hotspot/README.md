@@ -31,7 +31,7 @@
 
 1. انشر ملفات الربط من Madix أولاً (ربط الهوتسبوت ← نشر الملفات)، حتى يكون `sn-config.js` و `sohaibnet.js` على الجهاز.
 2. اعمل رمز GitHub للقراءة فقط على هذا المستودع (Fine-grained token ← Contents: Read-only).
-3. افتح `install-madix-net.rsc`، ضع الرمز مكان `PASTE_TOKEN_HERE`، والصق الكتلة كاملة في Terminal جهاز MikroTik.
+3. افتح `install-madix-net.rsc`، ضع الرمز بين علامتي التنصيص في `token` (أو اتركه فارغاً إذا كان المستودع عاماً)، والصق الكتلة كاملة في Terminal جهاز MikroTik.
 4. إذا كان مجلد الهوتسبوت عندك غير `hotspot` (مثلاً `flash/hotspot`)، عدّل قيمة `dir` في السكربت. تعرفه من `/ip hotspot profile print`.
 5. احذف الرمز من GitHub بعد الانتهاء.
 

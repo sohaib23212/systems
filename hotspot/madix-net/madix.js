@@ -42,6 +42,8 @@
   };
   var MT = DEMO ? (DEMO_MT[page] || {}) : SRC;
   function val(k) { var x = MT[k]; return (x == null || isRaw(x)) ? '' : String(x); }
+  // أرقام MikroTik قد تأتي مع لاحقة (مثل 90s)، فنقرأ الرقم في بدايتها
+  function num(k) { var n = parseInt(val(k), 10); return isNaN(n) ? 0 : n; }
 
   // ------------------------------------------------------------------ أدوات
   function byId(id) { return d.getElementById(id); }
@@ -288,7 +290,7 @@
       }
       timer = setTimeout(function () { finish(null); try { x.abort(); } catch (e) {} }, 3000);
       x.onreadystatechange = function () {
-        if (x.readyState === 4) { finish(x.status >= 200 && x.status < 400 ? now() - t0 : null); }
+        if (x.readyState === 4) { finish(x.status > 0 ? now() - t0 : null); }
       };
       try { x.open('GET', url + '?p=' + (+new Date()) + n, true); x.send(); } catch (e) { finish(null); }
     }
@@ -595,12 +597,12 @@
     setText('s-user', val('username') || '—');
     setText('s-ip', val('ip') || '—');
     setText('s-mac', val('mac') || '—');
-    setText('s-down', fmtBytes(val('bytesOut')));
-    setText('s-up', fmtBytes(val('bytesIn')));
+    setText('s-down', fmtBytes(num('bytesOut')));
+    setText('s-up', fmtBytes(num('bytesIn')));
     if (val('loginBy') === 'trial') { setText('s-sub', 'دخول تجريبي مجاني'); var sub = byId('s-sub'); if (sub) { sub.hidden = false; } }
 
-    var up = Math.max(0, +val('uptimeSecs') || 0);
-    var left = +val('timeLeftSecs') || 0;
+    var up = Math.max(0, num('uptimeSecs'));
+    var left = num('timeLeftSecs');
     if (!(left > 0)) { left = null; }
     var rows = {};
 
@@ -612,7 +614,7 @@
     setInterval(function () { up++; if (left != null && left > 0) { left--; } render(); }, 1000);
 
     var remain = val('remainBytes');
-    if (remain !== '' && +remain >= 0) { rows.data = fmtBytes(remain); }
+    if (remain !== '' && !isNaN(parseInt(remain, 10))) { rows.data = fmtBytes(parseInt(remain, 10)); }
 
     function planCard() {
       var box = byId('s-plan');
@@ -658,7 +660,7 @@
       var link = DEMO ? 'logout.html' : val('linkLogout');
       if (link) { out.href = DEMO ? link : link + (link.indexOf('?') === -1 ? '?' : '&') + 'erase-cookie=on'; }
     }
-    var secs = +val('refreshSecs') || 0;
+    var secs = num('refreshSecs');
     if (!DEMO && secs > 0) { setTimeout(function () { w.location.reload(); }, Math.max(30, secs) * 1000); }
   }
 
@@ -666,9 +668,9 @@
   function logoutPage() {
     var hasData = val('uptimeSecs') !== '' || val('bytesOut') !== '';
     if (hasData) {
-      setText('o-time', fmtDur(val('uptimeSecs')));
-      setText('o-down', fmtBytes(val('bytesOut')));
-      setText('o-up', fmtBytes(val('bytesIn')));
+      setText('o-time', fmtDur(num('uptimeSecs')));
+      setText('o-down', fmtBytes(num('bytesOut')));
+      setText('o-up', fmtBytes(num('bytesIn')));
       var sum = byId('sum');
       if (sum) { sum.hidden = false; }
     }
