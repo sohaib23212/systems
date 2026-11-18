@@ -28,6 +28,8 @@ const widths = arg('widths', '360,412,768,1280').split(',').map(Number);
 const langs = arg('langs', 'ar').split(',');
 const schemes = arg('schemes', 'light').split(',');
 const only = arg('only', '') ? arg('only').split(',') : null;
+// --combos=ar:dark,en:light لاختيار تركيبات اللغة والوضع بدل كل التركيبات
+const combos = arg('combos', '') ? arg('combos').split(',').map(c => c.split(':')) : langs.flatMap(l => schemes.map(sc => [l, sc]));
 const CONC = +arg('concurrency', '4');
 const OUT = arg('out', path.join(__dirname, 'report.json'));
 const CONTRAST = !process.argv.includes('--no-contrast');
@@ -337,7 +339,7 @@ async function pool(items, n, fn) {
 
   // جلسة دخول واحدة لكل لغة ووضع، يعاد استخدامها في كل السياقات
   const states = {};
-  for (const lang of langs) {
+  for (const lang of [...new Set(combos.map(c => c[0]))]) {
     for (const who of ['tenant', 'admin']) {
       const c = await browser.newContext();
       if (who === 'tenant') { await loginTenant(c); await setLang(c, '/' + SLUG, lang); } else { await loginAdmin(c); await setLang(c, '', lang); }
@@ -345,10 +347,11 @@ async function pool(items, n, fn) {
       await c.close();
     }
   }
-  const dctx = await browser.newContext({ storageState: states['tenant' + langs[0]], viewport: { width: 1280, height: 860 } });
+  const lang0 = combos[0][0];
+  const dctx = await browser.newContext({ storageState: states['tenant' + lang0], viewport: { width: 1280, height: 860 } });
   let pages = (await discover(dctx, '/' + SLUG)).map(u => ['tenant', u]);
   await dctx.close();
-  const actx = await browser.newContext({ storageState: states['admin' + langs[0]], viewport: { width: 1280, height: 860 } });
+  const actx = await browser.newContext({ storageState: states['admin' + lang0], viewport: { width: 1280, height: 860 } });
   pages = pages.concat((await discover(actx, '/admin')).filter(u => !/\/admin\/design\/preview/.test(u)).map(u => ['admin', u]));
   await actx.close();
   if (only) { pages = pages.filter(([, u]) => only.some(o => u === o || u.endsWith(o))); }
@@ -358,8 +361,8 @@ async function pool(items, n, fn) {
   const mobileW = widths.filter(w => w <= MOBILE_MAX), deskW = widths.filter(w => w > MOBILE_MAX);
   for (const design of designs) {
     await switchDesign(adminCtx, design);
-    for (const lang of langs) {
-      for (const scheme of schemes) {
+    for (const [lang, scheme] of combos) {
+      {
         const meta = { design, lang, scheme };
         const ctxs = {};
         for (const who of ['tenant', 'admin']) {

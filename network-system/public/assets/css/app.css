@@ -2273,9 +2273,10 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
   .mt-actions .btn, .mt-actions form { flex: 1 1 auto; }
   .mt-actions form .btn { width: 100%; }
 }
-.mt-types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+/* .segmented.mt-types: أقوى من .segmented.is-block (flex) التي كانت تلغي الشبكة فيخرج آخر خيار عن الشاشة على الهاتف */
+.segmented.mt-types { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .mt-types label span { justify-content: center; white-space: nowrap; }
-@media (max-width: 520px) { .mt-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .segmented.mt-types { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ==========================================================================
    الاستيراد الذكي للمشتركين
