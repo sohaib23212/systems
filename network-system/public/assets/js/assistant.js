@@ -1,0 +1,171 @@
+/*
+ * محادثة المساعد (مسؤول المنصة والمساعد الذكي داخل نظام الشبكة).
+ * السجل يبقى في الصفحة ويُرسل آخره مع كل سؤال. خصائص اختيارية على [data-chat]:
+ *   data-store        مفتاح حفظ المحادثة لهذه الجلسة (تبقى بعد مغادرة الصفحة والعودة)
+ *   data-confirm-url  مسار تنفيذ الإجراءات التي يجهّزها المساعد بعد ضغط «تأكيد»
+ */
+(function (window, document) {
+  'use strict';
+  var box = document.querySelector('[data-chat]');
+  if (!box || box.hasAttribute('data-disabled')) { return; }
+  var log = box.querySelector('[data-chat-log]');
+  var form = box.querySelector('[data-chat-form]');
+  var input = form.querySelector('textarea');
+  var clearBtn = box.querySelector('[data-chat-clear]');
+  var store = box.getAttribute('data-store');
+  var confirmUrl = box.getAttribute('data-confirm-url');
+  var emptyHtml = (log.querySelector('[data-chat-empty]') || {}).outerHTML || '';
+  var history = [];
+  var busy = false;
+
+  function icon(name) { return window.SN && SN.icon ? SN.icon(name) : ''; }
+  function save() {
+    if (!store) { return; }
+    try { sessionStorage.setItem(store, JSON.stringify(history.slice(-24))); } catch (e) { /* التخزين غير متاح */ }
+  }
+  function toBottom() { log.scrollTop = log.scrollHeight; }
+
+  function bubble(role, text) {
+    var empty = log.querySelector('[data-chat-empty]');
+    if (empty) { empty.remove(); }
+    if (clearBtn) { clearBtn.hidden = false; }
+    var el = document.createElement('div');
+    el.className = 'chat-msg is-' + role;
+    el.textContent = text;
+    log.appendChild(el);
+    toBottom();
+    return el;
+  }
+
+  // بطاقة إجراء جهّزه المساعد: لا يُنفَّذ إلا بضغط «تأكيد»، ونص الرسالة يُفتح في صفحة الإرسال للمراجعة
+  function actionCard(a) {
+    var card = document.createElement('div');
+    card.className = 'chat-action';
+    var head = document.createElement('div');
+    head.className = 'chat-action-head';
+    head.innerHTML = icon(a.type === 'sms' ? 'message-square' : 'zap');
+    var title = document.createElement('b');
+    title.textContent = a.title;
+    head.appendChild(title);
+    var detail = document.createElement('div');
+    detail.className = 'chat-action-detail' + (a.type === 'sms' ? ' is-quote' : '');
+    detail.textContent = a.detail;
+    var foot = document.createElement('div');
+    foot.className = 'chat-action-foot';
+    card.appendChild(head); card.appendChild(detail); card.appendChild(foot);
+    if (a.url) {
+      var link = document.createElement('a');
+      link.className = 'btn btn-primary btn-sm';
+      link.href = a.url;
+      link.innerHTML = icon('send');
+      link.appendChild(document.createTextNode(a.button));
+      foot.appendChild(link);
+    } else {
+      var ok = document.createElement('button');
+      ok.type = 'button'; ok.className = 'btn btn-primary btn-sm';
+      ok.innerHTML = icon('check');
+      ok.appendChild(document.createTextNode(a.button));
+      var no = document.createElement('button');
+      no.type = 'button'; no.className = 'btn btn-ghost btn-sm';
+      no.textContent = 'إلغاء';
+      foot.appendChild(ok); foot.appendChild(no);
+      var settle = function (cls, text) {
+        card.classList.add(cls);
+        foot.innerHTML = '';
+        var s = document.createElement('span');
+        s.className = 'chat-action-result';
+        s.innerHTML = icon(cls === 'is-done' ? 'circle-check' : (cls === 'is-failed' ? 'circle-x' : 'ban'));
+        s.appendChild(document.createTextNode(text));
+        foot.appendChild(s);
+        toBottom();
+      };
+      no.addEventListener('click', function () { settle('is-cancelled', 'أُلغي'); });
+      ok.addEventListener('click', function () {
+        if (ok.disabled) { return; }
+        ok.disabled = true; no.disabled = true; ok.classList.add('is-loading');
+        window.SN.api(confirmUrl, { method: 'POST', data: { id: a.id }, silent: true })
+          .then(function (r) { settle('is-done', r.message); })
+          .catch(function (e) { settle('is-failed', e.message); });
+      });
+    }
+    log.appendChild(card);
+    toBottom();
+  }
+
+  function usage(r) {
+    var t = box.querySelector('[data-chat-usage-text]'), bar = box.querySelector('[data-chat-usage-bar]');
+    if (!t || typeof r.used !== 'number' || !r.limit) { return; }
+    var fmt = window.SN && SN.fmtNum ? SN.fmtNum : String;
+    t.textContent = '⁦' + fmt(r.used) + ' / ' + fmt(r.limit) + '⁩';
+    var pct = Math.min(100, Math.round(r.used / r.limit * 100));
+    bar.style.width = pct + '%';
+    bar.parentNode.className = 'meter' + (pct >= 90 ? ' is-danger' : (pct >= 70 ? ' is-warning' : ''));
+  }
+
+  function send(text) {
+    text = (text || '').trim();
+    if (!text || busy) { return; }
+    busy = true;
+    bubble('user', text);
+    history.push({ role: 'user', content: text });
+    input.value = '';
+    input.style.height = '';
+    var wait = bubble('assistant', '');
+    wait.classList.add('is-typing');
+    window.SN.api(box.getAttribute('data-url'), { method: 'POST', data: { messages: history.slice(-12) }, silent: true })
+      .then(function (r) {
+        wait.classList.remove('is-typing');
+        wait.textContent = r.text;
+        history.push({ role: 'assistant', content: r.text });
+        save();
+        (r.actions || []).forEach(actionCard);
+        usage(r);
+      })
+      .catch(function (e) {
+        wait.classList.remove('is-typing');
+        wait.classList.add('is-error');
+        wait.textContent = e.message;
+        history.pop();
+        if (e.data) { usage(e.data); }
+      })
+      .then(function () { busy = false; toBottom(); input.focus(); });
+  }
+
+  form.addEventListener('submit', function (e) { e.preventDefault(); send(input.value); });
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(input.value); }
+  });
+  input.addEventListener('input', function () {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+  });
+  log.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-chat-sample]');
+    if (b) { send(b.textContent); }
+  });
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function () {
+      if (busy) { return; }
+      history = [];
+      save();
+      log.innerHTML = emptyHtml;
+      clearBtn.hidden = true;
+      input.focus();
+    });
+  }
+
+  // استعادة محادثة هذه الجلسة (النصوص فقط؛ الإجراءات المعلّقة لا تُستعاد وتُطلب من جديد)
+  if (store) {
+    try {
+      var saved = JSON.parse(sessionStorage.getItem(store) || '[]');
+      if (Array.isArray(saved)) {
+        saved.forEach(function (m) {
+          if (m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string') {
+            history.push({ role: m.role, content: m.content });
+            bubble(m.role, m.content);
+          }
+        });
+      }
+    } catch (e) { history = []; }
+  }
+})(window, document);
