@@ -119,6 +119,14 @@ final class Kernel
                 if (!$tenant) {
                     throw new HttpException(404);
                 }
+                // /اسم-الحساب بلا شرطة أخيرة: ملف تعريف الجلسة مسجّل على المسار /اسم-الحساب/ فلا يُرسله المتصفح هنا،
+                // فتظهر صفحة الدخول لمستخدم داخل فعلاً. التحويل إلى المسار الكامل قبل أي شيء آخر.
+                $uriPath = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
+                if (in_array($request->method, ['GET', 'HEAD'], true) && $uriPath === root_path() . '/' . $seg) {
+                    $query = (string) parse_url((string) ($_SERVER['REQUEST_URI'] ?? ''), PHP_URL_QUERY);
+                    self::finish(Response::redirect(root_path() . '/' . $tenant['slug'] . '/' . ($query !== '' ? '?' . $query : '')), $request);
+                    return;
+                }
                 Tenant::enter($tenant);
                 $request = Request::capture();
                 if (!Tenant::usable($tenant)) {
