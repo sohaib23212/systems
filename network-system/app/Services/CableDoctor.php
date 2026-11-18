@@ -330,6 +330,82 @@ final class CableDoctor
         return $r;
     }
 
+    /**
+     * خريطة الكابلات: كل كابل بين جهاز من أجهزة النظام وجهاز آخر مكتشف على طرفه (MikroTik أو غيره)،
+     * من آخر فحص لكل منفذ. الكابل بين جهازين من النظام يظهر مرة واحدة مهما فُحص من طرفيه، بأسوأ حالة وأحدث طول.
+     * @param ?list<int> $routerIds الأجهزة المسموحة للمستخدم (null = الكل)
+     * @return list<array>
+     */
+    public static function links(?array $routerIds = null): array
+    {
+        $sql = 'SELECT c.id, c.router_id, c.port, c.level, c.summary, c.length_m, c.snapshot, c.result, c.created_at, r.name AS router_name
+            FROM cable_checks c JOIN (SELECT MAX(id) AS id FROM cable_checks GROUP BY router_id, port) x ON x.id = c.id
+            JOIN routers r ON r.id = c.router_id';
+        $params = [];
+        if ($routerIds !== null) {
+            if (!$routerIds) {
+                return [];
+            }
+            $sql .= ' WHERE c.router_id IN (' . DB::in($routerIds) . ')';
+            $params = $routerIds;
+        }
+        $rank = ['ok' => 0, 'warn' => 1, 'bad' => 2];
+        $links = [];
+        foreach (DB::rows($sql . ' ORDER BY c.id DESC', $params) as $row) {
+            $snap = json_decode((string) $row['snapshot'], true) ?: [];
+            $peer = is_array($snap['peer'] ?? null) ? $snap['peer'] : null;
+            if ($peer === null || !in_array($peer['kind'] ?? '', ['neighbor', 'host'], true)) {
+                continue;
+            }
+            $length = $row['length_m'] !== null ? (int) $row['length_m'] : null;
+            if ($length === null) {
+                $length = DB::value('SELECT length_m FROM cable_checks WHERE router_id = ? AND port = ? AND length_m IS NOT NULL ORDER BY id DESC LIMIT 1', [(int) $row['router_id'], $row['port']]);
+                $length = $length !== null ? (int) $length : null;
+            }
+            $sysId = isset($peer['system']['id']) ? (int) $peer['system']['id'] : null;
+            $a = (int) $row['router_id'] . ':' . $row['port'];
+            $b = $sysId !== null ? $sysId . ':' . (string) ($peer['remote_port'] ?? '') : 'x:' . strtolower((string) ($peer['mac'] ?: $peer['name']));
+            $key = $sysId !== null ? implode('|', [min($a, $b), max($a, $b)]) : $a;
+            $res = json_decode((string) $row['result'], true) ?: [];
+            $pairs = [];
+            foreach ((array) ($res['pairs'] ?? []) as $pr) {
+                if (is_array($pr) && isset($pr['no'])) {
+                    $pairs[] = ['no' => (int) $pr['no'], 'hex' => (string) ($pr['hex'] ?? ''), 'color' => (string) ($pr['color'] ?? ''), 'cls' => (string) ($pr['cls'] ?? 'muted'),
+                        'text' => (string) ($pr['text'] ?? ''), 'm' => isset($pr['m']) ? (int) $pr['m'] : null, 'state' => (string) ($pr['state'] ?? '')];
+                }
+            }
+            $side = ['check' => (int) $row['id'], 'level' => $row['level'], 'summary' => $row['summary'], 'at' => $row['created_at'], 'length' => $length, 'pairs' => $pairs];
+            if (isset($links[$key])) {
+                // الطرف الآخر من الكابل نفسه: تُدمج النتيجة (أسوأ حالة، وأي طول معروف)
+                $l = &$links[$key];
+                if ($rank[$side['level']] > $rank[$l['level']]) {
+                    $l['level'] = $side['level'];
+                    $l['summary'] = $side['summary'];
+                    $l['check'] = $side['check'];
+                    if ($side['pairs']) {
+                        $l['pairs'] = $side['pairs'];
+                    }
+                }
+                if (!$l['pairs'] && $side['pairs']) {
+                    $l['pairs'] = $side['pairs'];
+                }
+                $l['length'] ??= $side['length'];
+                $l['both'] = true;
+                unset($l);
+                continue;
+            }
+            $links[$key] = [
+                'from' => ['id' => (int) $row['router_id'], 'name' => (string) $row['router_name'], 'port' => (string) $row['port']],
+                'to' => ['id' => $sysId, 'name' => (string) ($peer['name'] ?? ''), 'port' => (string) ($peer['remote_port'] ?? ''), 'model' => (string) ($peer['model'] ?? ''),
+                    'address' => (string) ($peer['address'] ?? ''), 'kind' => (string) $peer['kind']],
+                'both' => false,
+            ] + $side;
+        }
+        $links = array_values($links);
+        usort($links, static fn ($x, $y) => [$rank[$y['level']], $x['from']['name'], $x['from']['port']] <=> [$rank[$x['level']], $y['from']['name'], $y['from']['port']]);
+        return $links;
+    }
+
     /** آخر فحص محفوظ لمنفذ (لمقارنة العدّادات وعدد الانقطاعات) */
     public static function last(int $routerId, string $port): ?array
     {

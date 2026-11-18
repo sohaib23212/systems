@@ -56,6 +56,7 @@ final class CableController extends Controller
             'stats' => ['bad' => (int) ($levels['bad'] ?? 0), 'warn' => (int) ($levels['warn'] ?? 0), 'ok' => (int) ($levels['ok'] ?? 0),
                 'checks' => (int) DB::value("SELECT COUNT(*) FROM cable_checks c JOIN routers r ON r.id = c.router_id WHERE c.source <> 'auto' AND c.created_at >= ?" . $scope, array_merge([date('Y-m-d H:i:s', time() - 30 * 86400)], $params))],
             'lastScan' => $lastScan, 'canDeep' => Auth::can('routers.control'),
+            'links' => CableDoctor::links(array_map('intval', array_column($routers, 'id'))),
         ]);
     }
 

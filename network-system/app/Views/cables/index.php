@@ -1,6 +1,6 @@
 <?php
 /**
- * @var App\Core\View $v @var array $routers @var int $selected @var array $history @var array $stats @var int $lastScan @var bool $canDeep
+ * @var App\Core\View $v @var array $routers @var int $selected @var array $history @var array $stats @var int $lastScan @var bool $canDeep @var array $links
  */
 use App\Core\Settings;
 use App\Services\CableDoctor;
@@ -46,6 +46,43 @@ $interval = Settings::int('cable.interval_hours', 6);
       <div class="notice notice-danger" data-cb-ports-error hidden><?= icon('triangle-alert') ?><div data-cb-ports-msg></div></div>
     <?php endif; ?>
   </div>
+</div>
+
+<div class="panel cl-panel">
+  <div class="panel-head"><h3><?= icon('waypoints') ?>خريطة الكابلات بين الأجهزة</h3><span class="text-muted text-sm"><?= $links ? num(count($links)) . ' كابل' : '' ?></span></div>
+  <?php if (!$links): ?>
+    <div class="empty"><?= icon('cable') ?><div class="empty-title">لم تُكتشف كابلات بين الأجهزة بعد</div><div class="empty-text">افحص منفذاً موصولاً بجهاز آخر، أو فعّل الفحص الدوري أدناه، فيظهر هنا كل كابل: من أي جهاز ومنفذ إلى أي جهاز ومنفذ، وطوله وحالة أزواجه.</div></div>
+  <?php else: ?>
+  <div class="cl-list">
+    <?php foreach ($links as $l): ?>
+    <button type="button" class="cl-row is-<?= e($l['level']) ?>" data-cb-open="<?= (int) $l['check'] ?>" title="عرض تفاصيل الأزواج والأسلاك">
+      <span class="cl-end">
+        <span class="cl-ic"><?= icon('router') ?></span>
+        <span class="cl-txt"><b><?= e($l['from']['name']) ?></b><small>المنفذ <bdi class="cb-mono"><?= e($l['from']['port']) ?></bdi></small></span>
+      </span>
+      <span class="cl-wire" aria-hidden="true">
+        <span class="cl-line"></span>
+        <span class="cl-len"><?= icon('ruler', 'icon-sm') ?><?= $l['length'] !== null ? e(num($l['length'])) . ' م' : 'الطول غير مقاس' ?></span>
+      </span>
+      <span class="cl-end is-far">
+        <span class="cl-ic <?= $l['to']['id'] ? 'is-system' : '' ?>"><?= icon($l['to']['kind'] === 'host' ? 'monitor-smartphone' : 'router') ?></span>
+        <span class="cl-txt"><b><?= e($l['to']['name'] !== '' ? $l['to']['name'] : 'جهاز غير معروف') ?></b><small><?= $l['to']['port'] !== '' ? 'المنفذ <bdi class="cb-mono">' . e($l['to']['port']) . '</bdi>' : e($l['to']['model'] !== '' ? $l['to']['model'] : ($l['to']['address'] !== '' ? $l['to']['address'] : '—')) ?><?= !$l['to']['id'] && $l['to']['kind'] === 'neighbor' ? ' · خارج النظام' : '' ?></small></span>
+      </span>
+      <span class="cl-state">
+        <span class="badge <?= e($levelBadge[$l['level']] ?? 'badge-outline') ?>"><?= e(CableDoctor::LEVELS[$l['level']] ?? $l['level']) ?></span>
+        <?php if ($l['pairs']): ?>
+        <span class="cl-pairs">
+          <?php foreach ($l['pairs'] as $pr): ?>
+          <span class="cl-pair is-<?= e($pr['cls']) ?>" title="<?= e('الزوج ' . $pr['no'] . ' (' . $pr['color'] . '): ' . $pr['text'] . ($pr['m'] !== null && $pr['cls'] !== 'ok' ? ' على بعد ' . $pr['m'] . ' م' : '')) ?>"><i style="background:<?= e($pr['hex']) ?>"></i><?= (int) $pr['no'] ?><?= $pr['cls'] === 'ok' ? '' : ' · ' . e($pr['state'] === 'short' ? 'تماس' : ($pr['state'] === 'open' ? 'قطع' : $pr['text'])) . ($pr['m'] !== null && in_array($pr['state'], ['short', 'open'], true) ? ' ' . (int) $pr['m'] . 'م' : '') ?></span>
+          <?php endforeach; ?>
+        </span>
+        <?php endif; ?>
+        <small class="cl-sum"><?= e($l['level'] === 'ok' ? 'آخر فحص ' . time_ago($l['at']) : $l['summary']) ?></small>
+      </span>
+    </button>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
 </div>
 
 <div class="cb-grid">
