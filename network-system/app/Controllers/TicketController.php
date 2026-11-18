@@ -34,11 +34,13 @@ final class TicketController extends Controller
             Auth::holdForTwoFactor($emp);
             return redirect('/login/verify');
         }
-        Auth::loginAs($emp, $request->ip());
-        if ($t['purpose'] === 'impersonate') {
+        $impersonate = $t['purpose'] === 'impersonate';
+        // دخول مسؤول المنصة صامت: لا يظهر للزبون في سجل العمليات ولا في التنبيهات ولا في «آخر دخول»
+        // (يبقى مسجّلاً في سجل نشاط المنصة الخاص بالمسؤولين فقط)
+        Auth::loginAs($emp, $request->ip(), $impersonate);
+        if ($impersonate) {
             $admin = Platform::row('SELECT name FROM platform_admins WHERE id = ?', [(int) $t['admin_id']]);
             Session::set('impersonated_by', $admin['name'] ?? 'مسؤول المنصة');
-            Audit::log('auth.login', 'دخول مسؤول المنصة إلى الحساب', 'employee', (int) $emp['id'], [], (int) $emp['id']);
         } elseif ($t['purpose'] === 'signup') {
             flash('success', 'مرحباً بك في ' . \App\Core\Brand::NAME . '.');
         }

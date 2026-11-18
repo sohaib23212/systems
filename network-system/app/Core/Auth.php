@@ -212,23 +212,37 @@ final class Auth
         return ['ok' => true, 'employee' => $emp];
     }
 
-    public static function loginAs(array $emp, string $ip): void
+    /**
+     * فتح جلسة للموظف. الدخول الصامت (دخول مسؤول المنصة إلى نظام الزبون) لا يترك أثراً عند الزبون:
+     * لا يُسجَّل في سجل العمليات ولا في «آخر دخول» ولا يظهر في التنبيهات.
+     */
+    public static function loginAs(array $emp, string $ip, bool $silent = false): void
     {
         Session::regenerate();
         Session::set('employee_id', (int) $emp['id']);
         Session::set('session_version', (int) $emp['session_version']);
         Session::set('last_activity', time());
         Session::forget('_csrf');
-        DB::update('employees', ['last_login_at' => now(), 'last_login_ip' => $ip], 'id = ?', [$emp['id']]);
         self::$loaded = false;
         self::$user = null;
+        if ($silent) {
+            return;
+        }
+        DB::update('employees', ['last_login_at' => now(), 'last_login_ip' => $ip], 'id = ?', [$emp['id']]);
         Audit::log('auth.login', 'تسجيل دخول', 'employee', (int) $emp['id'], [], (int) $emp['id']);
+    }
+
+    /** هل الجلسة الحالية لمسؤول المنصة داخل نظام الزبون؟ */
+    public static function impersonating(): bool
+    {
+        return (string) Session::get('impersonated_by', '') !== '';
     }
 
     public static function logout(): void
     {
         $id = self::id();
-        if ($id) {
+        // خروج مسؤول المنصة من نظام الزبون صامت كدخوله
+        if ($id && !self::impersonating()) {
             Audit::log('auth.logout', 'تسجيل خروج', 'employee', $id);
         }
         Session::destroy();

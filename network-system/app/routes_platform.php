@@ -136,6 +136,10 @@ return static function (Router $r): void {
     // شبكة إضافية لمالك حساب قائم
     $r->post('/admin/tenants/{id}/network', [AdminController::class, 'tenant_network'], $a + ['aperm' => 'tenants.manage']);
     $r->post('/admin/tenants/{id}/group', [AdminController::class, 'tenant_group'], $a + ['aperm' => 'tenants.manage']);
+    // الكوكيز (الدخول التلقائي بالجهاز) لكل الشبكات أو لحساب محدد
+    $r->get('/admin/cookies', [\App\Controllers\AdminCookieController::class, 'index'], $a + ['aperm' => 'settings.manage']);
+    $r->post('/admin/cookies', [\App\Controllers\AdminCookieController::class, 'save'], $a + ['aperm' => 'settings.manage']);
+    $r->post('/admin/cookies/tenants/{id}', [\App\Controllers\AdminCookieController::class, 'tenant'], $a + ['aperm' => 'settings.manage']);
     $r->get('/admin/settings', [AdminController::class, 'settings'], $a + ['aperm' => 'settings.manage']);
     $r->post('/admin/settings', [AdminController::class, 'settingsSave'], $a + ['aperm' => 'settings.manage']);
     // فريق الإدارة: المالك وحده

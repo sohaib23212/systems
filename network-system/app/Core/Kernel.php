@@ -133,7 +133,8 @@ final class Kernel
                         Session::start($request->isHttps());
                     }
                     Migrator::run();
-                    if ($tenant['last_seen_at'] === null || strtotime($tenant['last_seen_at']) < time() - 300) {
+                    // دخول مسؤول المنصة لا يُحتسب نشاطاً للزبون
+                    if (($tenant['last_seen_at'] === null || strtotime($tenant['last_seen_at']) < time() - 300) && !Auth::impersonating() && !str_starts_with($request->path, '/auth/ticket/')) {
                         Platform::exec('UPDATE tenants SET last_seen_at = ? WHERE id = ?', [date('Y-m-d H:i:s'), $tenant['id']]);
                     }
                     if (Tenant::readonlyBlocks($tenant, $request->method, $request->path)) {

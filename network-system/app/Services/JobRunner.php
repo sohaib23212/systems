@@ -24,7 +24,11 @@ final class JobRunner
         'provision_subs'     => 'تطبيق مشتركين على أجهزة MikroTik',
         'deploy_sdk'         => 'نشر ملفات ربط الهوتسبوت',
         'profile_sync'       => 'مزامنة ملفات السرعة',
+        'cookie_sync'        => 'تطبيق الكوكيز على أجهزة MikroTik',
     ];
+
+    /** عمليات تلقائية تجري بصمت: لا تُسجَّل في سجل العمليات ولا تُرسل تنبيهاً عند انتهائها */
+    private const SILENT = ['cookie_sync'];
 
     public const STATUS = [
         'pending'   => ['بالانتظار', 'badge-info'],
@@ -34,7 +38,7 @@ final class JobRunner
         'cancelled' => ['ملغاة', 'badge-outline'],
     ];
 
-    public static function create(string $type, string $title, array $payload, int $total, ?int $employeeId = null): int
+    public static function create(string $type, string $title, array $payload, int $total, ?int $employeeId = null, bool $audit = true): int
     {
         $id = DB::insert('jobs', [
             'type'       => $type,
@@ -47,7 +51,9 @@ final class JobRunner
             'created_by' => $employeeId,
             'created_at' => now(),
         ]);
-        Audit::log('job.create', $title, 'job', $id);
+        if ($audit && !in_array($type, self::SILENT, true)) {
+            Audit::log('job.create', $title, 'job', $id);
+        }
         return $id;
     }
 
@@ -104,7 +110,7 @@ final class JobRunner
             'finished_at' => in_array($status, ['done', 'failed'], true) ? now() : null,
             'locked_until'=> null,
         ], 'id = ?', [$id]);
-        if (in_array($status, ['done', 'failed'], true)) {
+        if (in_array($status, ['done', 'failed'], true) && !in_array($job['type'], self::SILENT, true)) {
             Notifier::alert('job', $status === 'done' ? ($errors ? 'warning' : 'success') : 'danger', $job['title'] . ': ' . $message, null, null, 'job:' . $id, 0, false);
         }
         return DB::row('SELECT * FROM jobs WHERE id = ?', [$id]);
@@ -256,6 +262,40 @@ final class JobRunner
         }
         return self::runPairs($state, $deadline, $errors, static function (Gateway $gw, array $router) use ($p) {
             RouterTasks::execute($gw, $router, 'profile_sync', ['kind' => $p['kind'], 'id' => (int) $p['id']]);
+        });
+    }
+
+    /**
+     * تطبيق الكوكيز على كل أجهزة MikroTik: payload = {enabled, clear}
+     * يحدّث ملفات السرعة الموجودة على كل جهاز (باقات الكروت وباقات الهوتسبوت)، ويحذف الكوكيز المحفوظة عند الإيقاف.
+     */
+    private static function runCookieSync(array $p, array &$state, float $deadline, int &$errors): bool
+    {
+        if (!isset($state['pairs'])) {
+            $state['pairs'] = array_map(static fn ($r) => [(int) $r], DB::column('SELECT id FROM routers WHERE is_active = 1'));
+            $state['total'] = count($state['pairs']);
+        }
+        return self::runPairs($state, $deadline, $errors, static function (Gateway $gw, array $router) use ($p, &$state) {
+            $rid = (int) $router['id'];
+            $refs = DB::rows("SELECT kind, ref_id FROM router_profiles WHERE router_id = ? AND kind IN ('category', 'plan')", [$rid]);
+            $n = 0;
+            foreach ($refs as $ref) {
+                if ($ref['kind'] === 'category') {
+                    $cat = DB::row('SELECT * FROM categories WHERE id = ?', [(int) $ref['ref_id']]);
+                    if ($cat) {
+                        ProfileManager::ensureCategory($gw, $router, $cat, true);
+                        $n++;
+                    }
+                } else {
+                    $plan = DB::row("SELECT * FROM plans WHERE id = ? AND service <> 'ppp'", [(int) $ref['ref_id']]);
+                    if ($plan) {
+                        ProfileManager::ensureHotspotPlan($gw, $router, $plan, true);
+                        $n++;
+                    }
+                }
+            }
+            $cleared = !empty($p['clear']) ? $gw->clearHotspotCookies() : 0;
+            self::log($state, $router['name'] . ': تحديث ' . $n . ' ملف سرعة' . ($cleared ? '، وحذف ' . $cleared . ' كوكيز محفوظة' : ''));
         });
     }
 

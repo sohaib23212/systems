@@ -391,6 +391,17 @@ final class Gateway
         return count($rows);
     }
 
+    /** حذف الكوكيز المحفوظة (الدخول التلقائي) من الهوتسبوت؛ يعيد عددها */
+    public function clearHotspotCookies(): int
+    {
+        $rows = $this->client()->print('/ip/hotspot/cookie', [], ['.id']);
+        $ids = array_values(array_filter(array_column($rows, '.id')));
+        foreach (array_chunk($ids, 200) as $chunk) {
+            $this->client()->remove('/ip/hotspot/cookie', $chunk);
+        }
+        return count($ids);
+    }
+
     public function walledGarden(): array
     {
         return $this->client()->print('/ip/hotspot/walled-garden');

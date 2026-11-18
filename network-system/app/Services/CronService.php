@@ -46,6 +46,9 @@ final class CronService
                 $r['ok'] ? $synced++ : $failed++;
             }
 
+            // الكوكيز: تطبيق أي تغيير من مسؤول المنصة أو من إعدادات الشبكة على أجهزة MikroTik
+            self::guard(static fn () => CookiePolicy::syncIfChanged());
+
             // 2) العمليات الطويلة
             $left = $deadline - microtime(true);
             if ($left > 4) {

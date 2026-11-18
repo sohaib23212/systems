@@ -49,8 +49,8 @@ final class ProfileManager
             'shared-users'       => $shared <= 0 ? 'unlimited' : (string) $shared,
             'rate-limit'         => Units::rateLimit($category) ?? '',
             'idle-timeout'       => $category['idle_timeout'] ? Duration::format((int) $category['idle_timeout']) : 'none',
-            'add-mac-cookie'     => Settings::bool('hotspot.mac_cookie') ? 'yes' : 'no',
-            'mac-cookie-timeout' => (string) Settings::get('hotspot.mac_cookie_timeout', '1d'),
+            'add-mac-cookie'     => CookiePolicy::enabled() ? 'yes' : 'no',
+            'mac-cookie-timeout' => CookiePolicy::duration(),
             'on-login'           => self::eventScript($router, 'in'),
             'on-logout'          => self::eventScript($router, 'out'),
         ];
@@ -62,8 +62,8 @@ final class ProfileManager
         return [
             'shared-users'       => $shared <= 0 ? 'unlimited' : (string) $shared,
             'rate-limit'         => Units::rateLimit($plan) ?? '',
-            'add-mac-cookie'     => Settings::bool('hotspot.mac_cookie') ? 'yes' : 'no',
-            'mac-cookie-timeout' => (string) Settings::get('hotspot.mac_cookie_timeout', '1d'),
+            'add-mac-cookie'     => CookiePolicy::enabled() ? 'yes' : 'no',
+            'mac-cookie-timeout' => CookiePolicy::duration(),
             'on-login'           => self::eventScript($router, 'in'),
             'on-logout'          => self::eventScript($router, 'out'),
         ];

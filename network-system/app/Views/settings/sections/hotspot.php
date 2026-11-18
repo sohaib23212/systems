@@ -1,6 +1,15 @@
 <?php
 /** @var callable $s @var callable $name @var callable $switch */
+$cookieForced = \App\Services\CookiePolicy::forced();
 ?>
+<?php if ($cookieForced !== null): ?>
+      <div class="field col-12">
+        <div class="notice<?= $cookieForced['enabled'] ? '' : ' notice-warning' ?>"><?= icon('cookie') ?><div>
+          <div class="notice-title"><?= $cookieForced['enabled'] ? 'الدخول التلقائي بالجهاز (الكوكيز) مفعّل من إدارة المنصة بمدة ' . e(\App\Services\CookiePolicy::durationLabel($cookieForced['duration'])) : 'الدخول التلقائي بالجهاز (الكوكيز) موقوف من إدارة المنصة' ?></div>
+          <div class="text-sm">يُطبَّق هذا على أجهزة MikroTik بدلاً من خياري «الدخول التلقائي» و«مدته» أدناه، ويعود العمل بهما عند إعادة التحكم إلى الشبكة.</div>
+        </div></div>
+      </div>
+<?php endif; ?>
       <div class="field col-4">
         <label>حالة أحرف الرمز المُدخل</label>
         <select class="input" name="<?= e($name('hotspot.code_case')) ?>">

@@ -51,7 +51,7 @@ $nav = [
     ['الإدارة', array_merge(
         [['فريق الإدارة', '/admin/team', 'user-cog', 0, 'owner']],
         \App\Core\Server::managed() ? [['الخادم', '/admin/server', 'server', 0, 'settings.manage']] : [],
-        [['الأمان', '/admin/security', 'shield-check', 0, null], ['الإعدادات', '/admin/settings', 'settings', 0, 'settings.manage']]
+        [['الكوكيز', '/admin/cookies', 'cookie', 0, 'settings.manage'], ['الأمان', '/admin/security', 'shield-check', 0, null], ['الإعدادات', '/admin/settings', 'settings', 0, 'settings.manage']]
     )],
 ];
 // ما لا يحق للمسؤول يختفي من القائمة (والمسار نفسه مرفوض في الخادم)
