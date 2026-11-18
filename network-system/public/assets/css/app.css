@@ -756,6 +756,8 @@ a.stat:hover { border-color: var(--border-strong); box-shadow: var(--shadow-sm);
 }
 .dropdown-menu.align-start { inset-inline-end: auto; inset-inline-start: 0; }
 .dropdown.is-open > .dropdown-menu { display: block; animation: pop .12s ease-out; }
+/* القائمة المفتوحة عائمة فوق الصفحة كلها (تُنقل إلى نهاية الصفحة وتُحدَّد إحداثياتها من app.js) */
+.dropdown-menu.is-floating { display: block; position: fixed; inset: auto; z-index: 90; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; max-width: calc(100vw - 16px); }
 .dropdown-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
   padding: 8px 10px; border-radius: 7px; border: 0; background: none;
@@ -1334,7 +1336,7 @@ body { overscroll-behavior-y: none; }
 /* النوافذ المنبثقة على اللمس: بلا تمويه خلفها (يثقّل الفتح والتمرير داخلها) */
 @media (hover: none), (pointer: coarse) { dialog.modal::backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; } }
 a, button, label, summary, .btn, .tab, .nav-link, .list-item, .dropdown-item, input, select, textarea { touch-action: manipulation; }
-:root:not([data-page-fx="0"]) .content { animation: page-in .28s cubic-bezier(.22, .8, .32, 1) both; }
+:root:not([data-page-fx="0"]) .content { animation: page-in .28s cubic-bezier(.22, .8, .32, 1) backwards; }
 @keyframes page-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .btn { transition: background-color .18s, border-color .18s, box-shadow .18s, color .18s, transform .12s cubic-bezier(.3, .7, .4, 1); }
 .btn:not(:disabled):active { transform: scale(.965); }
@@ -1347,7 +1349,9 @@ a, button, label, summary, .btn, .tab, .nav-link, .list-item, .dropdown-item, in
 .list-item { transition: background-color .15s; }
 .stat, .panel { transition: box-shadow .2s, border-color .2s, transform .2s; }
 a.stat:active { transform: scale(.985); }
-.dropdown.is-open > .dropdown-menu { animation: menu-in .16s cubic-bezier(.2, .9, .3, 1); transform-origin: top; }
+.dropdown.is-open > .dropdown-menu, .dropdown-menu.is-floating { animation: menu-in .16s cubic-bezier(.2, .9, .3, 1); transform-origin: top; }
+.dropdown-menu.is-floating.is-up { animation-name: menu-in-up; transform-origin: bottom; }
+@keyframes menu-in-up { from { opacity: 0; transform: translateY(6px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes menu-in { from { opacity: 0; transform: translateY(-6px) scale(.98); } to { opacity: 1; transform: none; } }
 dialog.modal[open] { animation: modal-in .22s cubic-bezier(.2, .9, .3, 1.05); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(12px) scale(.97); } to { opacity: 1; transform: none; } }
@@ -1383,7 +1387,7 @@ dialog.modal::backdrop { animation: fade-in .2s ease; }
 .nav-progress.is-active { opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
-  .content, dialog.modal[open], .dropdown.is-open > .dropdown-menu, dialog.modal::backdrop { animation: none; }
+  .content, dialog.modal[open], .dropdown.is-open > .dropdown-menu, .dropdown-menu.is-floating, dialog.modal::backdrop { animation: none; }
   .btn:active, .icon-btn:active, .nav-link:active, a.stat:active { transform: none; }
 }
 
@@ -1391,7 +1395,7 @@ dialog.modal::backdrop { animation: fade-in .2s ease; }
 /* ==========================================================================
    التصميم العام: حركة ظهور العناصر، الكثافة، الزوايا، القائمة الجانبية
    ========================================================================== */
-.mx { animation-duration: var(--motion-speed, 380ms); animation-timing-function: cubic-bezier(.2, .8, .25, 1); animation-fill-mode: both; animation-delay: calc(var(--i, 0) * var(--motion-stagger, 45ms)); }
+.mx { animation-duration: var(--motion-speed, 380ms); animation-timing-function: cubic-bezier(.2, .8, .25, 1); animation-fill-mode: backwards; animation-delay: calc(var(--i, 0) * var(--motion-stagger, 45ms)); }
 [data-motion="rise"] .mx { animation-name: mx-rise; }
 [data-motion="drop"] .mx { animation-name: mx-drop; }
 [data-motion="fade"] .mx { animation-name: mx-fade; }

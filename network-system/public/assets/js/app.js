@@ -112,26 +112,70 @@
   // ------------------------------------------------------------------------
   // القوائم المنسدلة
   // ------------------------------------------------------------------------
+  // القائمة المفتوحة تُنقل مؤقتاً إلى نهاية الصفحة وتُثبَّت تحت زرّها، فلا يغطيها أي قسم أو جدول أو بطاقة
+  // ولا تُقص داخل حاوية قابلة للتمرير، وتعود إلى مكانها الأصلي عند الإغلاق.
+  function menuOf(dd) { return dd._menu || $(':scope > .dropdown-menu', dd) || $('.dropdown-menu', dd); }
   function closeDropdowns(except) {
     $$('.dropdown.is-open').forEach(function (d) {
-      if (d !== except) {
-        d.classList.remove('is-open');
-        var m = $('.dropdown-menu', d);
-        if (m) { m.style.translate = ''; }
+      if (d === except) { return; }
+      d.classList.remove('is-open');
+      var t = $('[data-dropdown]', d);
+      if (t) { t.setAttribute('aria-expanded', 'false'); }
+      var m = menuOf(d);
+      if (m) {
+        m.classList.remove('is-floating', 'is-up');
+        m.style.left = m.style.top = m.style.width = m.style.maxHeight = '';
+        if (m.parentNode !== d) { d.appendChild(m); }
       }
+      d._menu = null;
     });
   }
-  // القائمة المفتوحة تبقى كلها داخل الشاشة: تُزاح أفقياً بقدر ما تخرج عنها
-  function fitDropdown(dd) {
-    var m = $('.dropdown-menu', dd);
-    if (!m) { return; }
-    m.style.translate = '';
-    var r = m.getBoundingClientRect(), pad = 8, vw = doc.documentElement.clientWidth, dx = 0;
-    if (r.width + pad * 2 >= vw) { dx = pad - r.left; }
-    else if (r.right > vw - pad) { dx = vw - pad - r.right; }
-    else if (r.left < pad) { dx = pad - r.left; }
-    if (dx) { m.style.translate = Math.round(dx) + 'px 0'; }
+  function placeDropdown(dd) {
+    var m = dd._menu, t = $('[data-dropdown]', dd);
+    if (!m || !t || !m.classList.contains('is-floating')) { return; }
+    var r = t.getBoundingClientRect(), pad = 8, gap = 6;
+    var vw = doc.documentElement.clientWidth, vh = window.innerHeight;
+    if (r.bottom < 0 || r.top > vh || (!r.width && !r.height)) { closeDropdowns(); return; }
+    m.style.maxHeight = '';
+    m.style.width = '';
+    var w = m.offsetWidth, h = m.offsetHeight;
+    if (w > vw - pad * 2) { w = vw - pad * 2; m.style.width = w + 'px'; }
+    var rtl = (doc.documentElement.getAttribute('dir') || 'rtl') === 'rtl';
+    var alignStart = m.classList.contains('align-start');
+    // مثل القائمة الأصلية: تُحاذى حافة القائمة مع حافة الزر (نهاية السطر افتراضياً، وبدايته مع align-start)
+    var left = (rtl !== alignStart) ? r.left : r.right - w;
+    left = Math.max(pad, Math.min(left, vw - pad - w));
+    var below = vh - r.bottom - gap - pad, above = r.top - gap - pad;
+    var up = h > below && above > below;
+    var room = Math.max(120, up ? above : below);
+    if (h > room) { m.style.maxHeight = room + 'px'; h = room; }
+    m.classList.toggle('is-up', up);
+    m.style.left = Math.round(left) + 'px';
+    m.style.top = Math.round(up ? r.top - gap - h : r.bottom + gap) + 'px';
   }
+  function openDropdown(dd) {
+    var m = menuOf(dd);
+    dd.classList.add('is-open');
+    var t = $('[data-dropdown]', dd);
+    if (t) { t.setAttribute('aria-expanded', 'true'); }
+    if (!m) { return; }
+    dd._menu = m;
+    m.classList.add('is-floating');
+    doc.body.appendChild(m);
+    placeDropdown(dd);
+  }
+  var placeQueued = false;
+  function placeOpen() {
+    if (placeQueued) { return; }
+    placeQueued = true;
+    requestAnimationFrame(function () {
+      placeQueued = false;
+      $$('.dropdown.is-open').forEach(placeDropdown);
+    });
+  }
+  window.addEventListener('scroll', placeOpen, true);
+  window.addEventListener('resize', placeOpen);
+  window.addEventListener('pagehide', function () { closeDropdowns(); });
   // مستمع واحد على المستند: فتح/إغلاق القائمة، وإغلاقها عند النقر خارجها أو على أحد عناصرها
   doc.addEventListener('click', function (e) {
     var toggle = e.target.closest('[data-dropdown]');
@@ -139,10 +183,8 @@
       e.preventDefault();
       var dd = toggle.closest('.dropdown');
       var open = dd.classList.contains('is-open');
-      closeDropdowns(dd);
-      dd.classList.toggle('is-open', !open);
-      var menu = $('.dropdown-menu', dd);
-      if (!open) { fitDropdown(dd); } else if (menu) { menu.style.translate = ''; }
+      closeDropdowns();
+      if (!open) { openDropdown(dd); }
       return;
     }
     if (!e.target.closest('.dropdown-menu') || e.target.closest('.dropdown-item')) { closeDropdowns(); }
