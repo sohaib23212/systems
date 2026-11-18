@@ -70,27 +70,32 @@ final class DesignController extends Controller
     public function saveLanding(Request $request): Response
     {
         $values = [];
-        foreach (array_keys(Landing::TEXT_FIELDS) as $k) {
-            $values['landing.' . $k] = mb_substr(trim($request->str($k)), 0, 400);
-        }
-        foreach (array_keys(Landing::LIST_FIELDS) as $k) {
-            $titles = (array) $request->input($k . '_title', []);
-            $texts = (array) $request->input($k . '_text', []);
-            $lines = [];
-            foreach ($titles as $i => $title) {
-                $title = trim(str_replace(['|', "\n", "\r"], ' ', (string) $title));
-                $text = trim(str_replace(["\n", "\r"], ' ', (string) ($texts[$i] ?? '')));
-                if ($title !== '') {
-                    $lines[] = mb_substr($title, 0, 120) . ($text !== '' ? ' | ' . mb_substr($text, 0, 300) : '');
-                }
+        // العربية (landing.*) والإنجليزية (landing_en.*، حقولها تبدأ بـ en_)
+        foreach (['landing.' => '', 'landing_en.' => 'en_'] as $prefix => $field) {
+            foreach (array_keys(Landing::TEXT_FIELDS) as $k) {
+                $values[$prefix . $k] = mb_substr(trim($request->str($field . $k)), 0, 400);
             }
-            $values['landing.' . $k] = implode("\n", array_slice($lines, 0, 12));
+            foreach (array_keys(Landing::LIST_FIELDS) as $k) {
+                $titles = (array) $request->input($field . $k . '_title', []);
+                $texts = (array) $request->input($field . $k . '_text', []);
+                $lines = [];
+                foreach ($titles as $i => $title) {
+                    $title = trim(str_replace(['|', "\n", "\r"], ' ', (string) $title));
+                    $text = trim(str_replace(['|', "\n", "\r"], ' ', (string) ($texts[$i] ?? '')));
+                    if ($title !== '') {
+                        $lines[] = mb_substr($title, 0, 120) . ($text !== '' ? ' | ' . mb_substr($text, 0, 300) : '');
+                    }
+                }
+                $values[$prefix . $k] = implode("\n", array_slice($lines, 0, 12));
+            }
         }
+        $values['landing.enabled'] = $request->bool('enabled') ? '1' : '0';
         foreach (array_keys(Landing::SECTIONS) as $k) {
             $values['landing.show_' . $k] = $request->bool('show_' . $k) ? '1' : '0';
         }
         foreach ($values as $k => $v) {
-            if ($v === '' && !str_starts_with($k, 'landing.show_')) {
+            // العربية الفارغة تعود إلى النص الافتراضي؛ الإنجليزية الفارغة تعني الترجمة التلقائية من القاموس
+            if ($v === '' && str_starts_with($k, 'landing.') && !str_starts_with($k, 'landing.show_')) {
                 $values[$k] = Landing::DEFAULTS[$k] ?? '';
             }
         }

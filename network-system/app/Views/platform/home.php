@@ -43,6 +43,7 @@ $cta = $signup ? url('/signup') : url('/login');
       <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
     </nav>
     <div class="lp-nav-cta">
+      <?php if (\App\Core\Lang::switchable()): ?><a class="lp-btn lp-btn-line lp-lang" href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>" title="Language / اللغة"><?= icon('globe') ?><?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
       <a class="lp-btn lp-btn-line" href="<?= e(url('/login')) ?>"><?= e(L::get('cta_secondary')) ?></a>
       <?php if ($signup): ?><a class="lp-btn lp-btn-primary lp-nav-signup" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
     </div>
@@ -52,6 +53,7 @@ $cta = $signup ? url('/signup') : url('/login');
       <nav class="lp-menu-panel" aria-label="أقسام الصفحة">
         <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
         <?php if ($signup): ?><a class="lp-btn lp-btn-primary" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
+        <?php if (\App\Core\Lang::switchable()): ?><a href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>"><?= icon('globe') ?> <?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
       </nav>
     </details>
     <?php endif; ?>

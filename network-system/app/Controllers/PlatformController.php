@@ -29,6 +29,10 @@ final class PlatformController extends Controller
 
     public function home(Request $request): Response
     {
+        // صفحة الهبوط موقوفة من لوحة المسؤول: يُفتح تسجيل الدخول مباشرة
+        if (!\App\Platform\Landing::enabled()) {
+            return redirect('/login');
+        }
         return view('platform/home', [], 'landing');
     }
 

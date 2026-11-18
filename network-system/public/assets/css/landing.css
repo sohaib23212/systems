@@ -312,3 +312,42 @@ html, a, button, summary, label, input, select, textarea, [role="button"], [tabi
   .lp-apps { grid-template-columns: 1fr 1fr; gap: 56px; }
   .lp-devices { min-height: 340px; }
 }
+
+/* ==========================================================================
+   ربط صفحة الهبوط بتصميم النظام (لوحة المسؤول ← التصاميم):
+   الألوان من لون الهوية ومرافقه، والخط والزوايا وشكل الأزرار من التصميم المختار
+   ========================================================================== */
+:root {
+  --lp-blue: var(--brand, #2563eb);
+  --lp-blue-2: color-mix(in srgb, var(--brand, #2563eb) 80%, #000);
+  --lp-blue-soft: color-mix(in srgb, var(--brand, #2563eb) 10%, #fff);
+  --lp-cyan: color-mix(in srgb, var(--brand-2, #22d3ee) 70%, #fff);
+  --lp-navy: color-mix(in srgb, var(--brand, #2563eb) 12%, #04060f);
+  --lp-navy-2: color-mix(in srgb, var(--brand, #2563eb) 24%, #060a1c);
+  --lp-navy-3: color-mix(in srgb, var(--brand, #2563eb) 36%, #0a1024);
+  --lp-bg: color-mix(in srgb, var(--brand, #2563eb) 4%, #f5f7fc);
+  --lp-radius: calc(var(--radius-lg, 16px) + 4px);
+}
+.lp-btn-primary { background: linear-gradient(135deg, var(--lp-blue-2), var(--lp-blue)); box-shadow: 0 12px 28px -12px color-mix(in srgb, var(--lp-blue) 85%, transparent); }
+.lp-btn-primary:hover { box-shadow: 0 16px 34px -12px color-mix(in srgb, var(--lp-blue) 95%, transparent); }
+[data-buttons="gradient"] .lp-btn-primary { background: linear-gradient(135deg, var(--lp-blue), color-mix(in srgb, var(--lp-blue) 50%, var(--brand-2, #7c3aed))); }
+[data-buttons="pill"] .lp-btn { border-radius: 999px; }
+[data-radius="sharp"] .lp-btn { border-radius: 8px; }
+.lp-btn-soft:hover { background: color-mix(in srgb, var(--lp-blue) 16%, #fff); }
+.lp-btn-white { color: var(--lp-blue-2); }
+.lp-glow-a { background: var(--lp-blue); }
+.lp-pulse { box-shadow: 0 0 0 4px color-mix(in srgb, var(--lp-cyan) 22%, transparent); }
+.lp-app-logo { background: linear-gradient(135deg, var(--lp-blue), var(--brand-2, #06b6d4)); }
+.lp-feature-icon.is-0, .lp-step-num { background: linear-gradient(135deg, var(--lp-blue-2), var(--lp-blue)); }
+.lp-plan.is-hot { background: linear-gradient(165deg, var(--lp-navy-2), color-mix(in srgb, var(--lp-blue) 55%, #0b1437) 60%, var(--lp-blue-2)); box-shadow: 0 34px 70px -34px color-mix(in srgb, var(--lp-blue-2) 85%, transparent); }
+.lp-plan.is-hot .lp-plan-sub, .lp-plan.is-hot .lp-plan-price span, .lp-cta p { color: color-mix(in srgb, var(--lp-blue) 10%, #fff); }
+.lp-plan.is-hot .lp-btn-primary { color: var(--lp-blue-2); }
+.lp-mini-chart span { background: linear-gradient(color-mix(in srgb, var(--lp-blue) 55%, #fff), var(--lp-blue)); }
+.lp-phone-screen { background: linear-gradient(170deg, var(--lp-navy-2), var(--lp-blue-2)); }
+.lp-cta { background: linear-gradient(140deg, var(--lp-navy-2) 0%, color-mix(in srgb, var(--lp-blue) 55%, #0b1437) 55%, var(--lp-blue-2) 100%); }
+.lp-cta::before { background: var(--lp-cyan); }
+.lp-lang { gap: 6px; }
+.lp-lang .icon { width: 16px; height: 16px; }
+@media (max-width: 760px) { .lp-nav-cta .lp-lang { display: none; } }
+[dir="ltr"] .icon:has(use[href$="#i-chevron-left"]), [dir="ltr"] .icon:has(use[href$="#i-chevron-right"]),
+[dir="ltr"] .icon:has(use[href$="#i-arrow-left"]), [dir="ltr"] .icon:has(use[href$="#i-arrow-right"]) { transform: scaleX(-1); }

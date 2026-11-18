@@ -52,9 +52,38 @@ final class Landing
     public const LIST_FIELDS = ['features' => 'المميزات', 'steps' => 'الخطوات', 'stats' => 'الأرقام', 'faq' => 'الأسئلة الشائعة'];
     public const SECTIONS = ['stats' => 'الأرقام', 'features' => 'المميزات', 'steps' => 'الخطوات', 'pricing' => 'الباقات والأسعار', 'apps' => 'التطبيقات', 'faq' => 'الأسئلة الشائعة'];
 
+    /**
+     * نص الصفحة بلغة الواجهة الحالية: في الإنجليزية النسخة الإنجليزية إن كُتبت،
+     * وإلا النص العربي (والنصوص الافتراضية مترجمة في القاموس).
+     */
     public static function get(string $key): string
     {
+        if (str_starts_with($key, 'show_') || !\App\Core\Lang::isEn()) {
+            return self::raw($key, 'ar');
+        }
+        $en = self::raw($key, 'en');
+        return $en !== '' ? $en : self::raw($key, 'ar');
+    }
+
+    /** النص المحفوظ بلغة محددة (للتحرير): العربية بقيمتها أو الافتراضية، والإنجليزية فارغة إن لم تُكتب */
+    public static function raw(string $key, string $locale): string
+    {
+        if ($locale === 'en') {
+            return Platform::setting('landing_en.' . $key, '');
+        }
         return Platform::setting('landing.' . $key, self::DEFAULTS['landing.' . $key] ?? '');
+    }
+
+    /** هل صفحة الهبوط مفعّلة؟ (عند الإيقاف يُفتح تسجيل الدخول مباشرة) */
+    public static function enabled(): bool
+    {
+        return Platform::setting('landing.enabled', '1') !== '0';
+    }
+
+    /** عناصر قائمة بلغة محددة (للتحرير) */
+    public static function rawItems(string $key, string $locale): array
+    {
+        return self::parse(self::raw($key, $locale));
     }
 
     public static function on(string $section): bool
@@ -65,8 +94,13 @@ final class Landing
     /** @return array<int, array{0:string,1:string}> */
     public static function items(string $key): array
     {
+        return self::parse(self::get($key));
+    }
+
+    private static function parse(string $text): array
+    {
         $out = [];
-        foreach (preg_split('/\R/u', self::get($key)) as $line) {
+        foreach (preg_split('/\R/u', $text) as $line) {
             $line = trim($line);
             if ($line === '') {
                 continue;

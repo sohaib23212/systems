@@ -3132,3 +3132,4 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
 /* أسهم الاتجاه تنعكس */
 [dir="ltr"] .icon:has(use[href$="#i-chevron-left"]), [dir="ltr"] .icon:has(use[href$="#i-chevron-right"]),
 [dir="ltr"] .icon:has(use[href$="#i-arrow-left"]), [dir="ltr"] .icon:has(use[href$="#i-arrow-right"]) { transform: scaleX(-1); }
+.lp-list-block { border-top: 1px solid var(--border); }
