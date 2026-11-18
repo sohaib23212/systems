@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="theme-color" content="#0327d5">
+<title>Madix Net | حالة الاتصال</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="css/madix.css">
+</head>
+<body data-page="status">
+<div class="app">
+  <section class="hero hero-compact gutter">
+    <span class="cloud c1" aria-hidden="true"></span>
+    <span class="cloud c2" aria-hidden="true"></span>
+    <svg class="net" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M18 60 70 42l48 36M330 50l42 32 20-42M372 82l-20 42M24 220l36-30-20-42"/><circle cx="18" cy="60" r="3"/><circle cx="70" cy="42" r="4"/><circle cx="118" cy="78" r="2.5"/><circle cx="330" cy="50" r="2.5"/><circle cx="372" cy="82" r="4"/><circle cx="392" cy="40" r="2.5"/><circle cx="352" cy="124" r="3"/><circle cx="24" cy="220" r="2.5"/><circle cx="60" cy="190" r="3.5"/><circle cx="40" cy="148" r="2.5"/></svg>
+    <div class="brandbar">
+      <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></svg>حالة الاتصال</span>
+      <span class="pill"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span data-bind="brand">MADIX NET</span></span>
+    </div>
+    <div class="brand">
+      <img class="logo" src="img/madix-logo.svg" width="74" height="74" alt="شعار Madix Net">
+      <div class="word"><span data-bind="word1">Madix</span> <b data-bind="word2">Net</b></div>
+      <p class="tagline" data-bind="tagline">شبكة ماديكس نت لخدمات الإنترنت</p>
+    </div>
+  </section>
+
+  <main class="wrap gutter">
+    <div class="card user-card">
+      <span class="avatar"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+      <span class="user-meta">
+        <small>المستخدم المتصل</small>
+        <span class="user-name" id="s-user">$(username)</span>
+        <span class="user-sub" id="s-sub" hidden></span>
+      </span>
+      <span class="live"><i></i>متصل الآن</span>
+    </div>
+
+    <div class="tiles">
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>الوقت المتبقي</span>
+        <span class="val v-teal" id="s-left">—</span>
+      </div>
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2h4"/><path d="m12 14 3-3"/><circle cx="12" cy="14" r="8"/></svg>مدة الاتصال</span>
+        <span class="val" id="s-uptime">—</span>
+      </div>
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>التحميل <em>Download</em></span>
+        <span class="val ltr v-ok" id="s-down">—</span>
+      </div>
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/></svg>الرفع <em>Upload</em></span>
+        <span class="val ltr v-brand" id="s-up">—</span>
+      </div>
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 6h.01"/><path d="M6 18h.01"/></svg>عنوان الـ IP</span>
+        <span class="val ltr sm" id="s-ip">—</span>
+      </div>
+      <div class="tile-s">
+        <span class="lbl"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2M15 20v2M2 15h2M2 9h2M20 15h2M20 9h2M9 2v2M9 20v2"/></svg>عنوان الماك MAC</span>
+        <span class="val ltr sm" id="s-mac">—</span>
+      </div>
+    </div>
+
+    <div class="card plan" id="s-plan" hidden></div>
+
+    <div class="tip" id="tip">
+      <span class="t-ico"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h.01"/><path d="M2 8.82a15 15 0 0 1 20 0"/><path d="M5 12.86a10 10 0 0 1 14 0"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/></svg></span>
+      <div>
+        <h3><span data-tip="title">نصيحة لتجربة أفضل</span><em data-tip="badge">5GHz</em></h3>
+        <p data-tip="text">اتصل بشبكة ماديكس نت بتردد 5GHz للاستمتاع بأقل بنج في الألعاب وسرعة تصفح وتحميل فائقة الثبات.</p>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="refresh" type="button"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><span>تحديث البيانات</span></button>
+    <a class="btn btn-danger" id="logout" href="$(link-logout)?erase-cookie=on"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg><span>تسجيل الخروج</span></a>
+  </main>
+
+  <footer class="mini-foot"><span data-bind="tagline">شبكة ماديكس نت لخدمات الإنترنت</span> - <b data-bind="brand">MADIX NET</b></footer>
+</div>
+
+<script>
+window.SN_MT = {
+  username: '$(username)',
+  mac: '$(mac)',
+  ip: '$(ip)',
+  uptimeSecs: '$(uptime-secs)',
+  timeLeftSecs: '$(session-time-left-secs)',
+  bytesIn: '$(bytes-in)',
+  bytesOut: '$(bytes-out)',
+  remainBytes: '$(remain-bytes-total)',
+  refreshSecs: '$(refresh-timeout-secs)',
+  loginBy: '$(login-by)',
+  linkLogout: '$(link-logout)'
+};
+</script>
+<script src="madix-config.js"></script>
+<script src="sn-config.js"></script>
+<script src="sohaibnet.js"></script>
+<script src="madix.js"></script>
+</body>
+</html>

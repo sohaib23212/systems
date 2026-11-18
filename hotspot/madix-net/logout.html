@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="-1">
+<meta name="theme-color" content="#0327d5">
+<title>Madix Net | تم الخروج</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="css/madix.css">
+</head>
+<body data-page="logout">
+<div class="app">
+  <div class="sky-top">
+    <span class="cloud c1" aria-hidden="true"></span>
+    <span class="cloud c2" aria-hidden="true"></span>
+    <svg class="divider" viewBox="0 0 210 26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="22" r="3" fill="currentColor" stroke="none"/><path d="M12 22h50"/><path class="soft" d="M72 16v6M80 12v10M130 12v10M138 16v6"/><path d="M89.4 6.4a22 22 0 0 1 31.2 0M93.7 10.7a16 16 0 0 1 22.6 0M97.9 14.9a10 10 0 0 1 14.2 0"/><circle cx="105" cy="21.5" r="2.4" fill="currentColor" stroke="none"/><path d="M148 22h50"/><circle cx="203" cy="22" r="3" fill="currentColor" stroke="none"/></svg>
+  </div>
+
+  <main class="center gutter">
+    <div class="ring"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></div>
+    <h1>تم تسجيل الخروج بنجاح</h1>
+    <p class="lead">شكراً لاستخدامك شبكة <span data-bind="nameAr">ماديكس نت</span>، نتمنى رؤيتك قريباً.</p>
+
+    <div class="sum" id="sum" hidden>
+      <div><span>مدة الجلسة</span><b id="o-time">—</b></div>
+      <div><span>التحميل</span><b class="ltr" id="o-down">—</b></div>
+      <div><span>الرفع</span><b class="ltr" id="o-up">—</b></div>
+    </div>
+
+    <div class="progress" aria-live="polite">
+      <div class="progress-row"><span>العودة لصفحة الدخول...</span><b id="count">6 ثوانٍ</b></div>
+      <div class="bar"><i id="bar"></i></div>
+    </div>
+
+    <a class="btn btn-primary" id="again" href="$(link-login)"><span>تسجيل الدخول من جديد</span><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg></a>
+
+    <p class="note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><span>نتشرف بخدمتكم دائماً في شبكة <span data-bind="nameAr">ماديكس نت</span></span></p>
+  </main>
+
+  <footer class="mini-foot"><span data-bind="tagline">شبكة ماديكس نت لخدمات الإنترنت</span> - <b data-bind="brand">MADIX NET</b></footer>
+</div>
+
+<script>
+window.SN_MT = {
+  username: '$(username)',
+  uptimeSecs: '$(uptime-secs)',
+  bytesIn: '$(bytes-in)',
+  bytesOut: '$(bytes-out)',
+  linkLogin: '$(link-login)',
+  linkLoginOnly: '$(link-login-only)'
+};
+</script>
+<script src="madix-config.js"></script>
+<script src="madix.js"></script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+# Madix Net - error messages shown to hotspot users (Arabic).
+# Lines that start with # are comments. Format: key = message
+# Variables that can be used: error-orig, ip, username (written as in the original MikroTik file).
+
+internal-error = حدث خطأ داخلي في نقطة الاتصال. حاول مرة أخرى. ($(error-orig))
+config-error = يوجد خطأ في إعدادات نقطة الاتصال. تواصل مع الدعم الفني. ($(error-orig))
+not-logged-in = أنت غير مسجّل الدخول حالياً.
+ippool-empty = لا توجد عناوين متاحة حالياً. حاول بعد قليل.
+shutting-down = خدمة الإنترنت متوقفة مؤقتاً. حاول بعد قليل.
+user-session-limit = وصل الحساب $(username) إلى الحد الأقصى من الأجهزة المتصلة في نفس الوقت.
+license-session-limit = تم الوصول إلى الحد الأقصى للمتصلين على نقطة الاتصال. حاول بعد قليل.
+wrong-mac-username = اسم المستخدم غير صحيح لهذا الجهاز.
+chap-missing = لم يُرسل المتصفح بيانات الدخول المشفّرة. أعد المحاولة، وتأكد من تفعيل JavaScript.
+invalid-username = اسم المستخدم أو كلمة المرور غير صحيحة.
+invalid-mac = الحساب $(username) غير مسموح له بالدخول من هذا الجهاز.
+uptime-limit = انتهى رصيد الوقت للحساب $(username).
+traffic-limit = انتهى رصيد البيانات للحساب $(username).
+radius-timeout = خادم التحقق لا يستجيب حالياً. حاول بعد قليل.
+auth-in-progress = جاري التحقق من حسابك. انتظر لحظة ثم حاول مجدداً.
+radius-reply = $(error-orig)
