@@ -5,7 +5,7 @@
   if (!form) { return; }
   var presets = {};
   try { presets = JSON.parse((form.querySelector('[data-design-presets]') || {}).textContent || '{}'); } catch (e) { presets = {}; }
-  var FIELDS = ['skin', 'palette', 'font', 'radius', 'density', 'sidebar', 'sidebar_shape', 'nav_style', 'topbar', 'background', 'buttons', 'font_size', 'motion'];
+  var FIELDS = ['skin', 'palette', 'font', 'font_latin', 'radius', 'density', 'sidebar', 'sidebar_shape', 'nav_style', 'topbar', 'background', 'buttons', 'font_size', 'motion'];
   var NAMES = {};
   Array.prototype.forEach.call(form.querySelectorAll('[data-preset]'), function (b) {
     NAMES[b.getAttribute('data-preset')] = (b.querySelector('.dz-preset-text b') || {}).textContent || '';
@@ -59,7 +59,7 @@
   var DIM = { desktop: [1280, 820], mobile: [390, 780] };
   function previewUrl() {
     var q = [];
-    FIELDS.concat(['stagger', 'speed', 'page_fx', 'haptics']).forEach(function (f) { q.push(encodeURIComponent(f) + '=' + encodeURIComponent(val(f))); });
+    FIELDS.concat(['stagger', 'speed', 'page_fx', 'haptics', 'locale']).forEach(function (f) { q.push(encodeURIComponent(f) + '=' + encodeURIComponent(val(f))); });
     q.push('mode=' + mode);
     return base + '?' + q.join('&');
   }

@@ -10,7 +10,7 @@ $pageCount = (int) ceil(count($cards) / $perPage);
 $pw = rtrim(rtrim(number_format((float) $template['paper_width'], 2, '.', ''), '0'), '.');
 $ph = rtrim(rtrim(number_format((float) $template['paper_height'], 2, '.', ''), '0'), '.');
 ?><!doctype html>
-<html lang="ar" dir="rtl" data-theme="light" data-theme-pref="<?= e($themePref) ?>">
+<html <?= \App\Core\Lang::htmlAttrs() ?> data-theme="light" data-theme-pref="<?= e($themePref) ?>">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

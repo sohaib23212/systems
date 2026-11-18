@@ -20,6 +20,19 @@ final class Theme
         'readex'  => ['Readex Pro', 'Readex Pro', 'readex-pro', [400, 500, 700]],
     ];
 
+    /** الخطوط العالمية للحروف اللاتينية والأرقام (والواجهة الإنجليزية): المفتاح => [الاسم، اسم العائلة، ملف الخط] */
+    public const FONTS_LATIN = [
+        'auto'       => ['تلقائي (حروف الخط العربي)', '', ''],
+        'inter'      => ['Inter', 'Inter', 'inter'],
+        'poppins'    => ['Poppins', 'Poppins', 'poppins'],
+        'manrope'    => ['Manrope', 'Manrope', 'manrope'],
+        'jakarta'    => ['Plus Jakarta Sans', 'Plus Jakarta Sans', 'plus-jakarta-sans'],
+        'dmsans'     => ['DM Sans', 'DM Sans', 'dm-sans'],
+        'montserrat' => ['Montserrat', 'Montserrat', 'montserrat'],
+        'rubik'      => ['Rubik', 'Rubik', 'rubik'],
+        'outfit'     => ['Outfit', 'Outfit', 'outfit'],
+    ];
+
     /** المفتاح => [الاسم، اللون الفاتح، اللون في الوضع الداكن، اللون المرافق فاتحاً، اللون المرافق داكناً] */
     public const PALETTES = [
         'royal'    => ['أزرق ملكي', '#2453d6', '#5383ff', '#7c3aed', '#a78bfa'],
@@ -130,7 +143,7 @@ final class Theme
 
     /** الخيارات القابلة للتعيين وقوائمها المسموحة */
     public const CHOICES = [
-        'skin' => self::SKINS, 'palette' => self::PALETTES, 'font' => self::FONTS, 'radius' => self::RADIUS, 'density' => self::DENSITY,
+        'skin' => self::SKINS, 'palette' => self::PALETTES, 'font' => self::FONTS, 'font_latin' => self::FONTS_LATIN, 'radius' => self::RADIUS, 'density' => self::DENSITY,
         'sidebar' => self::SIDEBAR, 'sidebar_shape' => self::SIDEBAR_SHAPE, 'nav_style' => self::NAV_STYLE, 'topbar' => self::TOPBAR,
         'background' => self::BACKGROUND, 'buttons' => self::BUTTONS, 'font_size' => self::FONT_SIZE, 'motion' => self::MOTION,
     ];
@@ -139,6 +152,7 @@ final class Theme
         'design.preset'        => 'nexus',
         'design.skin'          => 'classic',
         'design.font'          => 'plex',
+        'design.font_latin'    => 'auto',
         'design.palette'       => 'royal',
         'design.radius'        => 'normal',
         'design.density'       => 'normal',
@@ -255,12 +269,32 @@ final class Theme
         return $css;
     }
 
+    /** تعريفات @font-face لخط عالمي (الحروف اللاتينية فقط، فالعربية تبقى من الخط العربي) */
+    public static function latinFaces(string $key, ?array $only = null): string
+    {
+        if (!isset(self::FONTS_LATIN[$key]) || $key === 'auto') {
+            return '';
+        }
+        [, $family, $file] = self::FONTS_LATIN[$key];
+        $range = 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+20AA, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD';
+        $css = '';
+        foreach ($only ?? [400, 500, 600, 700] as $w) {
+            $css .= '@font-face{font-family:"' . $family . '";font-weight:' . $w . ';font-style:normal;font-display:swap;src:url("' . asset('fonts/' . $file . '-latin-' . $w . '-normal.woff2') . '") format("woff2");unicode-range:' . $range . '}';
+        }
+        return $css;
+    }
+
     /** وسم style بالمتغيرات والخط المختار */
     public static function style(?array $t = null): string
     {
         $t ??= self::current();
         $family = self::FONTS[$t['font']][1];
         $css = self::fontFaces($t['font']);
+        if ($t['font_latin'] !== 'auto') {
+            // الخط العالمي أولاً للحروف اللاتينية والأرقام، ثم الخط العربي لما سواها
+            $css .= self::latinFaces($t['font_latin']);
+            $family = self::FONTS_LATIN[$t['font_latin']][1] . '", "' . $family;
+        }
         [, $light, $dark, $light2, $dark2] = self::PALETTES[$t['palette']];
         $radius = ['sharp' => ['6px', '8px', '10px'], 'normal' => ['10px', '12px', '16px'], 'round' => ['14px', '18px', '22px']][$t['radius']];
         $css .= ':root{--font:"' . $family . '", system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;'

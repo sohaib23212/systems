@@ -20,7 +20,7 @@ $rows = [
     ['602813899012', 'باقة ساعة', 'badge-danger', 'منتهي', '640 MB'],
 ];
 ?><!doctype html>
-<html lang="ar" dir="rtl" data-theme="<?= e($mode) ?>" data-theme-pref="<?= e($mode) ?>"<?= Theme::attrs($t) ?>>
+<html <?= \App\Core\Lang::htmlAttrs() ?> data-theme="<?= e($mode) ?>" data-theme-pref="<?= e($mode) ?>"<?= Theme::attrs($t) ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">

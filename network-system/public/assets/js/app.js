@@ -611,7 +611,7 @@
     s = Math.max(0, Math.floor(Number(s) || 0));
     var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
     function p(n) { return (n < 10 ? '0' : '') + n; }
-    return (d > 0 ? d + 'ي ' : '') + p(h) + ':' + p(m) + (d > 0 ? '' : ':' + p(sec));
+    return (d > 0 ? d + (doc.documentElement.lang === 'en' ? 'd ' : 'ي ') : '') + p(h) + ':' + p(m) + (d > 0 ? '' : ':' + p(sec));
   }
   function fmtNum(n) { return (Number(n) || 0).toLocaleString('en-US'); }
 

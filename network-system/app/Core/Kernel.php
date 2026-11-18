@@ -161,6 +161,11 @@ final class Kernel
 
     private static function finish(Response $response, Request $request): void
     {
+        try {
+            $response = I18n::response($response);
+        } catch (Throwable $e) {
+            ErrorHandler::report($e);
+        }
         self::secureHeaders($response, $request);
         if (self::$after) {
             $response->headers['Connection'] = 'close';

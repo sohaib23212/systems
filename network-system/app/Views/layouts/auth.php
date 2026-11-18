@@ -9,7 +9,7 @@ $networkName = Config::installed() ? Settings::networkName() : Brand::NAME;
 $logo = Config::installed() ? (string) Settings::get('general.logo', '') : '';
 $flash = Config::installed() || PHP_SAPI !== 'cli' ? (Session::pull('_flash', []) ?: []) : [];
 ?><!doctype html>
-<html lang="ar" dir="rtl" data-theme="light"<?= \App\Core\Theme::attrs() ?>>
+<html <?= \App\Core\Lang::htmlAttrs() ?> data-theme="light"<?= \App\Core\Theme::attrs() ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -43,7 +43,7 @@ $flash = Config::installed() || PHP_SAPI !== 'cli' ? (Session::pull('_flash', []
     </div>
     <?= $content ?>
   </div>
-  <div class="auth-credit"><?= $v->partial('madix-credit') ?></div>
+  <div class="auth-credit"><?= $v->partial('madix-credit') ?><?php if (\App\Core\Lang::switchable()): ?> <a class="btn btn-ghost btn-xs" href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>" data-no-loading><?= icon('globe', 'icon-sm') ?><?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?></div>
 </main>
 <div class="toasts" aria-live="polite"></div>
 <?php if ($flash): ?>

@@ -7,7 +7,7 @@
 use App\Core\Brand;
 use App\Core\Theme;
 ?><!doctype html>
-<html lang="ar" dir="rtl" data-theme="light"<?= Theme::attrs() ?>>
+<html <?= \App\Core\Lang::htmlAttrs() ?> data-theme="light"<?= Theme::attrs() ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

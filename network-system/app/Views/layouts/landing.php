@@ -12,7 +12,7 @@ use App\Platform\Landing;
 
 $flash = Session::pull('_flash', []) ?: [];
 ?><!doctype html>
-<html lang="ar" dir="rtl"<?= Theme::attrs() ?>>
+<html <?= \App\Core\Lang::htmlAttrs() ?><?= Theme::attrs() ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

@@ -68,6 +68,7 @@ return static function (Router $r): void {
         $r->post('/server/detect', [ServerController::class, 'detect']);
     }
     $r->get('/manifest.webmanifest', [BrandController::class, 'manifest'], ['auth' => false, 'csrf' => false]);
+    $r->get('/lang/{code:ar|en}', [\App\Controllers\LangController::class, 'switch'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/webhook/{secret:[a-f0-9]{32}}', [TelegramController::class, 'webhook'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/customer/{secret:[a-f0-9]{32}}', [TelegramController::class, 'customerWebhook'], ['auth' => false, 'csrf' => false]);
 

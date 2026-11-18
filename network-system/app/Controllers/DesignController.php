@@ -41,6 +41,9 @@ final class DesignController extends Controller
         foreach ($t as $k => $v) {
             $values['design.' . $k] = $v;
         }
+        // لغة الأنظمة الأساسية، وسماح التبديل لكل مستخدم
+        $values['platform.locale'] = in_array($request->str('locale'), array_keys(\App\Core\Lang::LOCALES), true) ? $request->str('locale') : 'ar';
+        $values['platform.locale_switch'] = $request->bool('locale_switch') ? '1' : '0';
         Platform::setSettings($values);
         Theme::flush();
         $name = $t['preset'] !== 'custom' ? 'تصميم «' . Theme::PRESETS[$t['preset']][0] . '»' : 'تصميم مخصص';
@@ -53,6 +56,8 @@ final class DesignController extends Controller
     {
         $t = $this->values($request);
         $mode = $request->str('mode') === 'dark' ? 'dark' : 'light';
+        // المعاينة بلغة الأنظمة المختارة في النموذج
+        \App\Core\Lang::set($request->str('locale') === 'en' ? 'en' : 'ar');
         $html = \App\Core\View::render('admin/design-preview', ['t' => $t, 'mode' => $mode], '');
         return new Response($html);
     }

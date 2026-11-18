@@ -3112,3 +3112,23 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
 .cl-pair.is-ok { background: var(--success-soft); color: var(--success); }
 .cl-pair.is-warn { background: var(--warning-soft); color: var(--warning); }
 .cl-pair.is-bad { background: var(--danger-soft); color: var(--danger); }
+
+/* ---------------- اللغة ---------------- */
+.lang-btn { width: auto; min-width: 38px; padding: 0 8px; gap: 5px; display: inline-flex; align-items: center; }
+.lang-btn .icon { width: 17px; height: 17px; }
+.lang-code { font-size: 11.5px; font-weight: 700; line-height: 1; }
+.dz-latin .font-sample { font-size: 20px; }
+
+/* ---------------- الواجهة الإنجليزية (من اليسار إلى اليمين) ---------------- */
+[dir="ltr"] .password-field .input-ltr::placeholder { direction: ltr; text-align: left; }
+[dir="ltr"] .password-field .input { padding-left: 12px; padding-right: 44px; }
+[dir="ltr"] .password-field .toggle-pass { left: auto; right: 4px; }
+[dir="ltr"] .input-icon > .icon { right: auto; left: 14px; }
+[dir="ltr"] .input-icon > .input { padding-right: 12px; padding-left: 44px; }
+[dir="ltr"] .input-icon.password-field > .input { padding-left: 44px; padding-right: 44px; }
+[dir="ltr"] .tg-status-title { text-align: left; }
+[dir="ltr"] .leaflet-popup-content, [dir="ltr"] .leaflet-control-layers-expanded { direction: ltr; text-align: left; }
+[dir="ltr"] .copyable .copy-btn { right: 8px; }
+/* أسهم الاتجاه تنعكس */
+[dir="ltr"] .icon:has(use[href$="#i-chevron-left"]), [dir="ltr"] .icon:has(use[href$="#i-chevron-right"]),
+[dir="ltr"] .icon:has(use[href$="#i-arrow-left"]), [dir="ltr"] .icon:has(use[href$="#i-arrow-right"]) { transform: scaleX(-1); }

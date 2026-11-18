@@ -93,6 +93,13 @@ function asset(string $path): string
 {
     static $versions = [];
     $rel = ltrim($path, '/');
+    // الواجهة الإنجليزية: نسخة JavaScript مترجمة مولّدة (cli/i18n.php js)
+    if (str_starts_with($rel, 'js/') && !str_starts_with($rel, 'js/i18n/') && \App\Core\Lang::isEn()) {
+        $alt = 'js/i18n/en/' . substr($rel, 3);
+        if (is_file(PUBLIC_PATH . '/assets/' . $alt)) {
+            $rel = $alt;
+        }
+    }
     if (!isset($versions[$rel])) {
         $file = PUBLIC_PATH . '/assets/' . $rel;
         $v = APP_VERSION;
@@ -276,6 +283,16 @@ function fmt_rate(int|float|string|null $bps): string
 /** صيغ العدد في العربية: 1، 2، 3-10، 11+ */
 function ar_plural(int $n, string $one, string $two, string $few, string $many): string
 {
+    if (\App\Core\Lang::isEn()) {
+        // الواجهة الإنجليزية: الصيغ مترجمة من القاموس (المفرد والمثنى صيغ كاملة، والجمع بعد العدد)
+        if ($n === 1) {
+            return ['يوم' => '1 day', 'ساعة' => '1 hour', 'دقيقة' => '1 minute', 'أسبوع' => '1 week', 'شهر' => '1 month', 'ثانية' => '1 second'][$one] ?? \App\Core\I18n::text($one);
+        }
+        if ($n === 2) {
+            return \App\Core\I18n::text($two);
+        }
+        return $n . ' ' . \App\Core\I18n::text($n <= 10 ? $few : $many);
+    }
     if ($n === 1) {
         return $one;
     }
@@ -291,13 +308,33 @@ function ar_plural(int $n, string $one, string $two, string $few, string $many):
 function fmt_duration(int|float|string|null $seconds, bool $short = false): string
 {
     $s = (int) ($seconds ?? 0);
+    $en = \App\Core\Lang::isEn();
     if ($s <= 0) {
-        return $short ? '0' : '0 ثانية';
+        return $short ? '0' : ($en ? '0 seconds' : '0 ثانية');
     }
     $d = intdiv($s, 86400);
     $h = intdiv($s % 86400, 3600);
     $m = intdiv($s % 3600, 60);
     $sec = $s % 60;
+    if ($en) {
+        if ($short) {
+            return $d > 0 ? sprintf('%dd %02d:%02d', $d, $h, $m) : sprintf('%02d:%02d:%02d', $h, $m, $sec);
+        }
+        $parts = [];
+        if ($d > 0) {
+            $parts[] = $d . ($d === 1 ? ' day' : ' days');
+        }
+        if ($h > 0) {
+            $parts[] = $h . ($h === 1 ? ' hour' : ' hours');
+        }
+        if ($m > 0 && $d === 0) {
+            $parts[] = $m . ($m === 1 ? ' minute' : ' minutes');
+        }
+        if (!$parts) {
+            $parts[] = $sec . ($sec === 1 ? ' second' : ' seconds');
+        }
+        return implode(' ', array_slice($parts, 0, 2));
+    }
     if ($short) {
         if ($d > 0) {
             return sprintf('%dي %02d:%02d', $d, $h, $m);
@@ -346,6 +383,16 @@ function time_ago(?string $datetime): string
     $diff = time() - (int) strtotime($datetime);
     if ($diff < 0) {
         return fmt_dt($datetime);
+    }
+    if (\App\Core\Lang::isEn()) {
+        $u = static fn (int $n, string $w) => $n . ' ' . $w . ($n === 1 ? '' : 's') . ' ago';
+        return match (true) {
+            $diff < 60 => 'just now',
+            $diff < 3600 => $u(intdiv($diff, 60), 'minute'),
+            $diff < 86400 => $u(intdiv($diff, 3600), 'hour'),
+            $diff < 86400 * 30 => $u(intdiv($diff, 86400), 'day'),
+            default => fmt_date($datetime),
+        };
     }
     if ($diff < 60) {
         return 'الآن';

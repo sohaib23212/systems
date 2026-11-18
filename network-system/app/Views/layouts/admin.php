@@ -70,7 +70,7 @@ foreach ($nav as [, $items]) {
 }
 $initial = mb_substr(trim((string) $admin['name']), 0, 1);
 ?><!doctype html>
-<html lang="ar" dir="rtl" data-theme="light" data-theme-pref="system"<?= Theme::attrs() ?>>
+<html <?= \App\Core\Lang::htmlAttrs() ?> data-theme="light" data-theme-pref="system"<?= Theme::attrs() ?>>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -133,6 +133,15 @@ $initial = mb_substr(trim((string) $admin['name']), 0, 1);
       <button type="button" class="icon-btn menu-toggle" data-sidebar-toggle aria-label="القائمة"><?= icon('menu') ?></button>
       <div class="topbar-spacer"></div>
       <div class="topbar-actions">
+        <?php if (\App\Core\Lang::switchable()): $curLang = \App\Core\Lang::current(); ?>
+        <div class="dropdown">
+          <button type="button" class="icon-btn lang-btn" data-dropdown aria-label="Language / اللغة" title="Language / اللغة"><?= icon('globe') ?><span class="lang-code"><?= $curLang === 'en' ? 'EN' : 'ع' ?></span></button>
+          <div class="dropdown-menu">
+            <a class="dropdown-item<?= $curLang === 'ar' ? ' is-current' : '' ?>" href="<?= e(\App\Core\Lang::switchUrl('ar')) ?>" lang="ar" data-no-loading><?= icon($curLang === 'ar' ? 'circle-check' : 'globe') ?>العربية</a>
+            <a class="dropdown-item<?= $curLang === 'en' ? ' is-current' : '' ?>" href="<?= e(\App\Core\Lang::switchUrl('en')) ?>" lang="en" dir="ltr" data-no-loading><?= icon($curLang === 'en' ? 'circle-check' : 'globe') ?>English</a>
+          </div>
+        </div>
+        <?php endif; ?>
         <div class="dropdown">
           <button type="button" class="icon-btn" data-dropdown aria-label="المظهر"><?= icon('sun-moon') ?></button>
           <div class="dropdown-menu">

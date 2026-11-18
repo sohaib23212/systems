@@ -9,6 +9,11 @@ $faces = '';
 foreach (array_keys(Theme::FONTS) as $fk) {
     $faces .= Theme::fontFaces($fk, [400, 700]);
 }
+foreach (array_keys(Theme::FONTS_LATIN) as $fk) {
+    $faces .= Theme::latinFaces($fk, [400, 700]);
+}
+$locale = \App\Core\Lang::default();
+$localeSwitch = \App\Core\Lang::switchable();
 
 // ألوان المصغّرات لكل تصميم جاهز
 $mini = static function (array $p): string {
@@ -131,6 +136,30 @@ $fields = static function (string $name, array $opts) use ($t): string {
           </div>
           <div class="form-grid mt-3">
             <div class="field col-12"><label>حجم الخط</label><?= $fields('font_size', Theme::FONT_SIZE) ?></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><h3><?= icon('globe') ?>اللغة والخطوط العالمية</h3></div>
+        <div class="panel-body">
+          <div class="form-grid">
+            <div class="field col-12"><label>لغة الأنظمة الأساسية</label>
+              <div class="segmented is-block dz-seg">
+                <label><input type="radio" name="locale" value="ar"<?= checked($locale === 'ar') ?>><span>العربية</span></label>
+                <label><input type="radio" name="locale" value="en"<?= checked($locale === 'en') ?>><span lang="en" dir="ltr">English</span></label>
+              </div>
+              <span class="hint">اللغة التي تظهر بها لوحة المسؤول وأنظمة كل الزبائن وصفحة الهبوط افتراضياً. الترجمة مكتوبة داخل النظام ولا تعتمد على ترجمة جوجل.</span>
+            </div>
+            <div class="field col-12"><label class="switch"><input type="checkbox" name="locale_switch" value="1"<?= checked($localeSwitch) ?>><span class="track"></span><span>السماح لكل مستخدم بالتبديل بين العربية والإنجليزية من الشريط العلوي</span></label></div>
+          </div>
+          <div class="field mt-3"><label>الخط العالمي للحروف اللاتينية والأرقام</label></div>
+          <div class="choice-grid is-fonts dz-latin">
+            <?php foreach (Theme::FONTS_LATIN as $k => [$label, $family]): ?>
+              <label class="choice"><input type="radio" name="font_latin" value="<?= e($k) ?>"<?= checked($t['font_latin'] === $k) ?>>
+                <span class="choice-card"><span class="font-sample" dir="ltr"<?= $family !== '' ? ' style="font-family:\'' . e($family) . '\'"' : '' ?>>Aa 2026</span><small<?= $k !== 'auto' ? ' dir="ltr"' : '' ?>><?= e($label) ?></small></span>
+              </label>
+            <?php endforeach; ?>
           </div>
         </div>
       </div>

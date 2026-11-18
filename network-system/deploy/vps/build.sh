@@ -9,6 +9,9 @@ OUT=${1:-$ROOT/network-apps/dist/madix-nexus-vps.sh}
 REV=$(git -C "$ROOT" rev-parse --short=8 HEAD)
 VERSION="$(git -C "$ROOT" log -1 --format=%cd --date=format:%Y.%m.%d HEAD)-$REV"
 
+# نسخ JavaScript الإنجليزية يجب أن تكون مولّدة من آخر نسخة للقاموس والملفات
+php "$ROOT/network-system/cli/i18n.php" check || { echo "run: php network-system/cli/i18n.php js, then commit" >&2; exit 1; }
+
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 

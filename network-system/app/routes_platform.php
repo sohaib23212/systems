@@ -38,6 +38,7 @@ return static function (Router $r): void {
     $r->get('/login', [PlatformController::class, 'loginForm'], $pub);
     $r->post('/login', [PlatformController::class, 'login'], $pub);
     $r->get('/manifest.webmanifest', [BrandController::class, 'manifest'], $pub + ['csrf' => false]);
+    $r->get('/lang/{code:ar|en}', [\App\Controllers\LangController::class, 'switch'], ['auth' => false, 'csrf' => false]);
     $r->get('/cron', [PlatformController::class, 'cron'], ['auth' => false, 'csrf' => false]);
     $r->get('/health', [PlatformController::class, 'health'], ['auth' => false, 'csrf' => false]);
 

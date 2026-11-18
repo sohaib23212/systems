@@ -22,7 +22,7 @@ final class Platform
         'admin', 'signup', 'login', 'logout', 'go', 'cron', 'assets', 'uploads', 'hotspot', 'api', 'install', 'manifest.webmanifest',
         'favicon.ico', 'robots.txt', 'about', 'terms', 'privacy', 'help', 'support', 'status', 'www', 'mail', 'app', 'apps', 'download',
         'downloads', 'platform', 'madix', 'nexus', 'root', 'system', 'public', 'static', 'telegram', 'auth', 'account', 'blog', 'docs',
-        'health', 'server',
+        'health', 'server', 'lang',
     ];
 
     public const DEFAULTS = [
