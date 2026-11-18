@@ -39,8 +39,8 @@
   }
 
   // ---------------------------------------------------------------------
-  // إجراء جهّزه المساعد: بطاقة in Chat, ونافذة فيها ما سيُنفَّذ بالضبط وحقول يراجعها User
-  // ويعدّلها, and no يُنفَّذ شيء إلا بضغط “موافق”. Message text النصية يُفتح in Page الإرسال للمراجعة.
+  // إجراء جهّزه المساعد: بطاقة in Chat, ونافذة فيها What will run بالضبط وحقول يراجعها User
+  // ويعدّلها, and no يُنفَّذ شيء إلا بضغط “OK”. Message text النصية يُفتح in Page الإرسال للمراجعة.
   // ---------------------------------------------------------------------
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -144,7 +144,7 @@
     var what = el('div', 'notice ai-what' + (a.danger ? ' notice-warning' : ''));
     what.innerHTML = icon('info');
     var wt = el('div');
-    wt.appendChild(el('div', 'notice-title', 'ما سيُنفَّذ'));
+    wt.appendChild(el('div', 'notice-title', 'What will run'));
     wt.appendChild(el('div', 'text-sm', a.summary || a.detail || ''));
     what.appendChild(wt);
     body.appendChild(what);
@@ -158,7 +158,7 @@
     var foot = el('div', 'modal-foot');
     var cancel = el('button', 'btn', 'Cancel'); cancel.type = 'button';
     var ok = el('button', 'btn ' + (a.danger ? 'btn-danger' : 'btn-primary')); ok.type = 'submit';
-    ok.innerHTML = icon('check'); ok.appendChild(document.createTextNode(a.button || 'موافق'));
+    ok.innerHTML = icon('check'); ok.appendChild(document.createTextNode(a.button || 'OK'));
     foot.appendChild(cancel); foot.appendChild(ok);
     form.appendChild(head); form.appendChild(body); form.appendChild(foot);
     dlg.appendChild(form);
@@ -229,7 +229,7 @@
     } else {
       var open = el('button', 'btn btn-primary btn-sm'); open.type = 'button';
       open.innerHTML = icon('app-window');
-      open.appendChild(document.createTextNode('Open النافذة'));
+      open.appendChild(document.createTextNode('Open window'));
       foot.appendChild(open);
       open.addEventListener('click', function () { dialogFor(a, card); });
       if (autoOpen) { setTimeout(function () { dialogFor(a, card); }, 120); }
