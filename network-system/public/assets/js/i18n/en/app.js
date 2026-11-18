@@ -755,14 +755,25 @@
   window.addEventListener('pagehide', function () { setTimeout(stopProgress, 4000); });
 
   // لوحة المفاتيح on Phone: ارتفاعها in --kb ليبقى شريط الحقوق السفلي فوقها
+  // لا تظهر لوحة المفاتيح إلا مع Field كتابة Active: أي تغيّر Last in ارتفاع Screen (شريط Address, التكبير) لا يحرّك الشريط.
+  // والحقل الذي يُكتب فيه يبقى ظاهراً فوق الشريط لا behind it.
   (function () {
     var vv = window.visualViewport;
-    if (!vv || !doc.querySelector('.app-footer')) { return; }
+    var bar = doc.querySelector('.app-footer');
+    if (!vv || !bar) { return; }
     var last = -1, queued = false;
+    function typing() {
+      var a = doc.activeElement;
+      if (!a || a === doc.body) { return null; }
+      if (a.isContentEditable) { return a; }
+      if (a.tagName === 'TEXTAREA') { return a.readOnly ? null : a; }
+      if (a.tagName !== 'INPUT' || a.readOnly) { return null; }
+      return /^(checkbox|radio|button|submit|reset|range|color|file|image|hidden)$/i.test(a.type) ? null : a;
+    }
     function update() {
       queued = false;
-      var kb = 0;
-      if (Math.abs((vv.scale || 1) - 1) < 0.01) {
+      var field = typing(), kb = 0;
+      if (field && Math.abs((vv.scale || 1) - 1) < 0.01) {
         kb = Math.round(window.innerHeight - vv.height - vv.offsetTop);
         if (kb < 80) { kb = 0; }
       }
@@ -770,10 +781,17 @@
         last = kb;
         doc.documentElement.style.setProperty('--kb', kb + 'px');
       }
+      if (kb > 0) {
+        var r = field.getBoundingClientRect();
+        var barTop = window.innerHeight - kb - bar.offsetHeight;
+        if (r.bottom > barTop - 8 && r.top > 0) { window.scrollBy({ top: Math.ceil(r.bottom - barTop + 12), behavior: 'instant' }); }
+      }
     }
     function schedule() { if (!queued) { queued = true; requestAnimationFrame(update); } }
     vv.addEventListener('resize', schedule);
     vv.addEventListener('scroll', schedule);
+    doc.addEventListener('focusin', schedule);
+    doc.addEventListener('focusout', function () { setTimeout(schedule, 0); });
     update();
   })();
 

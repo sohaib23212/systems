@@ -55,7 +55,7 @@ $initial = mb_substr(trim((string) $user['name']), 0, 1);
         <a class="icon-btn ai-btn" href="<?= e(url('/assistant')) ?>" aria-label="المساعد الذكي" title="المساعد الذكي"><?= icon('sparkles') ?></a>
         <?php endif; ?>
         <?php if (\App\Core\Lang::switchable()): $curLang = \App\Core\Lang::current(); ?>
-        <div class="dropdown">
+        <div class="dropdown lang-dd">
           <button type="button" class="icon-btn lang-btn" data-dropdown aria-label="Language / اللغة" title="Language / اللغة"><?= icon('globe') ?><span class="lang-code"><?= $curLang === 'en' ? 'EN' : 'ع' ?></span></button>
           <div class="dropdown-menu">
             <a class="dropdown-item<?= $curLang === 'ar' ? ' is-current' : '' ?>" href="<?= e(\App\Core\Lang::switchUrl('ar')) ?>" lang="ar" data-no-loading><?= icon($curLang === 'ar' ? 'circle-check' : 'globe') ?>العربية</a>
@@ -63,7 +63,7 @@ $initial = mb_substr(trim((string) $user['name']), 0, 1);
           </div>
         </div>
         <?php endif; ?>
-        <div class="dropdown">
+        <div class="dropdown theme-dd">
           <button type="button" class="icon-btn" data-dropdown aria-label="المظهر" title="المظهر">
             <?= icon('sun-moon') ?>
           </button>
@@ -108,6 +108,19 @@ $initial = mb_substr(trim((string) $user['name']), 0, 1);
             <?php if (can('settings.manage')): ?>
             <a class="dropdown-item" href="<?= e(url('/settings')) ?>"><?= icon('settings') ?>الإعدادات</a>
             <?php endif; ?>
+            <?php /* الشاشات الضيقة: المظهر واللغة هنا بدل زرّيهما في الشريط العلوي */ ?>
+            <div class="narrow-only">
+              <div class="dropdown-sep"></div>
+              <div class="dropdown-head">المظهر</div>
+              <button type="button" class="dropdown-item" data-theme-set="light"><?= icon('sun') ?>فاتح</button>
+              <button type="button" class="dropdown-item" data-theme-set="dark"><?= icon('moon') ?>داكن</button>
+              <button type="button" class="dropdown-item" data-theme-set="system"><?= icon('monitor') ?>حسب الجهاز</button>
+              <?php if (\App\Core\Lang::switchable()): $curLang = \App\Core\Lang::current(); ?>
+              <div class="dropdown-sep"></div>
+              <a class="dropdown-item<?= $curLang === 'ar' ? ' is-current' : '' ?>" href="<?= e(\App\Core\Lang::switchUrl('ar')) ?>" lang="ar" data-no-loading><?= icon($curLang === 'ar' ? 'circle-check' : 'globe') ?>العربية</a>
+              <a class="dropdown-item<?= $curLang === 'en' ? ' is-current' : '' ?>" href="<?= e(\App\Core\Lang::switchUrl('en')) ?>" lang="en" dir="ltr" data-no-loading><?= icon($curLang === 'en' ? 'circle-check' : 'globe') ?>English</a>
+              <?php endif; ?>
+            </div>
             <div class="dropdown-sep"></div>
             <form method="post" action="<?= e(url('/logout')) ?>">
               <?= csrf_field() ?>

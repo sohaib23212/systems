@@ -41,6 +41,8 @@ window.__uiAudit = function (opts) {
       var pr = clipOf(p), pcs = getComputedStyle(p);
       r = { l: pr.l, t: pr.t, r: pr.r, b: pr.b, fixed: pr.fixed, sticky: pr.sticky || pcs.position === 'sticky' || pcs.position === 'fixed', scroller: pr.scroller };
       var ox = pcs.overflowX, oy = pcs.overflowY;
+      // قصّ الحماية الأخيرة على المنطقة الرئيسية لا يُخفي المشكلة عن الفحص: ما يتجاوز الشاشة يُبلَّغ عنه
+      if (p.classList.contains('main') && p.parentElement && p.parentElement.classList.contains('shell')) { ox = 'visible'; }
       if (ox !== 'visible' || oy !== 'visible' || pcs.contain.indexOf('paint') >= 0) {
         var b = p.getBoundingClientRect();
         if (ox !== 'visible') { r.l = Math.max(r.l, b.left); r.r = Math.min(r.r, b.right); }
@@ -108,6 +110,8 @@ window.__uiAudit = function (opts) {
           u = u ? { l: Math.min(u.l, rr.left), t: Math.min(u.t, rr.top), r: Math.max(u.r, rr.right), b: Math.max(u.b, rr.bottom) } : { l: rr.left, t: rr.top, r: rr.right, b: rr.bottom };
         }
         box = u ? inter(u, clip) : null;
+        // العنصر نفسه يقصّ نصه إن كان قابلاً للتمرير (مثل صندوق الشيفرة)
+        if (box && (cs.overflowX !== 'visible' || cs.overflowY !== 'visible')) { box = inter(box, r); }
       }
       if (box) { cand.push({ el: el, r: box, own: own, cs: cs, clip: clip }); }
     }
@@ -164,7 +168,10 @@ window.__uiAudit = function (opts) {
       if ((A.el.tagName === 'INPUT' && (A.el.type === 'checkbox' || A.el.type === 'radio') && parseFloat(A.cs.opacity) < 0.05) ||
           (B.el.tagName === 'INPUT' && (B.el.type === 'checkbox' || B.el.type === 'radio') && parseFloat(B.cs.opacity) < 0.05)) { continue; }
       if (coveredBetween(A.el, B.el, (x.l + x.r) / 2, (x.t + x.b) / 2)) { continue; }
-      issues.push({ type: 'overlap', sel: desc(A.el) + '  ⟷  ' + desc(B.el), detail: Math.round(w) + 'x' + Math.round(h), text: text(A.el) + ' | ' + text(B.el) });
+      var bothText = A.own && B.own && !/^(BUTTON|INPUT|SELECT|TEXTAREA|IMG)$/.test(A.el.tagName) && !/^(BUTTON|INPUT|SELECT|TEXTAREA|IMG)$/.test(B.el.tagName);
+      issues.push({ type: 'overlap', sel: desc(A.el) + '  ⟷  ' + desc(B.el), detail: Math.round(w) + 'x' + Math.round(h), text: text(A.el) + ' | ' + text(B.el),
+        // صندوقا سطرين متداخلان لا يعني تلامس الحروف (خطوط مثل Cairo لها صندوق سطر أطول من الحروف): يُتحقق من البكسلات
+        ink: bothText ? { a: Array.prototype.indexOf.call(all, A.el), b: Array.prototype.indexOf.call(all, B.el) } : undefined });
     }
   }
 

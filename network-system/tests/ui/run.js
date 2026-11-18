@@ -155,6 +155,43 @@ async function verifyContrast(page, v) {
   }, [buf.toString('base64'), v.fg]);
 }
 
+// تراكب نصين: هل تلتقي حروفهما فعلاً؟ تُصوَّر منطقة التقاطع ثلاث مرات (بلا النصين، بالأول وحده، بالثاني وحده)
+// ويُعدّ تراكباً حقيقياً إن وُجد بكسل يرسمه النصان كلاهما
+async function verifyInk(page, v) {
+  const setup = await page.evaluate(([ia, ib]) => {
+    const all = document.body.querySelectorAll('*'), a = all[ia], b = all[ib];
+    if (!a || !b) { return null; }
+    a.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+    const box = el => { let u = null; for (const n of el.childNodes) { if (n.nodeType !== 3 || !n.nodeValue.trim()) { continue; } const r = document.createRange(); r.selectNodeContents(n); const q = r.getBoundingClientRect(); u = u ? [Math.min(u[0], q.left), Math.min(u[1], q.top), Math.max(u[2], q.right), Math.max(u[3], q.bottom)] : [q.left, q.top, q.right, q.bottom]; } return u; };
+    const x = box(a), y = box(b);
+    if (!x || !y) { return null; }
+    const l = Math.max(x[0], y[0], 0), t = Math.max(x[1], y[1], 0), r = Math.min(x[2], y[2], innerWidth), bt = Math.min(x[3], y[3], innerHeight);
+    if (r - l < 1 || bt - t < 1) { return null; }
+    window.__inkEls = [a, b];
+    return { x: Math.floor(l), y: Math.floor(t), width: Math.ceil(r - l) + 1, height: Math.ceil(bt - t) + 1 };
+  }, [v.a, v.b]);
+  if (!setup) { return null; }
+  const hide = (which) => page.evaluate(w => window.__inkEls.forEach((e, i) => {
+    if (w.includes(i)) { e.style.setProperty('color', 'transparent', 'important'); e.style.setProperty('-webkit-text-fill-color', 'transparent', 'important'); e.style.setProperty('text-shadow', 'none', 'important'); }
+    else { e.style.removeProperty('color'); e.style.removeProperty('-webkit-text-fill-color'); e.style.removeProperty('text-shadow'); }
+  }), which);
+  const styles = await page.evaluate(() => window.__inkEls.map(e => e.getAttribute('style')));
+  const shot = async (which) => { await hide(which); return (await page.screenshot({ clip: setup, animations: 'disabled', caret: 'hide' })).toString('base64'); };
+  const bg = await shot([0, 1]), onlyA = await shot([1]), onlyB = await shot([0]);
+  await page.evaluate(st => { window.__inkEls.forEach((e, i) => { if (st[i] === null) { e.removeAttribute('style'); } else { e.setAttribute('style', st[i]); } }); delete window.__inkEls; window.scrollTo({ top: 0, behavior: 'instant' }); }, styles);
+  return page.evaluate(async (imgs) => {
+    const px = async b64 => { const im = new Image(); im.src = 'data:image/png;base64,' + b64; await im.decode(); const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; const x = c.getContext('2d'); x.drawImage(im, 0, 0); return x.getImageData(0, 0, c.width, c.height).data; };
+    const [g, a, b] = await Promise.all(imgs.map(px));
+    let both = 0;
+    for (let i = 0; i < g.length; i += 4) {
+      const da = Math.abs(a[i] - g[i]) + Math.abs(a[i + 1] - g[i + 1]) + Math.abs(a[i + 2] - g[i + 2]);
+      const db = Math.abs(b[i] - g[i]) + Math.abs(b[i + 1] - g[i + 1]) + Math.abs(b[i + 2] - g[i + 2]);
+      if (da > 60 && db > 60) { both++; }
+    }
+    return both;
+  }, [bg, onlyA, onlyB]);
+}
+
 async function auditPage(ctx, url, ws, meta, results, extra) {
   const page = await ctx.newPage();
   const errs = [];
@@ -185,6 +222,12 @@ async function auditPage(ctx, url, ws, meta, results, extra) {
     const issues = await page.evaluate(o => window.__uiAudit(o), { expectWidth: w, contrast: CONTRAST }).catch(e => [{ type: 'audit', sel: 'page', detail: e.message }]);
     const kept = [];
     for (const i of issues) {
+      if (i.ink) {
+        const both = await verifyInk(page, i.ink);
+        delete i.ink;
+        if (both !== null && both < 2) { continue; }
+        if (both !== null) { i.detail += ' · ' + both + ' px of letters touch'; }
+      }
       if (i.verify) {
         const real = await verifyContrast(page, i.verify);
         delete i.verify;

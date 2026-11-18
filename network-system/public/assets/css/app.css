@@ -3141,12 +3141,11 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
   position: fixed; z-index: 25; inset-inline: 0; bottom: var(--kb, 0px);
   display: flex; justify-content: center; align-items: center;
   min-height: var(--footbar-h); padding: 2px 10px calc(2px + env(safe-area-inset-bottom, 0px));
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  border-top: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
-  -webkit-backdrop-filter: saturate(160%) blur(10px); backdrop-filter: saturate(160%) blur(10px);
+  /* سطح معتم: ما يمرّ تحته من المحتوى عند التمرير لا يظهر من خلاله */
+  background: var(--surface);
+  border-top: 1px solid var(--border);
   transition: bottom .12s ease-out;
 }
-@supports not (background: color-mix(in srgb, red 50%, blue)) { .app-footer { background: var(--surface); } }
 .app-footer .madix-credit { padding: 3px 10px; font-size: 11.5px; flex-wrap: nowrap; white-space: nowrap; max-width: 100%; overflow: hidden; }
 .app-footer .madix-credit img { width: 14px; height: 14px; }
 .content { padding-bottom: calc(24px + var(--footbar-h) + env(safe-area-inset-bottom, 0px)); }
@@ -3162,6 +3161,8 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
   body:not(.sidebar-hidden) .app-footer { inset-inline-start: var(--sidebar-w); }
   [data-sidebar-shape="floating"] body:not(.sidebar-hidden) .app-footer { inset-inline-start: calc(var(--sidebar-w) + 12px); }
 }
+/* أثناء الكتابة ولوحة المفاتيح ظاهرة: مساحة إضافية أسفل الصفحة بقدر ارتفاعها، فيمكن رفع آخر حقل فوق الشريط */
+.shell { padding-bottom: var(--kb, 0px); }
 /* الإشعارات المنبثقة فوق الشريط */
 body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-area-inset-bottom, 0px) + var(--kb, 0px)); }
 @media print { .app-footer { display: none !important; } }
@@ -3185,3 +3186,59 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
 .ai-rows td { font-size: 12px; }
 .ai-act.is-danger .modal-head h3 .icon { color: var(--danger); }
 @media (max-width: 640px) { .ai-fields { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------------- الشريط العلوي: لا تراكب ولا تمرير أفقي على أي مقاس ----------------
+   كل عنصر يحتفظ بحجمه (لا ينضغط فيتراكب فوق جاره ويغطي زر القائمة)، وخانة البحث وحدها تتقلص.
+   على الهاتف يصبح البحث زراً يتسع فوق الشريط عند الكتابة، وينتقل اختيار المظهر واللغة إلى قائمة الحساب. */
+.topbar > .menu-toggle, .topbar > .topbar-brand, .topbar-actions, .topbar-actions > * { flex-shrink: 0; }
+.topbar-search { min-width: 0; }
+.dropdown-menu .narrow-only { display: none; }
+@media (max-width: 760px) {
+  .topbar-actions { gap: 4px; }
+  .net-switch { padding: 0 10px; gap: 0; }
+  .net-switch > .icon-sm { display: none; }
+}
+@media (max-width: 600px) {
+  .topbar-search { flex: 0 0 38px; width: 38px; max-width: 38px; }
+  .topbar-search input { padding: 0; color: transparent; caret-color: transparent; cursor: pointer; }
+  .topbar-search input::placeholder { color: transparent; }
+  .topbar-search input::-webkit-search-cancel-button { -webkit-appearance: none; display: none; }
+  .topbar-search .icon { inset-inline-start: 10px; }
+  .topbar-search:focus-within { position: absolute; inset-inline: 12px; top: 0; bottom: 0; width: auto; max-width: none; z-index: 3; display: flex; align-items: center; }
+  .topbar-search:focus-within input { padding-inline: 38px 12px; color: var(--text); caret-color: auto; cursor: text; }
+  .topbar-search:focus-within input::placeholder { color: var(--muted); }
+  .topbar-search:focus-within .icon { inset-inline-start: 11px; }
+  .topbar:has(.topbar-search:focus-within) > :not(.topbar-search) { visibility: hidden; }
+  [data-topbar="brand"] .topbar-search:focus-within input { color: #fff; }
+  [data-topbar="brand"] .topbar-search:focus-within input::placeholder { color: rgba(255, 255, 255, .78); }
+}
+@media (max-width: 480px) {
+  .topbar-actions > .theme-dd, .topbar-actions > .lang-dd { display: none; }
+  .dropdown-menu .narrow-only { display: block; }
+  .user-chip { padding: 2px; gap: 0; }
+  .user-chip > .icon { display: none; }
+}
+@media (max-width: 360px) {
+  .topbar { padding-inline: 8px; gap: 4px; }
+  .topbar-search:focus-within { inset-inline: 8px; }
+}
+
+/* الكثافة على الهاتف: هوامش الهاتف نفسها في كل التصاميم (الكثافة المريحة كانت تلغي هوامش الهاتف فتضيق الصفحة) */
+@media (max-width: 760px) {
+  [data-density] .content { padding: 16px 16px calc(16px + var(--footbar-h) + env(safe-area-inset-bottom, 0px)); }
+  [data-density] .panel-head, [data-density] .panel-body { padding-inline: 14px; }
+}
+
+/* ---------------- القوائم: العنوان الطويل يُختصر بنقاط ولا يمتد فوق ما بجانبه ----------------
+   (العنوان قد يكون رابطاً <a> وهو عنصر سطري لا يقبل الاختصار، فيُجعل كتلة) */
+.list-item-title { display: block; max-width: 100%; }
+.list-item-end { flex: none; }
+
+/* ---------------- ألوان بتباين كافٍ للنص الأبيض ---------------- */
+.btn-whatsapp { background: linear-gradient(135deg, #128c7e, #075e54); }
+.team-card.is-owner .team-avatar { background: linear-gradient(135deg, #d97706, #92400e); }
+
+/* ---------------- حماية أخيرة: لا شيء يجعل الصفحة أعرض من الشاشة ----------------
+   على الهاتف، أي عنصر أعرض من الشاشة يوسّع مساحة العرض كلها فتنزاح القائمة والشريط السفلي وتظهر حافة فارغة.
+   القص هنا (clip وليس hidden) لا ينشئ حاوية تمرير، فيبقى الشريط العلوي ملتصقاً بالأعلى. */
+.main { overflow-x: clip; }
