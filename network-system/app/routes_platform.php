@@ -64,6 +64,7 @@ return static function (Router $r): void {
     $r->get('/admin/activity', [AdminController::class, 'activity'], $a + ['aperm' => ['tenants.view', 'tenants.manage', 'tenants.access']]);
     $r->get('/admin/design', [DesignController::class, 'index'], $a + ['aperm' => 'design.manage']);
     $r->post('/admin/design', [DesignController::class, 'save'], $a + ['aperm' => 'design.manage']);
+    $r->get('/admin/design/preview', [DesignController::class, 'preview'], $a + ['aperm' => 'design.manage']);
     $r->get('/admin/landing', [DesignController::class, 'landing'], $a + ['aperm' => 'design.manage']);
     $r->post('/admin/landing', [DesignController::class, 'saveLanding'], $a + ['aperm' => 'design.manage']);
     $r->get('/admin/sms', [AdminSmsController::class, 'index'], $a + ['aperm' => ['messages.send', 'settings.manage']]);

@@ -1,41 +1,137 @@
-/* معاينة مباشرة للتصميم والحركة في لوحة المسؤول */
-(function (document) {
+/* صفحة التصاميم في لوحة المسؤول: التصاميم الجاهزة والمعاينة الحيّة */
+(function (document, window) {
   'use strict';
   var form = document.querySelector('[data-design-form]');
   if (!form) { return; }
-  var pv = form.querySelector('[data-preview]');
-  var FONTS = { plex: 'Plex Arabic', cairo: 'Cairo', tajawal: 'Tajawal', almarai: 'Almarai', kufi: 'Noto Kufi Arabic', readex: 'Readex Pro' };
-  var COLORS = { royal: '#2453d6', ocean: '#0e7490', emerald: '#047857', violet: '#6d28d9', indigo: '#4338ca', sunset: '#c2410c', rose: '#be123c', graphite: '#334155', gold: '#a16207' };
-  var RADIUS = { sharp: '6px', normal: '12px', round: '18px' };
-  function val(name) { var el = form.querySelector('[name="' + name + '"]:checked') || form.querySelector('[name="' + name + '"]'); return el ? el.value : ''; }
-  function replay() {
-    var items = pv.querySelectorAll('.pv-title, .pv-stats > div, .pv-card, .pv-row');
-    var motion = val('motion');
-    var stagger = parseInt(val('stagger'), 10) || 0;
-    var speed = parseInt(val('speed'), 10) || 380;
-    Array.prototype.forEach.call(items, function (el, i) {
-      el.classList.remove('mx');
-      void el.offsetWidth;
-      if (motion === 'none') { return; }
-      el.style.setProperty('--i', i);
-      el.classList.add('mx');
-    });
-    pv.setAttribute('data-motion', motion);
-    pv.style.setProperty('--motion-stagger', stagger + 'ms');
-    pv.style.setProperty('--motion-speed', speed + 'ms');
-  }
-  function apply() {
-    pv.style.fontFamily = '"' + (FONTS[val('font')] || 'Plex Arabic') + '", system-ui, sans-serif';
-    pv.style.setProperty('--pv-accent', COLORS[val('palette')] || '#2453d6');
-    pv.style.setProperty('--pv-radius', RADIUS[val('radius')] || '12px');
-    pv.setAttribute('data-density', val('density'));
-    pv.setAttribute('data-sidebar', val('sidebar'));
-  }
-  form.addEventListener('change', function (e) {
-    apply();
-    if (/^(motion|stagger|speed)$/.test(e.target.name)) { replay(); }
+  var presets = {};
+  try { presets = JSON.parse((form.querySelector('[data-design-presets]') || {}).textContent || '{}'); } catch (e) { presets = {}; }
+  var FIELDS = ['skin', 'palette', 'font', 'radius', 'density', 'sidebar', 'sidebar_shape', 'nav_style', 'topbar', 'background', 'buttons', 'font_size', 'motion'];
+  var NAMES = {};
+  Array.prototype.forEach.call(form.querySelectorAll('[data-preset]'), function (b) {
+    NAMES[b.getAttribute('data-preset')] = (b.querySelector('.dz-preset-text b') || {}).textContent || '';
   });
-  form.querySelector('[data-replay]').addEventListener('click', replay);
-  apply();
-  replay();
-})(document);
+
+  var stage = form.querySelector('[data-pv-stage]');
+  var wrap = form.querySelector('[data-pv-frame-wrap]');
+  var frame = form.querySelector('[data-pv-frame]');
+  var loading = form.querySelector('[data-pv-loading]');
+  var state = form.querySelector('[data-preset-state]');
+  var base = form.getAttribute('data-preview-url');
+
+  function val(name) {
+    var el = form.querySelector('[name="' + name + '"]:checked');
+    if (el) { return el.value; }
+    el = form.querySelector('[name="' + name + '"]');
+    if (!el) { return ''; }
+    if (el.type === 'checkbox') { return el.checked ? '1' : '0'; }
+    return el.value;
+  }
+  function setVal(name, v) {
+    var el = form.querySelector('[name="' + name + '"][value="' + v + '"]');
+    if (el) { el.checked = true; }
+  }
+  function current() {
+    var o = {};
+    FIELDS.forEach(function (f) { o[f] = val(f); });
+    return o;
+  }
+  function matchPreset(o) {
+    for (var k in presets) {
+      if (!Object.prototype.hasOwnProperty.call(presets, k)) { continue; }
+      var p = presets[k], same = true;
+      for (var f in p) { if (Object.prototype.hasOwnProperty.call(p, f) && o[f] !== p[f]) { same = false; break; } }
+      if (same) { return k; }
+    }
+    return 'custom';
+  }
+  function markPreset() {
+    var k = matchPreset(current());
+    Array.prototype.forEach.call(form.querySelectorAll('[data-preset]'), function (b) {
+      var on = b.getAttribute('data-preset') === k;
+      b.classList.toggle('is-active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    if (state) { state.textContent = k === 'custom' ? 'تصميم مخصص' : 'المختار: ' + (NAMES[k] || k); }
+  }
+
+  // ---------------- المعاينة ----------------
+  var mode = 'light', device = 'desktop', timer = null, lastUrl = '';
+  var DIM = { desktop: [1280, 820], mobile: [390, 780] };
+  function previewUrl() {
+    var q = [];
+    FIELDS.concat(['stagger', 'speed', 'page_fx', 'haptics']).forEach(function (f) { q.push(encodeURIComponent(f) + '=' + encodeURIComponent(val(f))); });
+    q.push('mode=' + mode);
+    return base + '?' + q.join('&');
+  }
+  function fit() {
+    if (!stage || !wrap) { return; }
+    var d = DIM[device], avail = stage.clientWidth;
+    if (!avail) { return; }
+    var maxH = device === 'mobile' ? 640 : 99999;
+    var s = Math.min(1, avail / d[0], maxH / d[1]);
+    wrap.style.width = d[0] + 'px';
+    wrap.style.height = d[1] + 'px';
+    wrap.style.transform = 'scale(' + s + ')';
+    stage.style.height = Math.ceil(d[1] * s) + 'px';
+    stage.classList.toggle('is-mobile', device === 'mobile');
+    wrap.style.insetInlineStart = device === 'mobile' ? Math.max(0, (avail - d[0] * s) / 2) + 'px' : '0px';
+  }
+  function load() {
+    if (!frame || !base) { return; }
+    var url = previewUrl();
+    if (url === lastUrl) { return; }
+    lastUrl = url;
+    if (loading) { loading.classList.add('is-on'); }
+    frame.src = url;
+  }
+  function schedule() {
+    clearTimeout(timer);
+    timer = setTimeout(load, 220);
+  }
+  if (frame) {
+    frame.addEventListener('load', function () { if (loading) { loading.classList.remove('is-on'); } });
+  }
+
+  form.addEventListener('change', function (e) {
+    var n = e.target.name || '';
+    if (n === '_pv_mode') { mode = e.target.value; lastUrl = ''; load(); return; }
+    if (n === '_pv_device') { device = e.target.value; fit(); return; }
+    markPreset();
+    schedule();
+  });
+  form.addEventListener('input', function (e) {
+    if (e.target.name === 'stagger' || e.target.name === 'speed') { schedule(); }
+  });
+  form.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-preset]');
+    if (!b) { return; }
+    var p = presets[b.getAttribute('data-preset')];
+    if (!p) { return; }
+    for (var f in p) { if (Object.prototype.hasOwnProperty.call(p, f)) { setVal(f, p[f]); } }
+    markPreset();
+    load();
+    // على الهاتف: إظهار المعاينة بعد اختيار التصميم
+    if (window.innerWidth < 1100 && stage) {
+      var r = stage.getBoundingClientRect();
+      if (r.top > window.innerHeight || r.bottom < 0) { stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }
+  });
+  // منع إرسال حقول المعاينة الداخلية مع النموذج
+  form.addEventListener('submit', function () {
+    Array.prototype.forEach.call(form.querySelectorAll('[name^="_pv_"]'), function (el) { el.disabled = true; });
+  });
+  window.addEventListener('pageshow', function () {
+    Array.prototype.forEach.call(form.querySelectorAll('[name^="_pv_"]'), function (el) { el.disabled = false; });
+  });
+
+  var rq = false;
+  window.addEventListener('resize', function () {
+    if (rq) { return; }
+    rq = true;
+    requestAnimationFrame(function () { rq = false; fit(); });
+  });
+  if (window.ResizeObserver && stage) { new ResizeObserver(function () { fit(); }).observe(stage); }
+  markPreset();
+  fit();
+  load();
+})(document, window);

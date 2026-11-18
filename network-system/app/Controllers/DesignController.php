@@ -20,25 +20,41 @@ final class DesignController extends Controller
         return view('admin/design', ['t' => Theme::current()], 'admin');
     }
 
+    /** القيم المرسلة من نموذج التصاميم أو من رابط المعاينة */
+    private function values(Request $request): array
+    {
+        $in = [];
+        foreach (array_keys(Theme::CHOICES) as $k) {
+            $in[$k] = $request->str($k);
+        }
+        $in['stagger'] = (string) $request->int('stagger', 45);
+        $in['speed'] = (string) $request->int('speed', 380);
+        $in['page_fx'] = $request->bool('page_fx') ? '1' : '0';
+        $in['haptics'] = $request->bool('haptics') ? '1' : '0';
+        return Theme::sanitize($in);
+    }
+
     public function save(Request $request): Response
     {
-        $in = static fn (string $k, array $allowed, string $def) => in_array($request->str($k), $allowed, true) ? $request->str($k) : $def;
-        $values = [
-            'design.font'    => $in('font', array_keys(Theme::FONTS), 'plex'),
-            'design.palette' => $in('palette', array_keys(Theme::PALETTES), 'royal'),
-            'design.radius'  => $in('radius', array_keys(Theme::RADIUS), 'normal'),
-            'design.density' => $in('density', array_keys(Theme::DENSITY), 'normal'),
-            'design.sidebar' => $in('sidebar', array_keys(Theme::SIDEBAR), 'light'),
-            'design.motion'  => $in('motion', array_keys(Theme::MOTION), 'rise'),
-            'design.stagger' => (string) max(0, min(200, $request->int('stagger', 45))),
-            'design.speed'   => (string) max(120, min(1200, $request->int('speed', 380))),
-            'design.page_fx' => $request->bool('page_fx') ? '1' : '0',
-            'design.haptics' => $request->bool('haptics') ? '1' : '0',
-        ];
+        $t = $this->values($request);
+        $values = [];
+        foreach ($t as $k => $v) {
+            $values['design.' . $k] = $v;
+        }
         Platform::setSettings($values);
         Theme::flush();
-        Platform::log(null, 'admin', 'platform.design', 'تعديل التصاميم والحركة', AdminAuth::user()['name']);
-        return $this->ok('تم تطبيق التصميم على كل الأنظمة.', '/admin/design');
+        $name = $t['preset'] !== 'custom' ? 'تصميم «' . Theme::PRESETS[$t['preset']][0] . '»' : 'تصميم مخصص';
+        Platform::log(null, 'admin', 'platform.design', 'تطبيق ' . $name, AdminAuth::user()['name']);
+        return $this->ok('تم تطبيق ' . $name . ' على كل الأنظمة.', '/admin/design');
+    }
+
+    /** معاينة حيّة لصفحة حقيقية من النظام بالقيم المختارة (داخل إطار في صفحة التصاميم) */
+    public function preview(Request $request): Response
+    {
+        $t = $this->values($request);
+        $mode = $request->str('mode') === 'dark' ? 'dark' : 'light';
+        $html = \App\Core\View::render('admin/design-preview', ['t' => $t, 'mode' => $mode], '');
+        return new Response($html);
     }
 
     public function landing(Request $request): Response
