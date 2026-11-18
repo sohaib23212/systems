@@ -49,7 +49,9 @@ final class AssistantController extends Controller
         if (!Assistant::visible()) {
             return json_response(['ok' => false, 'message' => Ai::stateLabel(Ai::status())], 422);
         }
-        $r = Assistant::confirm($request->str('id'));
+        $in = $request->json();
+        $values = is_array($in['values'] ?? null) ? $in['values'] : [];
+        $r = Assistant::confirm((string) ($in['id'] ?? $request->str('id')), $values);
         return json_response($r, $r['ok'] ? 200 : 422);
     }
 }

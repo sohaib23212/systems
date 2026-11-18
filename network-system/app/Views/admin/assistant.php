@@ -5,10 +5,10 @@ use App\Services\Ai;
 $v->title = 'مساعد المسؤول';
 $v->script('js/assistant.js');
 $ok = $state === 'ok';
-$samples = ['كم دخل هذا الشهر مقارنة بالشهر الماضي؟', 'ما الحسابات التي تنتهي خلال أسبوع؟', 'ما الحسابات الخاملة منذ أكثر من أسبوعين؟', 'من أكثر الحسابات مشتركين؟'];
+$samples = ['كم دخل هذا الشهر مقارنة بالشهر الماضي؟', 'ما الحسابات التي تنتهي خلال أسبوع؟', 'ما الحسابات الخاملة منذ أكثر من أسبوعين؟', 'مدّد تجربة أحدث حساب 7 أيام'];
 ?>
-<div class="panel chat" data-chat data-url="<?= e(url('/admin/assistant')) ?>"<?= $ok ? '' : ' data-disabled' ?>>
-  <div class="panel-head"><h3><?= icon('sparkles') ?>مساعد المسؤول</h3><span class="badge <?= $ok ? 'badge-success' : 'badge-outline' ?>"><?= e($ok ? 'قراءة فقط' : Ai::stateLabel($state)) ?></span></div>
+<div class="panel chat chat-tall" data-chat data-url="<?= e(url('/admin/assistant')) ?>" data-confirm-url="<?= e(url('/admin/assistant/confirm')) ?>"<?= $ok ? '' : ' data-disabled' ?>>
+  <div class="panel-head"><h3><?= icon('sparkles') ?>مساعد المسؤول</h3><span class="badge <?= $ok ? 'badge-success' : 'badge-outline' ?>"><?= e($ok ? 'يعمل' : Ai::stateLabel($state)) ?></span></div>
   <div class="chat-log" data-chat-log aria-live="polite">
     <div class="chat-empty" data-chat-empty>
       <span class="chat-empty-icon"><?= icon('sparkles') ?></span>

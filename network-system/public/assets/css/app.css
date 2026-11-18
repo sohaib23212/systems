@@ -3165,3 +3165,23 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
 /* الإشعارات المنبثقة فوق الشريط */
 body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-area-inset-bottom, 0px) + var(--kb, 0px)); }
 @media print { .app-footer { display: none !important; } }
+
+/* ---------------- نافذة إجراءات المساعد الذكي ---------------- */
+.ai-act .modal-body { display: flex; flex-direction: column; gap: 14px; }
+.ai-act .ai-what { margin: 0; }
+.ai-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.ai-field { margin: 0; }
+.ai-field.is-check, .ai-field:has(.ai-multi), .ai-field:has(textarea) { grid-column: 1 / -1; }
+.ai-field .input.is-readonly { background: var(--surface-2); color: var(--text-2); }
+.ai-multi { display: flex; flex-wrap: wrap; gap: 8px; }
+.ai-chip { position: relative; cursor: pointer; }
+.ai-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.ai-chip span { display: inline-flex; align-items: center; height: 34px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--border-strong); background: var(--surface); font-size: 13px; color: var(--text-2); transition: background-color .15s, border-color .15s, color .15s; }
+.ai-chip input:checked + span { background: var(--primary); border-color: var(--primary); color: var(--on-primary); font-weight: 600; }
+.ai-chip input:focus-visible + span { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ai-act .ai-msg, .ai-act .ai-result .notice { margin: 0; }
+.ai-result { display: flex; flex-direction: column; gap: 12px; }
+.ai-rows { max-height: 320px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+.ai-rows td { font-size: 12px; }
+.ai-act.is-danger .modal-head h3 .icon { color: var(--danger); }
+@media (max-width: 640px) { .ai-fields { grid-template-columns: minmax(0, 1fr); } }

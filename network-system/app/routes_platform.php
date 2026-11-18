@@ -111,6 +111,7 @@ return static function (Router $r): void {
     $r->post('/admin/ai/tenants', [AdminAiController::class, 'tenants'], $a + ['aperm' => 'ai.manage']);
     $r->get('/admin/assistant', [AdminAiController::class, 'assistant'], $a + ['aperm' => 'ai.manage']);
     $r->post('/admin/assistant', [AdminAiController::class, 'ask'], $a + ['aperm' => 'ai.manage']);
+    $r->post('/admin/assistant/confirm', [AdminAiController::class, 'assistantConfirm'], $a + ['aperm' => 'ai.manage']);
     $r->get('/admin/insights', [AdminAiController::class, 'insights'], $a + ['aperm' => 'ai.manage']);
     // تذاكر الدعم والإعلانات
     $r->get('/admin/tickets', [AdminSupportController::class, 'tickets'], $a + ['aperm' => 'support.manage']);

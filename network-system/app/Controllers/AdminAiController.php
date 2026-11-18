@@ -189,11 +189,35 @@ final class AdminAiController extends Controller
             return json_response(['ok' => false, 'message' => Ai::stateLabel(Ai::status(null))], 422);
         }
         Session::release();
-        $system = 'أنت مساعد مسؤول منصة ' . \App\Core\Brand::NAME . ' لإدارة اشتراكات شبكات الإنترنت. أجب بالعربية بإيجاز ووضوح اعتماداً على بيانات المنصة التالية فقط، واذكر الأرقام والأسماء كما هي. '
-            . 'دورك للقراءة والتحليل فقط: لا تنفّذ أي إجراء ولا تدّعِ تنفيذه. إن لم تكن المعلومة ضمن البيانات فقل إنها غير متوفرة. العملة: ' . Platform::setting('platform.currency') . ". التاريخ الآن: " . date('Y-m-d H:i') . ".\n\n"
-            . 'بيانات المنصة (JSON):' . "\n" . json_encode(Insights::context(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $hints = \App\Platform\AdminAssistantActions::hints();
+        $system = 'أنت مساعد مسؤول منصة ' . \App\Core\Brand::NAME . ' لإدارة اشتراكات شبكات الإنترنت. ' . (\App\Core\Lang::isEn() ? 'أجب بالإنجليزية' : 'أجب بالعربية') . ' بإيجاز ووضوح ودقة اعتماداً على بيانات المنصة التالية فقط، واذكر الأرقام والأسماء كما هي. '
+            . 'إن لم تكن المعلومة ضمن البيانات فقل إنها غير متوفرة ولا تخمّن. العملة: ' . Platform::setting('platform.currency') . ". التاريخ الآن: " . date('Y-m-d H:i') . ".\n"
+            . ($hints
+                ? 'لا تنفّذ أي شيء بنفسك ولا تقل إنك نفّذته. إذا طلب المسؤول أمراً من القائمة التالية فجهّزه بسطر مستقل في آخر ردّك بهذه الصيغة تماماً: <<ACTION {...}>> فتفتح له نافذة فيها ما سيُنفَّذ وحقول يراجعها ثم يضغط «موافق». ثلاثة إجراءات على الأكثر، ولا تجهّز ما لم يُطلب صراحة. الإجراءات المتاحة:' . "\n" . implode("\n", $hints) . "\n"
+                : 'دورك للقراءة والتحليل فقط: لا تنفّذ أي إجراء ولا تدّعِ تنفيذه.' . "\n")
+            . "\n" . 'بيانات المنصة (JSON):' . "\n" . json_encode(Insights::context(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $r = Ai::ask('admin_chat', $system, $messages, ['effort' => 'medium', 'actor' => $this->admin()]);
-        return json_response(['ok' => $r['ok'], 'text' => $r['text'], 'message' => $r['message']], $r['ok'] ? 200 : 422);
+        if (!$r['ok']) {
+            return json_response(['ok' => false, 'text' => '', 'message' => $r['message']], 422);
+        }
+        Session::resume();
+        [$text, $actions, $notes] = \App\Platform\AdminAssistantActions::extract((string) $r['text']);
+        Session::release();
+        if ($notes) {
+            $text = trim($text . "\n\n" . implode("\n", $notes));
+        }
+        if ($text === '' && $actions) {
+            $text = 'جهّزت لك الإجراء التالي، ولن يُنفَّذ قبل موافقتك.';
+        }
+        return json_response(['ok' => true, 'text' => $text, 'message' => '', 'actions' => $actions]);
+    }
+
+    /** تنفيذ إجراء جهّزه مساعد المسؤول بعد «موافق» في النافذة */
+    public function assistantConfirm(Request $request): Response
+    {
+        $in = $request->json();
+        $r = \App\Platform\AdminAssistantActions::confirm((string) ($in['id'] ?? ''), is_array($in['values'] ?? null) ? $in['values'] : []);
+        return json_response($r, $r['ok'] ? 200 : 422);
     }
 
     // ------------------------------------------------------------------

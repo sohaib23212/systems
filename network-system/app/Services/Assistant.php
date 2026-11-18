@@ -18,16 +18,6 @@ use RuntimeException;
  */
 final class Assistant
 {
-    /** الإجراءات التي يجهّزها المساعد: النوع => [الصلاحية، وصف للنموذج] */
-    public const ACTIONS = [
-        'renew'    => ['subscribers.renew', 'تجديد اشتراك مشترك فترة أو أكثر: {"type":"renew","username":"اسم دخول المشترك","periods":1}'],
-        'suspend'  => ['subscribers.status', 'إيقاف مشترك: {"type":"suspend","username":"اسم دخول المشترك","reason":"السبب"}'],
-        'activate' => ['subscribers.status', 'تفعيل مشترك موقوف: {"type":"activate","username":"اسم دخول المشترك"}'],
-        'generate' => ['cards.generate', 'توليد كروت من باقة: {"type":"generate","category":"اسم الباقة","quantity":50}'],
-        'sms'      => ['sms.send', 'نص رسالة نصية يراجعه المستخدم ثم يرسله بنفسه: {"type":"sms","text":"نص الرسالة"}'],
-    ];
-
-    public const MAX_GENERATE = 500;
     private const TTL = 900;
 
     /** يظهر المساعد في الواجهة: الذكاء مفعّل للحساب (ولو انتهى حد الشهر) والمستخدم مخوَّل */
@@ -163,18 +153,16 @@ final class Assistant
     public static function system(): string
     {
         $user = Auth::user();
-        $actions = [];
-        foreach (self::ACTIONS as [$perm, $how]) {
-            if (Auth::can($perm)) {
-                $actions[] = '- ' . $how;
-            }
-        }
+        $actions = AssistantActions::hints();
+        $lang = \App\Core\Lang::isEn() ? 'أجب بالإنجليزية' : 'أجب بالعربية';
         $s = 'أنت المساعد الذكي داخل نظام إدارة شبكة الإنترنت «' . Settings::networkName() . '». تتحدث مع ' . ($user['is_owner'] ? 'صاحب الشبكة' : 'موظف في الشبكة') . ' (' . $user['name'] . ').' . "\n"
-            . 'أجب بالعربية بإيجاز ووضوح اعتماداً على بيانات الشبكة أدناه فقط، واذكر الأسماء والأرقام كما هي. إن لم تكن المعلومة ضمن البيانات فقل إنها غير متوفرة لديك، ولا تخمّن. '
-            . 'البيانات أدناه هي كل ما يحق لهذا المستخدم رؤيته؛ لا تذكر شيئاً خارجها. التسمية «أجهزة MikroTik» وليس «راوتر». النص عادي بلا تنسيق Markdown.' . "\n";
+            . $lang . ' بإيجاز ووضوح ودقة اعتماداً على بيانات الشبكة أدناه فقط، واذكر الأسماء والأرقام كما هي تماماً. إن لم تكن المعلومة ضمن البيانات فقل إنها غير متوفرة لديك واقترح أين يجدها في النظام، ولا تخمّن أبداً. '
+            . 'البيانات أدناه هي كل ما يحق لهذا المستخدم رؤيته؛ لا تذكر شيئاً خارجها. التسمية «أجهزة MikroTik» وليس «راوتر». النص عادي بلا تنسيق Markdown.' . "\n"
+            . 'لشرح طريقة عمل شيء في النظام: صفحات النظام هي القائمة الجانبية (لوحة التحكم، أجهزة MikroTik، فحص الكابلات، المتصلون الآن، الكروت، توليد كروت، الباقات، المشتركون، المبيعات، الموزعون، التقارير، المخزون، مهام الصيانة، الإعدادات).' . "\n";
         if ($actions) {
-            $s .= 'أنت للقراءة: لا تنفّذ أي إجراء ولا تقل إنك نفّذته. إذا طلب المستخدم إجراءً من القائمة التالية فجهّزه بسطر مستقل في آخر ردّك بهذه الصيغة تماماً: '
-                . '<<ACTION {...}>> وسيظهر للمستخدم زر «تأكيد» ينفّذه بنفسه. جهّز إجراءً واحداً لكل سطر، وثلاثة على الأكثر، ولا تجهّز إجراءً لم يطلبه المستخدم صراحة. الإجراءات المتاحة:' . "\n"
+            $s .= 'لا تنفّذ أي شيء بنفسك ولا تقل إنك نفّذته. إذا طلب المستخدم أمراً من القائمة التالية فجهّزه بسطر مستقل في آخر ردّك بهذه الصيغة تماماً: '
+                . '<<ACTION {...}>> فتفتح للمستخدم نافذة فيها ما سيُنفَّذ وحقول يراجعها ويعدّلها ثم يضغط «موافق». جهّز إجراءً واحداً لكل سطر، وثلاثة على الأكثر، ولا تجهّز إجراءً لم يطلبه المستخدم صراحة. '
+                . 'إن نقصت معلومة (مثل الباقة أو العدد) فجهّز الإجراء بأفضل قيمة مقترحة، فالمستخدم يختار ويعدّل في النافذة. الإجراءات المتاحة:' . "\n"
                 . implode("\n", $actions) . "\n";
         } else {
             $s .= 'أنت للقراءة فقط: لا تنفّذ أي إجراء ولا تدّعِ تنفيذه.' . "\n";
@@ -270,83 +258,31 @@ final class Assistant
         return [$text, $actions, $notes];
     }
 
-    /** التحقق من إجراء وتجهيزه للعرض؛ الإجراءات المنفِّذة تُحفظ في الجلسة بمعرّف */
+    /** التحقق من إجراء وتجهيز نافذته؛ يُحفظ معلّقاً في الجلسة بمعرّف لا يُنفَّذ إلا بموافقة المستخدم */
     private static function prepare(array $a): array
     {
         $type = (string) ($a['type'] ?? '');
-        if (!isset(self::ACTIONS[$type])) {
+        if (!isset(AssistantActions::LIST[$type])) {
             throw new RuntimeException('إجراء غير معروف.');
         }
-        if (!Auth::can(self::ACTIONS[$type][0])) {
-            throw new RuntimeException('لا تملك صلاحية هذا الإجراء.');
+        $form = AssistantActions::form($type, $a);
+        if (isset($form['url'])) {
+            return ['id' => '', 'type' => $type, 'title' => $form['title'], 'summary' => $form['summary'], 'detail' => $form['summary'], 'fields' => [], 'button' => $form['button'], 'url' => $form['url']];
         }
-        switch ($type) {
-            case 'renew':
-                $sub = self::subscriber((string) ($a['username'] ?? ''));
-                $periods = max(1, min(12, (int) ($a['periods'] ?? 1)));
-                $plan = DB::row('SELECT * FROM plans WHERE id = ?', [$sub['plan_id']]);
-                if (!$plan) {
-                    throw new RuntimeException('باقة المشترك غير موجودة.');
-                }
-                $amount = round((float) $plan['price'] * $periods, 2);
-                return self::hold($type, ['id' => (int) $sub['id'], 'periods' => $periods], 'تجديد اشتراك ' . $sub['full_name'],
-                    'الباقة: ' . $plan['name'] . ' · ' . ar_plural($periods, 'فترة واحدة', 'فترتان', 'فترات', 'فترة') . ' · ' . money($amount) . ' تُضاف إلى حسابه (بلا تسجيل دفعة)', 'تأكيد التجديد');
-            case 'suspend':
-            case 'activate':
-                $sub = self::subscriber((string) ($a['username'] ?? ''));
-                $suspend = $type === 'suspend';
-                if ($suspend === ($sub['status'] === 'suspended')) {
-                    throw new RuntimeException($suspend ? 'المشترك موقوف أصلاً.' : 'المشترك مفعّل أصلاً.');
-                }
-                $reason = $suspend ? mb_substr(trim((string) ($a['reason'] ?? '')), 0, 190) : '';
-                return self::hold($type, ['id' => (int) $sub['id'], 'reason' => $reason], ($suspend ? 'إيقاف المشترك ' : 'تفعيل المشترك ') . $sub['full_name'],
-                    'اسم الدخول ' . $sub['username'] . ($reason !== '' ? ' · السبب: ' . $reason : ''), $suspend ? 'تأكيد الإيقاف' : 'تأكيد التفعيل');
-            case 'generate':
-                $name = trim((string) ($a['category'] ?? ''));
-                $cat = DB::row('SELECT * FROM categories WHERE is_active = 1 AND (name = ? OR id = ?) ORDER BY name = ? DESC LIMIT 1', [$name, (int) $name, $name]);
-                if (!$cat) {
-                    throw new RuntimeException('لا توجد باقة كروت باسم «' . mb_substr($name, 0, 60) . '».');
-                }
-                $qty = (int) ($a['quantity'] ?? 0);
-                if ($qty < 1 || $qty > self::MAX_GENERATE) {
-                    throw new RuntimeException('عدد الكروت عبر المساعد بين 1 و' . self::MAX_GENERATE . '.');
-                }
-                return self::hold($type, ['category_id' => (int) $cat['id'], 'quantity' => $qty], 'توليد ' . ar_plural($qty, 'كرت واحد', 'كرتين', 'كروت', 'كرتاً') . ' من «' . $cat['name'] . '»',
-                    'سعر الكرت ' . money((float) $cat['price']) . ' · بإعدادات التوليد الافتراضية', 'تأكيد التوليد');
-            default: // sms: نص يراجعه المستخدم في صفحة الإرسال، ولا يُرسل من هنا
-                $text = trim(mb_substr((string) ($a['text'] ?? ''), 0, 600));
-                if ($text === '') {
-                    throw new RuntimeException('نص الرسالة فارغ.');
-                }
-                return ['id' => '', 'type' => 'sms', 'title' => 'نص رسالة نصية', 'detail' => $text, 'button' => 'مراجعة وإرسال', 'url' => url('/sms', ['text' => $text])];
-        }
-    }
-
-    private static function subscriber(string $username): array
-    {
-        $username = trim($username);
-        [$scope, $sp] = Auth::routerScope('router_id', true);
-        $sub = $username !== '' ? DB::row("SELECT * FROM subscribers WHERE username = ?$scope", array_merge([$username], $sp)) : null;
-        if (!$sub) {
-            throw new RuntimeException('لا يوجد مشترك باسم الدخول «' . mb_substr($username, 0, 60) . '».');
-        }
-        return $sub;
-    }
-
-    private static function hold(string $type, array $payload, string $title, string $detail, string $button): array
-    {
         $id = bin2hex(random_bytes(8));
         $all = array_filter((array) Session::get('assistant_actions', []), static fn ($x) => is_array($x) && time() - (int) ($x['at'] ?? 0) < self::TTL);
-        $all[$id] = ['type' => $type, 'payload' => $payload, 'title' => $title, 'at' => time(), 'by' => (int) Auth::id()];
+        $all[$id] = ['type' => $type, 'title' => $form['title'], 'at' => time(), 'by' => (int) Auth::id()];
         Session::set('assistant_actions', array_slice($all, -12, null, true));
-        return ['id' => $id, 'type' => $type, 'title' => $title, 'detail' => $detail, 'button' => $button];
+        return ['id' => $id, 'type' => $type, 'title' => $form['title'], 'summary' => $form['summary'], 'detail' => $form['summary'],
+            'fields' => $form['fields'], 'button' => $form['button'], 'danger' => (bool) ($form['danger'] ?? false)];
     }
 
     /**
-     * تنفيذ إجراء جهّزه المساعد بعد ضغط المستخدم «تأكيد»: مرة واحدة، خلال ربع ساعة، وبصلاحياته وقت التنفيذ.
-     * @return array{ok:bool, message:string}
+     * تنفيذ إجراء جهّزه المساعد بعد ضغط المستخدم «موافق» في النافذة: مرة واحدة، خلال ربع ساعة،
+     * بالقيم التي راجعها المستخدم، وبصلاحياته وقت التنفيذ.
+     * @return array{ok:bool, message:string, rows?:list<array>, url?:string}
      */
-    public static function confirm(string $id): array
+    public static function confirm(string $id, array $values = []): array
     {
         $all = (array) Session::get('assistant_actions', []);
         $a = $all[$id] ?? null;
@@ -356,45 +292,15 @@ final class Assistant
         unset($all[$id]);
         Session::set('assistant_actions', $all);
         $type = (string) $a['type'];
-        if (!isset(self::ACTIONS[$type]) || !Auth::can(self::ACTIONS[$type][0])) {
-            return ['ok' => false, 'message' => 'لا تملك صلاحية هذا الإجراء.'];
-        }
-        $p = (array) $a['payload'];
         try {
-            switch ($type) {
-                case 'renew':
-                    $sub = self::subscriberById((int) $p['id']);
-                    $r = SubscriberService::renew((int) $sub['id'], (int) $sub['plan_id'], (int) $p['periods'], null, 0.0, 'cash', 'عبر المساعد الذكي');
-                    $message = 'تم تجديد اشتراك ' . $sub['full_name'] . ' حتى ' . substr((string) $r['expires_at'], 0, 10) . '.';
-                    break;
-                case 'suspend':
-                case 'activate':
-                    $sub = self::subscriberById((int) $p['id']);
-                    SubscriberService::setStatus((int) $sub['id'], $type === 'suspend' ? 'suspended' : 'active', $type === 'suspend' ? ((string) $p['reason'] !== '' ? (string) $p['reason'] : 'عبر المساعد الذكي') : null);
-                    $message = ($type === 'suspend' ? 'تم إيقاف المشترك ' : 'تم تفعيل المشترك ') . $sub['full_name'] . '.';
-                    break;
-                default: // generate
-                    $r = CardGenerator::generate([
-                        'category_id' => (int) $p['category_id'], 'quantity' => (int) $p['quantity'],
-                        'username_length' => (int) Settings::get('cards.username_length', '8'), 'charset' => (string) Settings::get('cards.charset', 'digits'),
-                        'password_mode' => 'same', 'prefix' => '', 'notes' => 'عبر المساعد الذكي',
-                    ], Auth::id());
-                    $message = 'تم توليد ' . ar_plural((int) $r['count'], 'كرت واحد', 'كرتين', 'كروت', 'كرتاً') . '.';
-            }
+            $r = AssistantActions::run($type, $values, (string) $a['title']);
         } catch (RuntimeException $e) {
-            return ['ok' => false, 'message' => $e->getMessage()];
+            // تعذّر التنفيذ: يبقى الإجراء معلّقاً ليصحّح المستخدم القيم ويعيد المحاولة
+            $all[$id] = $a;
+            Session::set('assistant_actions', $all);
+            return ['ok' => false, 'message' => $e->getMessage(), 'retry' => true];
         }
         Audit::log('assistant.action', 'إجراء عبر المساعد الذكي: ' . $a['title'], 'assistant', null, ['type' => $type]);
-        return ['ok' => true, 'message' => $message];
-    }
-
-    private static function subscriberById(int $id): array
-    {
-        [$scope, $sp] = Auth::routerScope('router_id', true);
-        $sub = DB::row("SELECT * FROM subscribers WHERE id = ?$scope", array_merge([$id], $sp));
-        if (!$sub) {
-            throw new RuntimeException('المشترك غير موجود.');
-        }
-        return $sub;
+        return ['ok' => true] + $r;
     }
 }
