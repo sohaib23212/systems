@@ -4,11 +4,13 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Audit;
+use App\Core\Auth;
 use App\Core\DB;
 use App\Core\Paginator;
 use App\Core\Request;
 use App\Core\Response;
 use App\Services\CardService;
+use App\Services\JobRunner;
 
 final class BatchController extends Controller
 {
@@ -60,7 +62,75 @@ final class BatchController extends Controller
         $sample = DB::rows('SELECT id, username, password, short_code, short_password, status, is_disabled FROM cards WHERE batch_id = ? ORDER BY id LIMIT 10', [$id]);
         $templates = DB::pairs('SELECT id, name FROM print_templates ORDER BY is_default DESC, name');
         $routers = DB::pairs('SELECT id, name FROM routers WHERE is_active = 1 ORDER BY name');
-        return view('batches/show', compact('batch', 'stats', 'sample', 'templates', 'routers'));
+        $linked = array_map('intval', DB::column('SELECT router_id FROM batch_routers WHERE batch_id = ?', [$id]));
+        $catLimit = array_map('intval', DB::column('SELECT router_id FROM category_routers WHERE category_id = ?', [(int) $batch['category_id']]));
+        return view('batches/show', compact('batch', 'stats', 'sample', 'templates', 'routers', 'linked', 'catLimit'));
+    }
+
+    /**
+     * أجهزة MikroTik المرتبطة بالدفعة: كل الأجهزة، أو أجهزة محددة تعمل الكروت عليها فقط.
+     * الأجهزة المضافة تُرفع إليها الكروت (إن طُلب)، والمُزالة تُحذف منها الكروت فوراً.
+     */
+    public function routers(Request $request, int $id): Response
+    {
+        $batch = DB::row('SELECT * FROM batches WHERE id = ?', [$id]);
+        $this->notFoundUnless($batch);
+        $old = array_map('intval', DB::column('SELECT router_id FROM batch_routers WHERE batch_id = ?', [$id]));
+        $new = [];
+        if ($request->str('router_mode') === 'selected') {
+            $new = $request->ids('routers');
+            if (!$new) {
+                return $this->backWithErrors($request, ['routers' => 'اختر جهاز MikroTik واحداً على الأقل، أو اختر «كل الأجهزة».'], '/batches/' . $id);
+            }
+            $active = DB::column('SELECT id FROM routers WHERE is_active = 1 AND id IN (' . DB::in($new) . ')', $new);
+            if (count($active) !== count($new)) {
+                return $this->backWithErrors($request, ['routers' => 'أحد الأجهزة المختارة غير موجود أو غير مفعّل.'], '/batches/' . $id);
+            }
+            $catLimit = array_map('intval', DB::column('SELECT router_id FROM category_routers WHERE category_id = ?', [(int) $batch['category_id']]));
+            if ($catLimit && array_diff($new, $catLimit)) {
+                return $this->backWithErrors($request, ['routers' => 'باقة هذه الدفعة لا تعمل إلا على أجهزة محددة؛ اختر منها فقط.'], '/batches/' . $id);
+            }
+        }
+        DB::transaction(static function () use ($id, $new) {
+            DB::delete('batch_routers', 'batch_id = ?', [$id]);
+            if ($new) {
+                DB::insertMany('batch_routers', array_map(static fn ($r) => ['batch_id' => $id, 'router_id' => $r], $new));
+            }
+        });
+        $cardIds = array_map('intval', DB::column('SELECT id FROM cards WHERE batch_id = ? ORDER BY id', [$id]));
+        $jobs = [];
+        $notes = [];
+        if ($new && $cardIds) {
+            // حذف الكروت من الأجهزة التي لم تعد مرتبطة بالدفعة
+            $items = [];
+            foreach (array_chunk($cardIds, 1000) as $chunk) {
+                foreach (DB::rows("SELECT cr.router_id, cr.card_id, c.username FROM card_routers cr JOIN cards c ON c.id = cr.card_id WHERE cr.state = 'present' AND cr.card_id IN (" . DB::in($chunk) . ')', $chunk) as $r) {
+                    if (!in_array((int) $r['router_id'], $new, true)) {
+                        $items[] = [(int) $r['router_id'], (int) $r['card_id'], $r['username']];
+                    }
+                }
+            }
+            if ($items) {
+                $jobs[] = JobRunner::create('remove_cards', 'حذف كروت الدفعة ' . $batch['name'] . ' من الأجهزة غير المرتبطة', ['items' => $items], count($items), Auth::id());
+                $notes[] = 'تُحذف كروتها من الأجهزة الأخرى';
+            }
+            $added = $old ? array_values(array_diff($new, $old)) : $new;
+            if ($added && $request->bool('push_now')) {
+                $jobs[] = CardService::pushToRouters($cardIds, $added);
+                $notes[] = 'تُرفع كروتها إلى الأجهزة المضافة';
+            }
+        }
+        $names = $new ? implode('، ', DB::column('SELECT name FROM routers WHERE id IN (' . DB::in($new) . ') ORDER BY name', $new)) : '';
+        Audit::log('batch.routers', $new ? 'ربط الدفعة ' . $batch['name'] . ' بالأجهزة: ' . $names : 'إتاحة الدفعة ' . $batch['name'] . ' على كل الأجهزة', 'batch', $id);
+        $msg = $new ? 'الدفعة تعمل الآن فقط على: ' . $names . '.' : 'الدفعة تعمل الآن على كل الأجهزة.';
+        if ($notes) {
+            $msg .= ' ' . implode('، و', $notes) . '.';
+        }
+        if (count($jobs) === 1) {
+            flash('success', $msg);
+            return redirect('/jobs/' . $jobs[0]);
+        }
+        return $this->ok($msg, '/batches/' . $id);
     }
 
     public function update(Request $request, int $id): Response

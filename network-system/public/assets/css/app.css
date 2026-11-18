@@ -3040,3 +3040,29 @@ mark.nav-hit { padding: 0 1px; border-radius: 3px; color: inherit; background: c
   .dz-preview-panel .panel-head { flex-direction: column; align-items: stretch; }
   .dz-preview-panel .panel-tools { justify-content: space-between; }
 }
+
+/* ---------------- توليد الكروت: أجهزة MikroTik ---------------- */
+.gen-routers { display: flex; flex-direction: column; gap: 10px; }
+.gen-routers-tools { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.router-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.router-opt { position: relative; cursor: pointer; display: block; }
+.router-opt[hidden] { display: none; }
+.router-opt input { position: absolute; opacity: 0; pointer-events: none; }
+.router-opt-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: var(--radius); background: var(--surface); transition: border-color .15s, background-color .15s, box-shadow .15s; }
+.router-opt:hover .router-opt-card { border-color: var(--border-strong); }
+.router-opt input:checked + .router-opt-card { border-color: var(--primary); background: var(--primary-soft); box-shadow: 0 0 0 3px var(--primary-ring); }
+.router-opt input:focus-visible + .router-opt-card { outline: 2px solid var(--primary); outline-offset: 2px; }
+.router-opt-icon { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--surface-3); color: var(--muted); }
+.router-opt-icon.is-online { background: var(--success-soft); color: var(--success); }
+.router-opt-icon.is-offline { background: var(--danger-soft); color: var(--danger); }
+.router-opt-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.router-opt-text b { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.router-opt-text small { color: var(--muted); font-size: 11.5px; display: flex; align-items: center; gap: 5px; overflow: hidden; white-space: nowrap; }
+.router-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
+.router-dot.is-online { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+.router-dot.is-offline { background: var(--danger); }
+.router-opt-check { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid var(--border-strong); color: transparent; transition: background-color .15s, border-color .15s, color .15s; }
+.router-opt-check .icon { width: 13px; height: 13px; }
+.router-opt input:checked + .router-opt-card .router-opt-check { background: var(--primary); border-color: var(--primary); color: var(--on-primary); }
+@media (max-width: 640px) { .router-pick { grid-template-columns: minmax(0, 1fr); } }
+.chips-wrap { display: flex; flex-wrap: wrap; gap: 6px; }

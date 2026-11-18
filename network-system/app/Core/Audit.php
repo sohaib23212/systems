@@ -47,6 +47,7 @@ final class Audit
         'card.update'         => 'تعديل كرت',
         'card.password'       => 'تغيير كلمة مرور كرت',
         'batch.delete'        => 'حذف دفعة',
+        'batch.routers'       => 'تعديل أجهزة دفعة',
         'plan.save'           => 'حفظ باقة اشتراك',
         'plan.delete'         => 'حذف باقة اشتراك',
         'subscriber.create'   => 'إضافة مشترك',

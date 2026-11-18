@@ -89,7 +89,40 @@ final class CardController extends Controller
     public function generateForm(Request $request): Response
     {
         $categories = DB::rows('SELECT * FROM categories WHERE is_active = 1 ORDER BY sort, price');
-        return view('cards/generate', ['categories' => $categories, 'selected' => $request->int('category')]);
+        $catRouters = [];
+        foreach (DB::rows('SELECT category_id, router_id FROM category_routers') as $r) {
+            $catRouters[(int) $r['category_id']][] = (int) $r['router_id'];
+        }
+        return view('cards/generate', [
+            'categories' => $categories,
+            'selected'   => $request->int('category'),
+            'routers'    => DB::rows('SELECT id, name, host, status, identity FROM routers WHERE is_active = 1 ORDER BY name'),
+            'catRouters' => $catRouters,
+        ]);
+    }
+
+    /**
+     * أجهزة MikroTik المختارة للدفعة: يجب أن تكون مفعّلة ومسموحة لباقة الكروت.
+     * يعيد [] عند اختيار «كل الأجهزة»، ونص الخطأ عند اختيار غير صالح.
+     */
+    private function chosenRouters(Request $request, int $categoryId): array|string
+    {
+        if ($request->str('router_mode') !== 'selected') {
+            return [];
+        }
+        $ids = $request->ids('routers');
+        if (!$ids) {
+            return 'اختر جهاز MikroTik واحداً على الأقل، أو اختر «كل الأجهزة».';
+        }
+        $active = array_map('intval', DB::column('SELECT id FROM routers WHERE is_active = 1 AND id IN (' . DB::in($ids) . ')', $ids));
+        if (count($active) !== count($ids)) {
+            return 'أحد الأجهزة المختارة غير موجود أو غير مفعّل.';
+        }
+        $allowed = array_map('intval', DB::column('SELECT router_id FROM category_routers WHERE category_id = ?', [$categoryId]));
+        if ($allowed && array_diff($ids, $allowed)) {
+            return 'هذه الباقة لا تعمل إلا على أجهزة محددة؛ اختر من الأجهزة المسموحة لها فقط.';
+        }
+        return $ids;
     }
 
     public function generate(Request $request): Response
@@ -114,6 +147,10 @@ final class CardController extends Controller
         if (!$request->bool('with_short')) {
             $d['short_length'] = null;
         }
+        $routerIds = $this->chosenRouters($request, (int) $d['category_id']);
+        if (is_string($routerIds)) {
+            return $this->backWithErrors($request, ['routers' => $routerIds], '/cards/generate');
+        }
         try {
             Session::release();
             $result = CardGenerator::generate($d, \App\Core\Auth::id());
@@ -128,6 +165,18 @@ final class CardController extends Controller
             'cards.password_mode' => $d['password_mode'],
             'cards.password_length' => (string) ($d['password_length'] ?? 4),
         ]);
+        if ($routerIds) {
+            // الدفعة مرتبطة بالأجهزة المختارة: تعمل عليها فقط، وتُرفع إليها الآن إن طُلب
+            DB::insertMany('batch_routers', array_map(static fn ($r) => ['batch_id' => (int) $result['batch_id'], 'router_id' => $r], $routerIds));
+            $names = implode('، ', DB::column('SELECT name FROM routers WHERE id IN (' . DB::in($routerIds) . ') ORDER BY name', $routerIds));
+            if ($request->bool('push_now')) {
+                $cardIds = array_map('intval', DB::column('SELECT id FROM cards WHERE batch_id = ? ORDER BY id', [(int) $result['batch_id']]));
+                $job = CardService::pushToRouters($cardIds, $routerIds);
+                flash('success', 'تم توليد ' . num($result['count']) . ' كرت مرتبطة بـ: ' . $names . '. جارٍ رفعها إلى الأجهزة الآن.');
+                return redirect('/jobs/' . $job);
+            }
+            return $this->ok('تم توليد ' . num($result['count']) . ' كرت تعمل فقط على: ' . $names . '.', '/batches/' . $result['batch_id']);
+        }
         return $this->ok('تم توليد ' . num($result['count']) . ' كرت.', '/batches/' . $result['batch_id']);
     }
 

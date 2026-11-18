@@ -58,6 +58,44 @@ $defPassLen = old('password_length', Settings::get('cards.password_length', '4')
       </div>
 
       <div class="panel">
+        <div class="panel-head"><h2><?= icon('router') ?>أجهزة MikroTik</h2></div>
+        <div class="panel-body">
+          <?php $rMode = old('router_mode', 'all'); $rSel = array_map('intval', (array) old('routers', [])); ?>
+          <div class="segmented is-block">
+            <label><input type="radio" name="router_mode" value="all"<?= checked($rMode !== 'selected') ?>><span>كل الأجهزة</span></label>
+            <label><input type="radio" name="router_mode" value="selected"<?= checked($rMode === 'selected') ?><?= $routers ? '' : ' disabled' ?>><span>أجهزة محددة فقط</span></label>
+          </div>
+          <p class="hint mt-2" data-show-when="router_mode=all">تعمل الكروت على كل أجهزة MikroTik المسموحة للباقة، وتُجهَّز على الجهاز تلقائياً عند أول دخول.</p>
+          <?php if (!$routers): ?>
+            <p class="hint mt-2">لا توجد أجهزة MikroTik مفعّلة بعد.<?php if (can('routers.manage')): ?> <a href="<?= e(url('/routers/create')) ?>">إضافة جهاز</a><?php endif; ?></p>
+          <?php else: ?>
+          <div class="gen-routers mt-3" data-show-when="router_mode=selected" data-cat-routers='<?= e(json_encode($catRouters, JSON_FORCE_OBJECT)) ?>'>
+            <div class="gen-routers-tools">
+              <span class="text-sm text-muted" data-routers-count>لم يُختر جهاز</span>
+              <button type="button" class="btn btn-ghost btn-xs" data-routers-all><?= icon('list-checks') ?>تحديد الكل</button>
+            </div>
+            <div class="router-pick">
+              <?php foreach ($routers as $r): $on = $r['status'] === 'online'; ?>
+              <label class="router-opt" data-router-opt="<?= (int) $r['id'] ?>">
+                <input type="checkbox" name="routers[]" value="<?= (int) $r['id'] ?>"<?= checked(in_array((int) $r['id'], $rSel, true)) ?>>
+                <span class="router-opt-card">
+                  <span class="router-opt-icon <?= $on ? 'is-online' : ($r['status'] === 'offline' ? 'is-offline' : '') ?>"><?= icon('router') ?></span>
+                  <span class="router-opt-text"><b><?= e($r['name']) ?></b><small><span class="router-dot <?= $on ? 'is-online' : ($r['status'] === 'offline' ? 'is-offline' : '') ?>"></span><?= $on ? 'متصل' : ($r['status'] === 'offline' ? 'غير متصل' : 'لم يُفحص') ?> · <bdi dir="ltr"><?= e($r['host']) ?></bdi></small></span>
+                  <span class="router-opt-check"><?= icon('check') ?></span>
+                </span>
+              </label>
+              <?php endforeach; ?>
+            </div>
+            <p class="hint" data-routers-limited hidden><?= icon('info', 'icon-sm') ?> هذه الباقة محددة بأجهزة معيّنة، فتظهر الأجهزة المسموحة لها فقط.</p>
+            <?= error_html('routers') ?>
+            <div class="notice mt-2" style="margin-bottom:0"><?= icon('shield-check') ?><div class="text-sm">الكروت تعمل على الأجهزة المختارة فقط، ويُرفض الدخول بها من أي جهاز آخر.</div></div>
+            <label class="switch mt-3"><input type="checkbox" name="push_now" value="1"<?= checked(old('push_now', '1') === '1') ?>><span class="track"></span><span>رفع الكروت إلى الأجهزة المختارة الآن بعد التوليد</span></label>
+          </div>
+          <?php endif; ?>
+        </div>
+      </div>
+
+      <div class="panel">
         <div class="panel-head"><h2><?= icon('hash') ?>صيغة الأرقام</h2></div>
         <div class="panel-body">
           <div class="form-grid">
@@ -152,6 +190,39 @@ $defPassLen = old('password_length', Settings::get('cards.password_length', '4')
   f.addEventListener('input', update);
   f.addEventListener('change', update);
   update();
+
+  // أجهزة MikroTik: إظهار المسموحة للباقة المختارة فقط، وتحديد الكل، وعدد المختار
+  var box = f.querySelector('[data-cat-routers]');
+  if (box) {
+    var map = {};
+    try { map = JSON.parse(box.getAttribute('data-cat-routers') || '{}'); } catch (e) { map = {}; }
+    var opts = Array.prototype.slice.call(box.querySelectorAll('[data-router-opt]'));
+    var countEl = box.querySelector('[data-routers-count]');
+    var limitedEl = box.querySelector('[data-routers-limited]');
+    var syncRouters = function () {
+      var catEl = f.querySelector('[name="category_id"]:checked');
+      var allowed = catEl && map[catEl.value] ? map[catEl.value].map(String) : null;
+      var n = 0;
+      opts.forEach(function (o) {
+        var ok = !allowed || allowed.indexOf(o.getAttribute('data-router-opt')) !== -1;
+        var cb = o.querySelector('input');
+        o.hidden = !ok;
+        cb.disabled = !ok;
+        if (!ok) { cb.checked = false; }
+        if (cb.checked) { n++; }
+      });
+      if (limitedEl) { limitedEl.hidden = !allowed; }
+      if (countEl) { countEl.textContent = n ? 'المختار: ' + n + (n === 1 ? ' جهاز' : ' أجهزة') : 'لم يُختر جهاز'; }
+    };
+    f.addEventListener('change', syncRouters);
+    box.querySelector('[data-routers-all]').addEventListener('click', function () {
+      var vis = opts.filter(function (o) { return !o.hidden; });
+      var all = vis.every(function (o) { return o.querySelector('input').checked; });
+      vis.forEach(function (o) { o.querySelector('input').checked = !all; });
+      syncRouters();
+    });
+    syncRouters();
+  }
 })();
 </script>
 <?php endif; ?>

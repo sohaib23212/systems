@@ -135,6 +135,11 @@ final class PortalService
         if ($allowed && !in_array((string) $router['id'], array_map('strval', $allowed), true)) {
             return self::fail($router, $code, $mac, $ip, 'not_allowed', $cardId, null, false);
         }
+        // دفعة مرتبطة بأجهزة محددة: الكرت يعمل عليها فقط
+        $batchRouters = DB::column('SELECT router_id FROM batch_routers WHERE batch_id = ?', [(int) $card['batch_id']]);
+        if ($batchRouters && !in_array((string) $router['id'], array_map('strval', $batchRouters), true)) {
+            return self::fail($router, $code, $mac, $ip, 'not_allowed', $cardId, null, false);
+        }
         if ((int) $cat['lock_mac'] === 1 && $card['bound_mac'] && $mac && $card['bound_mac'] !== $mac) {
             return self::fail($router, $code, $mac, $ip, 'mac_mismatch', $cardId, null, false);
         }

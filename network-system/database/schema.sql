@@ -343,6 +343,16 @@ CREATE TABLE IF NOT EXISTS batches (
   CONSTRAINT fk_batches_employee FOREIGN KEY (created_by)  REFERENCES employees (id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- أجهزة MikroTik المرتبطة بدفعة كروت: الكروت تُرفع إليها وتعمل عليها فقط (بلا صفوف = كل الأجهزة)
+CREATE TABLE IF NOT EXISTS batch_routers (
+  batch_id   INT UNSIGNED NOT NULL,
+  router_id  INT UNSIGNED NOT NULL,
+  PRIMARY KEY (batch_id, router_id),
+  KEY idx_br_router (router_id),
+  CONSTRAINT fk_br_batch  FOREIGN KEY (batch_id)  REFERENCES batches (id) ON DELETE CASCADE,
+  CONSTRAINT fk_br_router FOREIGN KEY (router_id) REFERENCES routers (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS sales (
   id                INT UNSIGNED NOT NULL AUTO_INCREMENT,
   type              ENUM('distributor','direct') NOT NULL,

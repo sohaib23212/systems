@@ -55,6 +55,35 @@ $showPass = can('cards.passwords');
     </form>
     <?php endif; ?>
     <div class="panel">
+      <div class="panel-head"><h3><?= icon('router') ?>أجهزة MikroTik للدفعة</h3><?= $linked ? '<span class="badge badge-primary">' . num(count($linked)) . ' محددة</span>' : '<span class="badge badge-outline">كل الأجهزة</span>' ?></div>
+      <div class="panel-body stack" style="gap:10px">
+        <?php if ($linked): ?>
+          <div class="chips-wrap"><?php foreach ($linked as $rid): ?><span class="badge badge-info"><?= icon('router') ?><?= e($routers[$rid] ?? ('#' . $rid)) ?></span><?php endforeach; ?></div>
+          <p class="hint" style="margin:0">كروت هذه الدفعة تعمل على هذه الأجهزة فقط.</p>
+        <?php else: ?>
+          <p class="hint" style="margin:0">كروت هذه الدفعة تعمل على كل الأجهزة المسموحة لباقتها.</p>
+        <?php endif; ?>
+        <?php if (can('cards.manage') && $routers): $selMode = old('router_mode', $linked ? 'selected' : 'all'); ?>
+        <form method="post" action="<?= e(url('/batches/' . $batch['id'] . '/routers')) ?>" class="stack" style="gap:10px">
+          <?= csrf_field() ?>
+          <div class="segmented is-block">
+            <label><input type="radio" name="router_mode" value="all"<?= checked($selMode !== 'selected') ?>><span>كل الأجهزة</span></label>
+            <label><input type="radio" name="router_mode" value="selected"<?= checked($selMode === 'selected') ?>><span>أجهزة محددة</span></label>
+          </div>
+          <div class="stack" style="gap:6px" data-show-when="router_mode=selected"<?= $selMode === 'selected' ? '' : ' hidden' ?>>
+            <?php foreach ($routers as $rid => $rname): if ($catLimit && !in_array((int) $rid, $catLimit, true)) { continue; } ?>
+              <label class="check"><input type="checkbox" name="routers[]" value="<?= (int) $rid ?>"<?= checked(in_array((int) $rid, $linked, true)) ?>><?= e($rname) ?></label>
+            <?php endforeach; ?>
+            <label class="switch mt-2"><input type="checkbox" name="push_now" value="1" checked><span class="track"></span><span class="text-sm">رفع الكروت إلى الأجهزة المضافة الآن</span></label>
+            <p class="hint" style="margin:0">الأجهزة التي تُزال تُحذف منها كروت الدفعة.</p>
+          </div>
+          <?= error_html('routers') ?>
+          <button class="btn btn-block"><?= icon('save') ?>حفظ أجهزة الدفعة</button>
+        </form>
+        <?php endif; ?>
+      </div>
+    </div>
+    <div class="panel">
       <div class="panel-head"><h3><?= icon('zap') ?>إجراءات سريعة</h3></div>
       <div class="panel-body stack" style="gap:10px">
         <?php if (can('cards.short')): ?><a class="btn btn-block" href="<?= e(url('/shortener', ['batch' => $batch['id']])) ?>"><?= icon('link-2') ?>اختصار أرقام الدفعة</a><?php endif; ?>

@@ -296,6 +296,7 @@ return static function (Router $r): void {
     $r->get('/batches', [BatchController::class, 'index'], ['perm' => 'cards.view']);
     $r->get('/batches/{id}', [BatchController::class, 'show'], ['perm' => 'cards.view']);
     $r->post('/batches/{id}', [BatchController::class, 'update'], ['perm' => 'cards.manage']);
+    $r->post('/batches/{id}/routers', [BatchController::class, 'routers'], ['perm' => 'cards.manage']);
     $r->post('/batches/{id}/delete', [BatchController::class, 'destroy'], ['perm' => 'cards.delete']);
 
     $r->get('/shortener', [ShortenerController::class, 'index'], ['perm' => 'cards.short']);
