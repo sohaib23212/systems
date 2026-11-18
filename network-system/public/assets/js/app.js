@@ -753,6 +753,29 @@
   window.addEventListener('pageshow', stopProgress);
   window.addEventListener('pagehide', function () { setTimeout(stopProgress, 4000); });
 
+  // لوحة المفاتيح على الهاتف: ارتفاعها في --kb ليبقى شريط الحقوق السفلي فوقها
+  (function () {
+    var vv = window.visualViewport;
+    if (!vv || !doc.querySelector('.app-footer')) { return; }
+    var last = -1, queued = false;
+    function update() {
+      queued = false;
+      var kb = 0;
+      if (Math.abs((vv.scale || 1) - 1) < 0.01) {
+        kb = Math.round(window.innerHeight - vv.height - vv.offsetTop);
+        if (kb < 80) { kb = 0; }
+      }
+      if (kb !== last) {
+        last = kb;
+        doc.documentElement.style.setProperty('--kb', kb + 'px');
+      }
+    }
+    function schedule() { if (!queued) { queued = true; requestAnimationFrame(update); } }
+    vv.addEventListener('resize', schedule);
+    vv.addEventListener('scroll', schedule);
+    update();
+  })();
+
   // ظهور العناصر المتتابع حسب نمط الحركة المختار
   function stagger() {
     var root = doc.documentElement;
