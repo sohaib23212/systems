@@ -25,7 +25,18 @@
 node tests/ui/run.js --base=http://127.0.0.1:8080 --slug=اسم-الحساب --user=U --pass=P --admin-user=A --admin-pass=B
 ```
 
-خيارات: `--designs=all|nexus,aurora` · `--widths=320,360,412,768,1280` · `--langs=ar,en` · `--schemes=light,dark` ·
-`--only=/cards,/admin/design` · `--concurrency=4` · `--out=report.json` · `--no-contrast`
+خيارات: `--designs=all|current|nexus,aurora` · `--widths=320,360,412,768,1280` · `--langs=ar,en` · `--schemes=light,dark` ·
+`--combos=ar:light,en:dark` · `--extra=/الحساب/cards/1,/الحساب/search?q=a` (صفحات لا تصلها الروابط) ·
+`--public=/,/login,…` (صفحات بلا دخول) · `--only=/cards,/admin/design` · `--concurrency=4` · `--out=report.json` · `--no-contrast`
+
+تُفتح كل نافذة منبثقة (dialog) في كل صفحة وتُفحص وحدها، وتُفحص القائمة الجانبية والقوائم المنسدلة في الشريط العلوي.
 
 رمز الخروج 0 فقط عندما لا تُكتشف أي مشكلة؛ التفاصيل في `report.json`.
+
+## فحوص أخرى
+
+- `node tests/ui/flows.js --slug=… --user=… --pass=…` تفاعل حقيقي على الهاتف (320/360/412): فتح `/اسم-الحساب`، القائمة الجانبية، البحث، المظهر واللغة من قائمة الحساب، الشريط السفلي مع لوحة المفاتيح.
+- `node tests/ui/preview.js --admin-user=… --admin-pass=… --presets-file=…` معاينة كل تصميم في صفحة «التصاميم».
+- `node tests/ui/hotspot.js` صفحات الهوتسبوت (`hotspot/madix-net`) بالوضعين على كل المقاسات.
+
+كل نتيجة تباين تُثبَّت على البكسلات الفعلية، وتراكب نصّين لا يُحتسب إلا إذا تلامست حروفهما فعلاً (`verify.js`).
