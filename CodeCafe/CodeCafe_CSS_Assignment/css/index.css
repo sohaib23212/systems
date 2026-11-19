@@ -1,0 +1,435 @@
+
+/* Code Cafe - Assignment 2: CSS */
+/* CSS for index.html only */
+
+
+
+
+/* 1. General Styles */
+
+/* Include padding and border inside the element's width */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #f7f6ef;
+  color: #233a32;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1,
+h2,
+h3 {
+  color: #17493b;
+}
+
+h1 {
+  font-size: 36px;
+}
+
+h2 {
+  font-size: 28px;
+}
+
+/* Keep images and video inside the screen width */
+img,
+video {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+a {
+  color: #14624d;
+}
+
+/* Simple light line between sections */
+hr {
+  border: none;
+  border-top: 1px solid #dddddd;
+  margin: 20px 0;
+}
+
+
+
+
+/* 2. Header and Navigation */
+
+/* Flexbox: logo on the left, navigation on the right */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #143d32;
+  padding: 15px 6%;
+}
+
+header img {
+  display: block;
+  width: 150px;
+}
+
+/* Navigation links side by side */
+nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Links styled as buttons */
+nav a {
+  display: block;
+  padding: 10px 15px;
+  background-color: #245b49;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 5px;
+}
+
+nav a:hover {
+  background-color: #e5b96d;
+  color: #143d32;
+}
+
+
+
+
+/* 3. Main Content */
+
+main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+
+
+
+/* 4. Hero Section */
+
+#hero {
+  background-color: #e6efe7;
+  border: 1px solid #d5e2d6;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+}
+
+/* Center the list with its bullets */
+#hero ul {
+  list-style-position: inside;
+  padding: 0;
+}
+
+#hero li {
+  margin-bottom: 8px;
+}
+
+#hero img {
+  display: block;
+  width: 440px;
+  margin: 20px auto 0;
+  border-radius: 12px;
+}
+
+
+
+
+/* 5. Story Section */
+
+#story {
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 10px 30px 20px;
+}
+
+
+
+
+/* 6. Menu Section */
+
+/* Flexbox: the three menu cards side by side */
+#menu {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  padding: 20px 0;
+  text-align: center;
+}
+
+/* Title, intro text and the last link take a full row */
+#menu > h2,
+#menu > p {
+  width: 100%;
+  margin: 0;
+}
+
+/* Menu card */
+#menu article {
+  width: 29%;
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: left;
+}
+
+#menu article img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+}
+
+#menu article h3 {
+  margin: 15px 0 10px;
+}
+
+#menu article p {
+  margin: 10px 0;
+}
+
+/* Price */
+#menu article strong {
+  color: #9a5b26;
+}
+
+#menu a {
+  font-weight: bold;
+  text-decoration: none;
+}
+
+#menu a:hover {
+  text-decoration: underline;
+}
+
+
+
+
+/* 7. Gallery Section */
+
+/* Flexbox: the two gallery images side by side */
+#gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 25px;
+  padding: 20px 0;
+}
+
+#gallery h2 {
+  width: 100%;
+  margin: 0;
+  text-align: center;
+}
+
+#gallery figure {
+  width: 43%;
+  margin: 0;
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+#gallery img {
+  display: block;
+  width: 100%;
+  border-radius: 8px;
+}
+
+#gallery figcaption {
+  margin-top: 12px;
+  color: #555555;
+  font-style: italic;
+  text-align: center;
+}
+
+
+
+
+/* 8. Visit Us Section */
+
+#visit {
+  background-color: #ffffff;
+  border: 1px solid #dddddd;
+  border-radius: 12px;
+  padding: 10px 20px 20px;
+}
+
+address {
+  font-style: normal;
+}
+
+
+
+
+/* 9. Table Styling */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #bfcfc3;
+  text-align: center;
+}
+
+caption {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+th,
+td {
+  border: 1px solid #bfcfc3;
+  padding: 10px;
+}
+
+/* Colored table header */
+th {
+  background-color: #17493b;
+  color: #ffffff;
+}
+
+/* Light background for every second row */
+tbody tr:nth-child(even) {
+  background-color: #eef4ec;
+}
+
+
+
+
+/* 10. Aside Section */
+
+aside {
+  background-color: #e7efe8;
+  border-left: 5px solid #c08b47;
+  border-radius: 6px;
+  padding: 5px 20px;
+}
+
+
+
+
+/* 11. Media Section */
+
+#media {
+  padding: 20px 0;
+  text-align: center;
+}
+
+/* Centered video that never gets wider than the page */
+video {
+  display: block;
+  width: 500px;
+  margin: 0 auto;
+  border-radius: 10px;
+  background-color: #000000;
+}
+
+
+
+
+/* 12. Footer */
+
+footer {
+  background-color: #143d32;
+  color: #ffffff;
+  padding: 25px 20px;
+  text-align: center;
+}
+
+footer a {
+  color: #e5b96d;
+  text-decoration: none;
+}
+
+footer a:hover {
+  text-decoration: underline;
+}
+
+footer p {
+  margin: 5px 0;
+}
+
+
+
+
+/* 13. Responsive Design */
+@media screen and (max-width: 700px) {
+
+  /* Stack the header elements vertically */
+  header {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+  }
+
+  nav ul {
+    justify-content: center;
+    gap: 8px;
+  }
+
+  nav a {
+    padding: 8px 12px;
+  }
+
+  /* Reduce large font sizes and spacing */
+  h1 {
+    font-size: 26px;
+  }
+
+  h2 {
+    font-size: 22px;
+  }
+
+  main {
+    padding: 20px 15px;
+  }
+
+  hr {
+    margin: 15px 0;
+  }
+
+  #hero,
+  #story,
+  #visit {
+    padding: 15px 20px;
+  }
+
+  #menu,
+  #gallery,
+  #media {
+    padding: 10px 0;
+  }
+
+  #menu,
+  #gallery {
+    gap: 20px;
+  }
+
+  /* Menu cards and gallery images in one column */
+  #menu article,
+  #gallery figure {
+    width: 100%;
+  }
+
+  th,
+  td {
+    padding: 8px;
+  }
+
+  footer {
+    padding: 20px 15px;
+  }
+
+}

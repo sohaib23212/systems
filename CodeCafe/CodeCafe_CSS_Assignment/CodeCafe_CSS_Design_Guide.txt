@@ -1,0 +1,79 @@
+CODE CAFE - ASSIGNMENT 2: CSS
+STUDENT DESIGN GUIDE (index.html ONLY)
+
+VIDEO TUTORIAL
+Watch the following video to understand the assignment requirements and expected design before starting your work.
+
+YouTube Link: https://youtu.be/tiHKBA_ouXw
+
+NOTE: The video is provided for guidance on the expected design and layout.
+
+OBJECTIVE
+You are provided with the complete HTML project from Assignment 1.
+Your task is to style index.html only using CSS concepts covered in the course.
+Write your CSS code in css/index.css. Do not modify the other HTML pages.
+
+1. COLOR PALETTE
+Use the following colors for a clean and consistent design:
+Page background: #f7f6ef
+Header and footer: #143d32
+Main text: #233a32
+Headings: #17493b
+Hero background: #e6efe7
+Cards and sections: #ffffff
+Navigation buttons: #245b49
+Highlight / hover: #e5b96d
+Prices: #9a5b26
+Borders: #dddddd
+You may use similar colors where appropriate.
+
+2. FONTS AND SIZES
+Font: Arial, sans-serif
+Body text: 16px
+Main heading: 36px
+Section headings: 28px
+Main content maximum width: 1080px
+Logo width: 150px
+Hero image width: 440px
+Use suitable margins, padding, borders, and rounded corners to organize the page.
+
+3. DESIGN REQUIREMENTS
+Header and Navigation:
+Use Flexbox to place the logo and navigation links side by side. Style the links as buttons and add a simple :hover effect.
+
+Hero and Story:
+Use suitable backgrounds, spacing, centered content for the Hero section, and rounded corners.
+
+Menu and Gallery:
+Show the three menu items and two gallery images side by side on large screens. Style them as simple cards with borders, backgrounds, and spacing.
+
+Visit Us:
+Style the table with clear borders, padding, and a colored header. Give the aside section a different background.
+
+Media and Footer:
+Center the video, make it fit the page width, and style the footer with a dark background and readable text.
+
+4. RESPONSIVE DESIGN
+Use one @media query for screens up to 700px.
+On smaller screens:
+- Stack the header elements vertically.
+- Display menu cards and gallery images in one column.
+- Reduce large font sizes and spacing.
+- Keep images and video within the screen width.
+
+5. IMPORTANT NOTES
+- Style index.html only.
+- Keep the provided HTML content and media unchanged.
+- Use only CSS concepts covered in the course.
+- Do not use JavaScript, CSS frameworks, animation, transition, or transform.
+- Keep your CSS code clean and organized.
+- Small visual changes are allowed as long as the required layout is maintained.
+
+6. SUBMISSION
+Submit the complete project as one ZIP file, including the CSS file and video_link.
+Record an explanation video (maximum 15 minutes) that includes your full name, student ID, explanation of the CSS code, and a demonstration of the final page in the browser.
+
+GRADING
+CSS code: 6 marks
+Explanation video: 4 marks
+Total: 10 marks

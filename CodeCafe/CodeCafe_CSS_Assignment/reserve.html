@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reserve a Table | Code Café</title>
+  <link rel="icon" href="images/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/reserve.css">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <a href="index.html">
+      <img src="images/logo.svg" alt="Code Café logo" width="160">
+    </a>
+    <nav>
+      <a href="index.html">Back to Home</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>Reserve Your Table</h1>
+    <p>Fill out the form below to book your study spot.</p>
+
+    <!-- Basic Form Example -->
+    <form action="thanks.html" method="get">
+      <fieldset>
+        <legend>Personal Information</legend>
+        
+        <label for="name">Full Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="email">Email Address:</label><br>
+        <input type="email" id="email" name="email" required>
+      </fieldset>
+      
+      <br>
+
+      <fieldset>
+        <legend>Reservation Details</legend>
+        
+        <label for="date">Date:</label><br>
+        <input type="date" id="date" name="date" required><br><br>
+
+        <label for="guests">Number of Guests:</label><br>
+        <select id="guests" name="guests">
+          <option value="1">1 Person</option>
+          <option value="2">2 People</option>
+          <option value="3">3 People</option>
+          <option value="4+">4 or more</option>
+        </select><br><br>
+
+        <p>Preferred Seating:</p>
+        <input type="radio" id="quiet" name="seating" value="quiet" required>
+        <label for="quiet">Quiet Zone</label><br>
+        
+        <input type="radio" id="group" name="seating" value="group">
+        <label for="group">Group Table</label><br><br>
+      </fieldset>
+      
+      <br>
+      
+      <input type="submit" value="Confirm Reservation"/>
+      <input type="reset" value="Clear Form"/>
+    </form>
+  </main>
+
+  <hr>
+
+  <footer>
+    <p>&copy; 2026 Code Café. A simplified student project focusing on core HTML.</p>
+  </footer>
+</body>
+</html>
