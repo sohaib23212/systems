@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>سكربت فيديو المرحلة الثانية</title>
+<style>
+  :root {
+    --bg: #f7f7f4; --card: #ffffff; --text: #1d2321; --muted: #5d6763;
+    --accent: #1f6f5c; --accent-soft: #e4f1ec; --border: #dfe3e0; --code-bg: #eef1ef;
+    --warn-bg: #fff6e0; --warn-border: #e6c66b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121614; --card: #1b201e; --text: #e8ecea; --muted: #9aa5a0;
+      --accent: #6fd1b4; --accent-soft: #1f2e29; --border: #2c3431; --code-bg: #252c29;
+      --warn-bg: #2b2616; --warn-border: #7a6526;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121614; --card: #1b201e; --text: #e8ecea; --muted: #9aa5a0;
+    --accent: #6fd1b4; --accent-soft: #1f2e29; --border: #2c3431; --code-bg: #252c29;
+    --warn-bg: #2b2616; --warn-border: #7a6526;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: "Noto Naskh Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+    line-height: 1.9; font-size: 19px;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 64px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; line-height: 1.4; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 1rem; }
+  code {
+    font-family: "JetBrains Mono", Consolas, monospace; font-size: 0.86em;
+    background: var(--code-bg); padding: 1px 6px; border-radius: 5px;
+    direction: ltr; unicode-bidi: isolate; white-space: nowrap;
+  }
+  .tips {
+    background: var(--warn-bg); border: 1px solid var(--warn-border);
+    border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; font-size: 0.95rem;
+  }
+  .tips h2 { font-size: 1.05rem; margin: 0 0 6px; }
+  .tips ol { margin: 0; padding-inline-start: 22px; }
+  .scene {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 16px 18px; margin-bottom: 16px;
+  }
+  .head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+  .num {
+    background: var(--accent); color: var(--bg); font-weight: 700; border-radius: 8px;
+    min-width: 2.2em; text-align: center; padding: 0 8px; font-size: 1rem;
+    font-family: "JetBrains Mono", Consolas, monospace;
+  }
+  .title { font-weight: 700; font-size: 1.08rem; }
+  .dur { color: var(--muted); font-size: 0.85rem; margin-inline-start: auto; }
+  .screen {
+    background: var(--accent-soft); border-radius: 8px; padding: 6px 12px;
+    font-size: 0.88rem; color: var(--muted); margin-bottom: 10px;
+  }
+  .screen b { color: var(--accent); }
+  .say p { margin: 0 0 10px; }
+  .say p:last-child { margin-bottom: 0; }
+  .fill { background: var(--warn-bg); border-bottom: 2px dashed var(--warn-border); padding: 0 4px; }
+  .total { text-align: center; color: var(--muted); font-size: 0.9rem; margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>سكربت فيديو شرح المرحلة الثانية</h1>
+  <p class="sub">Simple Equipment Checkout System — Custom Singly Linked Lists</p>
+
+  <section class="tips">
+    <h2>قبل ما تسجّل</h2>
+    <ol>
+      <li><b>الأفضل:</b> سجّل كل مشهد بملف صوتي لحاله، وسمّي كل ملف برقم المشهد: 01 و02 و03 لحد 15. إذا غلطت، بتعيد هداك الملف بس.</li>
+      <li><b>إذا بدك ملف واحد:</b> اسكت 3 ثواني كاملة بين كل مشهد والثاني، وما توقف أكثر من ثانية جوّا المشهد الواحد.</li>
+      <li>سجّل بمكان هادي، وخلّي الجوال قريب من تمك.</li>
+      <li>اقرأ على راحتك وما تستعجل، أنا بظبط الصورة على طول صوتك. المدة المتوقعة حوالي 7 لـ 8 دقايق، والحد الأقصى 10.</li>
+      <li>المربع الأخضر الصغير بكل مشهد بيوصف شو رح يكون ظاهر على الشاشة، وهو مش للقراءة. اقرأ بس النص اللي تحته.</li>
+    </ol>
+  </section>
+
+  <!-- 1 -->
+  <section class="scene">
+    <div class="head"><span class="num">01</span><span class="title">مقدمة</span><span class="dur">~25 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> شريحة العنوان وأسماء الملفات الثلاثة.</div>
+    <div class="say">
+      <p>السلام عليكم، أنا <span class="fill">[اسمك الكامل]</span>، ورقمي الجامعي <span class="fill">[رقمك الجامعي]</span>.</p>
+      <p>سأشرح المرحلة الثانية من مشروع <code>Equipment Checkout System</code>. في المرحلة الأولى خزّنا الأجهزة في مصفوفتين، وعند الإرجاع كنا نزيح العناصر. في هذه المرحلة استبدلت المصفوفات بـ <code>singly linked list</code> بنيتها بنفسي، فأصبح الحذف بتعديل الروابط بدل الإزاحة.</p>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="scene">
+    <div class="head"><span class="num">02</span><span class="title">كلاس Equipment</span><span class="dur">~25 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> كود <code>Equipment.java</code>.</div>
+    <div class="say">
+      <p>كلاس <code>Equipment</code> هو نفس كلاس المرحلة الأولى: ثلاثة حقول <code>private</code> هي <code>id</code> و<code>name</code> و<code>available</code>. الـ <code>constructor</code> يجعل الجهاز الجديد متاحاً، ومعه الـ <code>getters</code> و<code>setAvailable</code>، و<code>toString</code> تعرض الجهاز بالشكل المطلوب.</p>
+      <p>ولم أضف فيه أي رابط <code>next</code>، لأنه يمثل الجهاز نفسه، لا مكانه في القائمة.</p>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="scene">
+    <div class="head"><span class="num">03</span><span class="title">كلاس Node</span><span class="dur">~25 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> كود الـ <code>Node</code> ورسمة لعقدة واحدة.</div>
+    <div class="say">
+      <p>داخل <code>EquipmentLinkedList</code> يوجد كلاس <code>Node</code>، وهو <code>private static nested class</code>: مخفي عن باقي البرنامج، ولا يحتاج كائناً من القائمة حتى يُنشأ.</p>
+      <p>كل <code>Node</code> فيها <code>data</code> وهو <code>reference</code> لكائن <code>Equipment</code>، و<code>next</code> وهو <code>reference</code> للعقدة التالية وقيمته الابتدائية <code>null</code>. فالـ <code>Node</code> تمثل موقعاً في القائمة، والـ <code>Equipment</code> يمثل الجهاز.</p>
+    </div>
+  </section>
+
+  <!-- 4 -->
+  <section class="scene">
+    <div class="head"><span class="num">04</span><span class="title">head و size و addLast</span><span class="dur">~45 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> حقول القائمة ودالة <code>addLast</code>، مع رسمة لإضافة عقدة في الآخر.</div>
+    <div class="say">
+      <p>القائمة فيها حقلان: <code>head</code> يشير لأول عقدة، و<code>size</code> لعدد العقد، والـ <code>constructor</code> يبدأ بـ <code>head</code> يساوي <code>null</code> و<code>size</code> يساوي صفر. وأحافظ دائماً على قاعدة: <code>head</code> يكون <code>null</code> فقط عندما تكون القائمة فارغة، وعدد العقد التي أصل إليها من الـ <code>head</code> يساوي <code>size</code>.</p>
+      <p>دالة <code>addLast</code> تنشئ عقدة جديدة. إذا كانت القائمة فارغة تصبح هي الـ <code>head</code>، وإلا أتقدم بحلقة <code>while</code> حتى أصل للعقدة التي <code>next</code> فيها <code>null</code>، وأربط الجديدة بعدها، ثم أزيد <code>size</code> بواحد. لم أستخدم <code>tail</code> لأنه اختياري، والقائمة لا تتجاوز خمس عقد.</p>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section class="scene">
+    <div class="head"><span class="num">05</span><span class="title">findById</span><span class="dur">~20 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> دالة <code>findById</code> مع رسمة لمؤشر <code>current</code> وهو يتنقل.</div>
+    <div class="say">
+      <p>دالة <code>findById</code> تمر على العقد بمتغير <code>current</code>، وتقارن الـ <code>ID</code> بعد <code>trim</code> وبدون اعتبار لحالة الأحرف. إذا وجدته ترجع كائن الجهاز، وإذا وصلت إلى <code>null</code> ترجع <code>null</code>، دون أن تغيّر القائمة.</p>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section class="scene">
+    <div class="head"><span class="num">06</span><span class="title">removeById وتعديل الروابط</span><span class="dur">~65 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> دالة <code>removeById</code>، ورسمات لحذف العقدة الأولى والوسطى والأخيرة والوحيدة.</div>
+    <div class="say">
+      <p>أهم دالة هي <code>removeById</code>. إذا كانت القائمة فارغة ترجع <code>null</code> مباشرة.</p>
+      <p>إذا كانت العقدة المطلوبة هي الأولى، أنقل الـ <code>head</code> إلى العقدة التي بعدها. وإذا كانت هي الوحيدة، فالـ <code>next</code> فيها <code>null</code>، فيصبح <code>head</code> يساوي <code>null</code> وتفرغ القائمة.</p>
+      <p>وإذا كانت في الوسط أو في الآخر، أتقدم بمؤشرين <code>previous</code> و<code>current</code>، وعندما أجدها أجعل <code>previous.next</code> يساوي <code>current.next</code>، فتتخطى العقدة السابقة العقدة المحذوفة. وإذا كانت الأخيرة فإن <code>current.next</code> يساوي <code>null</code>، فتصبح السابقة هي الأخيرة.</p>
+      <p>في كل حالة أنقص <code>size</code> مرة واحدة، وإذا لم أجد الـ <code>ID</code> لا يتغير شيء. وهذا ما حلّ محل الإزاحة: بدل تحريك البيانات أغيّر رابطاً واحداً. وهذه الدالة لا تغيّر حالة توفر الجهاز، فهذه مسؤولية البرنامج الرئيسي.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="scene">
+    <div class="head"><span class="num">07</span><span class="title">isEmpty و size و display</span><span class="dur">~15 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> الدوال الثلاث.</div>
+    <div class="say">
+      <p><code>isEmpty</code> ترجع <code>true</code> إذا كان <code>head</code> يساوي <code>null</code>، و<code>size</code> ترجع عدد العقد، و<code>display</code> تمر من الـ <code>head</code> حتى <code>null</code> وتطبع كل جهاز بـ <code>toString</code>، أو رسالة إذا كانت القائمة فارغة.</p>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section class="scene">
+    <div class="head"><span class="num">08</span><span class="title">البرنامج الرئيسي وعقدتان لنفس الجهاز</span><span class="dur">~80 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> كود <code>EquipmentCheckoutSystem</code>، ورسمة للقائمتين وكيف تشير عقدتان مختلفتان إلى نفس الجهاز.</div>
+    <div class="say">
+      <p>في البرنامج الرئيسي عرّفت حدّين: خمسة أجهزة للمخزون وثلاث استعارات، وأنشأت كائنين منفصلين من <code>EquipmentLinkedList</code>: <code>inventory</code> و<code>checkedOut</code>، وأتحقق من السعة بدالة <code>size</code> بدل عدادات إضافية. التحقق من المدخلات وتغيير حالة التوفر كله هنا، واختيار القائمة أقرؤه كسطر وأحوّله لرقم داخل <code>try catch</code> حتى لا يتوقف البرنامج إذا أُدخلت حروف.</p>
+      <p>عند الاستعارة أتحقق أن الجهاز موجود ومتاح وأن الاستعارات أقل من ثلاث، ثم أستدعي <code>addLast</code> على <code>checkedOut</code> بنفس الكائن، وأجعله غير متاح.</p>
+      <p>و<code>addLast</code> تنشئ <code>Node</code> جديدة، لكنها تشير لنفس كائن الـ <code>Equipment</code> الموجود في المخزون، فلا أنسخ الجهاز، ولذلك تظهر حالة <code>Checked Out</code> في القائمتين معاً. ولا يصح استخدام نفس العقدة في القائمتين، لأن فيها <code>next</code> واحداً فقط، ولا يمكنه أن يشير للتالي في المخزون وللتالي في الاستعارات معاً.</p>
+      <p>وعند الإرجاع أحذف العقدة من <code>checkedOut</code> فقط وأجعل الجهاز متاحاً، وإذا فشل الإرجاع أوضّح السبب: الجهاز غير موجود، أو غير مستعار.</p>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="scene">
+    <div class="head"><span class="num">09</span><span class="title">تشغيل: القوائم الفارغة والاختيارات الخاطئة</span><span class="dur">~30 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> تشغيل البرنامج: الخيار 5، ثم 4، ثم إرجاع E101، ثم 9، ثم abc.</div>
+    <div class="say">
+      <p>الآن التشغيل. القائمتان فارغتان: الخيار خمسة يعرض أنه لا توجد أجهزة مستعارة، والخيار أربعة يعرض أن المخزون فارغ. إرجاع <code>E101</code> يعطي خطأ دون أي تغيير. والاختيار تسعة ثم <code>abc</code> يعطيان رسالة اختيار غير صحيح، وتعود القائمة دون أن يتوقف البرنامج.</p>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="scene">
+    <div class="head"><span class="num">10</span><span class="title">تشغيل: الإضافة والتكرار والسعة</span><span class="dur">~35 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> إضافة E101 وE102، ومحاولة e101 مكرر، ثم E103، ثم ID فارغ، ثم E104 وE105، ثم إضافة سادسة، ثم الخيار 4.</div>
+    <div class="say">
+      <p>أضيف <code>E101</code> و<code>E102</code>. ثم أحاول إضافة <code>e101</code> بحروف صغيرة ومسافات، فيُرفض لأنه مكرر. أضيف <code>E103</code>، وأترك الـ <code>ID</code> فارغاً فيظهر خطأ. ثم أضيف <code>E104</code> و<code>E105</code>، وعند محاولة إضافة جهاز سادس يُرفض لأن المخزون ممتلئ. والعرض يُظهر الأجهزة الخمسة بترتيب التسجيل، وكلها <code>Available</code>.</p>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="scene">
+    <div class="head"><span class="num">11</span><span class="title">تشغيل: الاستعارة وأخطاؤها</span><span class="dur">~30 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> استعارة E999، ثم E101 وE102 وE103، ثم E101 مرة ثانية، ثم E104، ثم الخيار 5.</div>
+    <div class="say">
+      <p>استعارة <code>E999</code> تعطي خطأ لأنه غير موجود. أستعير <code>E101</code> و<code>E102</code> و<code>E103</code> بنجاح. استعارة <code>E101</code> مرة ثانية تُرفض لأنه مستعار، واستعارة <code>E104</code> تُرفض لأننا وصلنا للحد الأقصى، وهو ثلاث استعارات. والعرض يُظهرها بترتيب الاستعارة.</p>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section class="scene">
+    <div class="head"><span class="num">12</span><span class="title">تشغيل: حذف العقدة الوسطى وإعادة استخدام السعة</span><span class="dur">~35 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> إرجاع E104 (خطأ)، ثم إرجاع E102، ثم الخيار 5، ثم استعارة E104، ثم 5، ثم 4.</div>
+    <div class="say">
+      <p>إرجاع <code>E104</code> يُرفض لأنه غير مستعار. الآن أرجع <code>E102</code>، وهي العقدة الوسطى، فيصبح الترتيب <code>E101</code> ثم <code>E103</code>، أي أن <code>E101</code> صارت تشير مباشرة إلى <code>E103</code>.</p>
+      <p>وبعد أن توفّر مكان، أستعير <code>E104</code> بنجاح، وهذه إعادة استخدام للسعة. وفي المخزون الأجهزة الخمسة ما زالت موجودة، و<code>E102</code> عادت <code>Available</code>.</p>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="scene">
+    <div class="head"><span class="num">13</span><span class="title">تشغيل: حذف الأخيرة والأولى والوحيدة</span><span class="dur">~40 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> إرجاع E104، ثم E101، ثم e103، مع عرض القائمة بعد كل مرة، ثم استعارة E105، ثم 5، ثم 4.</div>
+    <div class="say">
+      <p>أرجع <code>E104</code>، وهي العقدة الأخيرة، فتبقى <code>E101</code> و<code>E103</code>. ثم <code>E101</code>، وهي العقدة الأولى، فينتقل الـ <code>head</code> إلى <code>E103</code>. ثم <code>e103</code> بحروف صغيرة، وهي العقدة الوحيدة، فتفرغ القائمة: <code>head</code> يساوي <code>null</code> و<code>size</code> يساوي صفر.</p>
+      <p>بعدها أستعير <code>E105</code> بنجاح، فالقائمة تعمل بشكل صحيح بعد أن فرغت. وفي المخزون كل الأجهزة <code>Available</code> ما عدا <code>E105</code>.</p>
+    </div>
+  </section>
+
+  <!-- 14 -->
+  <section class="scene">
+    <div class="head"><span class="num">14</span><span class="title">الخروج</span><span class="dur">~15 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> الخيار 6، ثم تشغيل جديد والخروج مباشرة.</div>
+    <div class="say">
+      <p>أختار ستة فينتهي البرنامج بشكل طبيعي. وفي تشغيل جديد أختار ستة مباشرة، فينتهي دون أن يحاول الوصول لأي عقدة في القوائم الفارغة.</p>
+    </div>
+  </section>
+
+  <!-- 15 -->
+  <section class="scene">
+    <div class="head"><span class="num">15</span><span class="title">الخلاصة</span><span class="dur">~20 ث</span></div>
+    <div class="screen"><b>على الشاشة:</b> شريحة ملخص.</div>
+    <div class="say">
+      <p>باختصار: البحث أصبح <code>traversal</code> من الـ <code>head</code> حتى <code>null</code>، والإضافة ربط عقدة في الآخر، والحذف تعديل رابط بدل الإزاحة، والـ <code>size</code> يتحدّث مع كل عملية. وكل جهاز مستعار له عقدتان مختلفتان تشيران إلى نفس الكائن.</p>
+      <p>شكراً لكم.</p>
+    </div>
+  </section>
+
+  <p class="total">15 مشهد · حوالي 7–8 دقايق</p>
+</main>
+</body>
+</html>
