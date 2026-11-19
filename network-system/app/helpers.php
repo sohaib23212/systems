@@ -46,6 +46,13 @@ function root_path(bool $reset = false): string
     return $root;
 }
 
+/** طلب تحميل مسبق من المتصفح (Speculation Rules) قبل أن يضغط المستخدم الرابط */
+function is_prefetch(): bool
+{
+    $p = strtolower((string) ($_SERVER['HTTP_SEC_PURPOSE'] ?? $_SERVER['HTTP_PURPOSE'] ?? ''));
+    return str_contains($p, 'prefetch');
+}
+
 /** المسار الأساسي للتطبيق: الجذر، وفي وضع المنصة يضاف اسم حساب الزبون (/sohaib) */
 function base_path(bool $reset = false): string
 {

@@ -164,11 +164,14 @@ final class Theme
         'design.buttons'       => 'normal',
         'design.font_size'     => 'normal',
         'design.motion'        => 'rise',
-        'design.stagger'       => '45',
-        'design.speed'         => '380',
-        'design.page_fx'       => '1',
+        'design.stagger'       => '20',
+        'design.speed'         => '200',
+        'design.page_fx'       => '0',
         'design.haptics'       => '1',
     ];
+
+    /** مراجعة إعدادات الحركة: تُحفظ مع صفحة التصاميم (2 = بعد تخفيف التنقل بين الصفحات) */
+    public const REV = 2;
 
     private static ?array $cache = null;
 
@@ -185,6 +188,18 @@ final class Theme
                 $v = $def;
             }
             $out[substr($k, 7)] = $v;
+        }
+        // تصميم حُفظ قبل تخفيف التنقل: بلا تأثير انتقال بين الصفحات (يؤخر ظهور كل صفحة) وبحركة خفيفة،
+        // حتى يحفظ المسؤول صفحة التصاميم من جديد فيُعتمد اختياره
+        try {
+            $rev = (int) (Platform::enabled() ? Platform::setting('design.rev', '0') : (Config::installed() ? Settings::get('design.rev', '0') : self::REV));
+        } catch (\Throwable) {
+            $rev = self::REV;
+        }
+        if ($rev < self::REV) {
+            $out['page_fx'] = '0';
+            $out['stagger'] = '20';
+            $out['speed'] = '200';
         }
         return self::$cache = self::sanitize($out);
     }
@@ -203,8 +218,9 @@ final class Theme
         }
         // التصميم الجاهز يُستنتج من القيم نفسها: أي تعديل على تفاصيله يجعله «مخصصاً»
         $out['preset'] = self::matchPreset($out);
-        $out['stagger'] = (string) max(0, min(200, (int) $out['stagger']));
-        $out['speed'] = (string) max(120, min(1200, (int) $out['speed']));
+        // حركة خفيفة دائماً: التنقل بين الصفحات لا ينتظر حركات طويلة (حد أعلى 30 و260 ملي ثانية)
+        $out['stagger'] = (string) max(0, min(30, (int) $out['stagger']));
+        $out['speed'] = (string) max(120, min(260, (int) $out['speed']));
         $out['page_fx'] = $out['page_fx'] === '1' ? '1' : '0';
         $out['haptics'] = $out['haptics'] === '1' ? '1' : '0';
         return $out;

@@ -224,6 +224,10 @@ final class Kernel
                 'X-Frame-Options' => 'SAMEORIGIN',
                 'Cache-Control'   => 'no-store, private',
             ];
+            // بعد أي تعديل (طلب غير GET) تُحذف الصفحات المحمّلة مسبقاً، فلا تظهر صفحة من قبل التعديل
+            if (!in_array($request->method, ['GET', 'HEAD'], true)) {
+                $response->headers += ['Clear-Site-Data' => '"prefetchCache"'];
+            }
         }
     }
 }

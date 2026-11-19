@@ -27,8 +27,8 @@ final class DesignController extends Controller
         foreach (array_keys(Theme::CHOICES) as $k) {
             $in[$k] = $request->str($k);
         }
-        $in['stagger'] = (string) $request->int('stagger', 45);
-        $in['speed'] = (string) $request->int('speed', 380);
+        $in['stagger'] = (string) $request->int('stagger', 20);
+        $in['speed'] = (string) $request->int('speed', 200);
         $in['page_fx'] = $request->bool('page_fx') ? '1' : '0';
         $in['haptics'] = $request->bool('haptics') ? '1' : '0';
         return Theme::sanitize($in);
@@ -41,6 +41,7 @@ final class DesignController extends Controller
         foreach ($t as $k => $v) {
             $values['design.' . $k] = $v;
         }
+        $values['design.rev'] = (string) Theme::REV;
         // لغة الأنظمة الأساسية، وسماح التبديل لكل مستخدم
         $values['platform.locale'] = in_array($request->str('locale'), array_keys(\App\Core\Lang::LOCALES), true) ? $request->str('locale') : 'ar';
         $values['platform.locale_switch'] = $request->bool('locale_switch') ? '1' : '0';

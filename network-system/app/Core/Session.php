@@ -39,7 +39,13 @@ final class Session
         }
         self::$started = true;
 
-        // نقل بيانات الطلب السابق (المدخلات والأخطاء) إلى الطلب الحالي فقط
+        // نقل بيانات الطلب السابق (المدخلات والأخطاء) إلى الطلب الحالي فقط.
+        // التحميل المسبق لا يستهلكها: تبقى للصفحة التي يفتحها المستخدم فعلاً
+        if (is_prefetch()) {
+            $_SESSION['_old_now'] = [];
+            $_SESSION['_errors_now'] = [];
+            return;
+        }
         $_SESSION['_old_now'] = $_SESSION['_old'] ?? [];
         $_SESSION['_errors_now'] = $_SESSION['_errors'] ?? [];
         unset($_SESSION['_old'], $_SESSION['_errors']);
@@ -77,8 +83,12 @@ final class Session
         unset($_SESSION[$key]);
     }
 
+    /** قراءة قيمة تُعرض مرة واحدة ثم حذفها. طلب التحميل المسبق لا يستهلكها: تبقى للصفحة التي تُفتح فعلاً */
     public static function pull(string $key, mixed $default = null): mixed
     {
+        if (is_prefetch()) {
+            return $default;
+        }
         $v = $_SESSION[$key] ?? $default;
         unset($_SESSION[$key]);
         return $v;

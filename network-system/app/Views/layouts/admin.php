@@ -79,6 +79,7 @@ $initial = mb_substr(trim((string) $admin['name']), 0, 1);
 <meta name="icons-url" content="<?= e(asset('img/icons.svg')) ?>">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e(($v->title !== '' ? $v->title . ' · ' : '') . 'لوحة المسؤول') ?></title>
+<?= $v->partial('prefetch-fresh') ?>
 <script>
 (function () {
   var p = 'system';
@@ -195,6 +196,7 @@ $initial = mb_substr(trim((string) $admin['name']), 0, 1);
 <?php if ($flash): ?>
 <script type="application/json" id="flash-data"><?= json_encode($flash, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?></script>
 <?php endif; ?>
+<?= $v->partial('speculation') ?>
 <script src="<?= e(asset('js/app.js')) ?>"></script>
 <?php foreach ($v->scripts as $script): ?>
 <script src="<?= e(asset($script)) ?>"></script>

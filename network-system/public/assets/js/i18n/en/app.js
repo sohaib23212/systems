@@ -226,10 +226,11 @@
     if (!Array.isArray(closed)) { closed = []; }
 
     // ظلّا حافتي التمرير on الغلاف (لا on حاوية التمرير): يُحدَّثان times لكل Border وعند التغيّر only
-    var shell = nav.closest('[data-nav-body]') || nav, fadeNow = '', fadeQueued = false;
+    var shell = nav.closest('[data-nav-body]') || nav, fadeNow = '', fadeQueued = false, lastY = 0;
     function fadeApply() {
       fadeQueued = false;
-      var top = nav.scrollTop > 2, bottom = nav.scrollTop + nav.clientHeight < nav.scrollHeight - 2;
+      lastY = nav.scrollTop;
+      var top = lastY > 2, bottom = lastY + nav.clientHeight < nav.scrollHeight - 2;
       var v = (top ? 'top ' : '') + (bottom ? 'bottom' : '');
       if (v === fadeNow) { return; }
       fadeNow = v;
@@ -240,10 +241,11 @@
       fadeQueued = true;
       requestAnimationFrame(fadeApply);
     }
-    // موضع التمرير يُحفظ للجلسة ويُستعاد before رسم Page التالية (partials/nav-restore), فلا تقفز Menu عند التنقل
+    // موضع التمرير يُحفظ للجلسة ويُستعاد before رسم Page التالية (partials/nav-restore), فلا تقفز Menu عند التنقل.
+    // يُقرأ أثناء التمرير (in Border الرسم) لا عند مغادرة Page: القراءة عند المغادرة تفرض Account التخطيط وتؤخر Open Page التالية
     var saveTimer = null;
     function savePos() {
-      try { sessionStorage.setItem(store + '-y', String(Math.round(nav.scrollTop))); } catch (err) {}
+      try { sessionStorage.setItem(store + '-y', String(Math.round(lastY))); } catch (err) {}
     }
     function savePosSoon() {
       clearTimeout(saveTimer);
@@ -255,16 +257,24 @@
       if (t) { t.setAttribute('aria-expanded', collapse ? 'false' : 'true'); }
     }
 
-    // Sections المطوية سابقاً تُستعاد دون حركة, وقسم Page الحالية يبقى مفتوحاً دائماً
-    nav.classList.add('no-anim');
-    groups.forEach(function (g) {
+    // Sections المطوية سابقاً تُستعاد دون حركة, وقسم Page الحالية يبقى مفتوحاً دائماً.
+    // عادةً تكون مطوية مسبقاً before الرسم (partials/nav-restore): لا شيء يتغير فلا حاجة لإيقاف Movement and Redo Account Menu
+    var pending = groups.filter(function (g) {
       var name = g.getAttribute('data-nav-group');
-      if (name && closed.indexOf(name) !== -1 && !$('.nav-link.is-active', g)) { setGroup(g, true); }
+      return name && closed.indexOf(name) !== -1 && !$('.nav-link.is-active', g) && !g.classList.contains('is-collapsed');
     });
-    void nav.offsetHeight;
-    nav.classList.remove('no-anim');
+    if (pending.length) {
+      nav.classList.add('no-anim');
+      pending.forEach(function (g) { setGroup(g, true); });
+      void nav.offsetHeight;
+      nav.classList.remove('no-anim');
+    }
     revealActiveNav();
-    fade();
+    // ظلّا الحافتين يُضبطان فوراً عند Open Page بلا حركة تلاشٍ (Movement للتمرير only)
+    shell.classList.add('is-init');
+    fadeApply();
+    void shell.offsetHeight;
+    requestAnimationFrame(function () { shell.classList.remove('is-init'); });
     nav.addEventListener('scroll', function () { fade(); savePosSoon(); }, { passive: true });
     window.addEventListener('resize', fade);
     window.addEventListener('pagehide', savePos);
@@ -785,7 +795,9 @@
     var vv = window.visualViewport;
     var bar = doc.querySelector('.app-footer');
     if (!vv || !bar) { return; }
-    var last = -1, queued = false;
+    // تبدأ from صفر (Value CSS Default): لا يُكتب المتغير on Page إلا عند ظهور لوحة المفاتيح فعلاً,
+    // فكتابته on جذر Page تعيد Account أنماط Every عناصرها
+    var last = 0, queued = false;
     function typing() {
       var a = doc.activeElement;
       if (!a || a === doc.body) { return null; }
@@ -835,9 +847,12 @@
         });
       } else if (!el.matches('script, dialog, style, .app-footer')) { pick(el); }
     });
-    list.slice(0, 16).forEach(function (el, i) { el.style.setProperty('--i', i); el.classList.add('mx'); });
-    var rows = content.querySelectorAll('.table tbody tr, .list > .list-item');
-    Array.prototype.slice.call(rows, 0, 14).forEach(function (tr, i) { tr.style.setProperty('--i', Math.min(16, 2 + i)); tr.classList.add('mx', 'mx-row'); });
+    // أول أربع كتل only وبتأخير Small, وصفوف الجداول تظهر مع جدولها: المحتوى يظهر فوراً and Movement لمسة خفيفة لا تؤخر Page
+    // التأخير يُضبط on العنصر نفسه (animation-delay لا يُورَّث) لا بمتغير CSS يُعيد Account أنماط Every ما بداخل الكتلة
+    list.slice(0, 4).forEach(function (el, i) {
+      if (i) { el.style.animationDelay = 'calc(' + i + ' * var(--motion-stagger, 20ms))'; }
+      el.classList.add('mx');
+    });
   }
   if (doc.readyState === 'loading') { doc.addEventListener('DOMContentLoaded', stagger); } else { stagger(); }
 

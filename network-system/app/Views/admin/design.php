@@ -186,8 +186,8 @@ $fields = static function (string $name, array $opts) use ($t): string {
             <?php endforeach; ?>
           </div>
           <div class="form-grid mt-3">
-            <div class="field col-6"><label for="dz-stagger">التأخير بين العناصر المتتابعة</label><div class="input-group"><input class="input" id="dz-stagger" type="number" name="stagger" min="0" max="200" step="5" value="<?= e($t['stagger']) ?>"><span class="input-addon">ملي ثانية</span></div></div>
-            <div class="field col-6"><label for="dz-speed">مدة الحركة</label><div class="input-group"><input class="input" id="dz-speed" type="number" name="speed" min="120" max="1200" step="20" value="<?= e($t['speed']) ?>"><span class="input-addon">ملي ثانية</span></div></div>
+            <div class="field col-6"><label for="dz-stagger">التأخير بين العناصر المتتابعة</label><div class="input-group"><input class="input" id="dz-stagger" type="number" name="stagger" min="0" max="30" step="5" value="<?= e($t['stagger']) ?>"><span class="input-addon">ملي ثانية</span></div></div>
+            <div class="field col-6"><label for="dz-speed">مدة الحركة</label><div class="input-group"><input class="input" id="dz-speed" type="number" name="speed" min="120" max="260" step="20" value="<?= e($t['speed']) ?>"><span class="input-addon">ملي ثانية</span></div></div>
             <div class="field col-6"><label class="switch"><input type="checkbox" name="page_fx" value="1"<?= checked($t['page_fx'] === '1') ?>><span class="track"></span><span>انتقال ناعم بين الصفحات</span></label></div>
             <div class="field col-6"><label class="switch"><input type="checkbox" name="haptics" value="1"<?= checked($t['haptics'] === '1') ?>><span class="track"></span><span>الاهتزاز عند اللمس</span></label></div>
           </div>
