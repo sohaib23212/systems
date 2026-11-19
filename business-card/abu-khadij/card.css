@@ -1,0 +1,258 @@
+/*
+ * كرت أبو خديج — تصليح وصيانة السخانات
+ * المقاس 90 × 50 مم. كل الأبعاد مكتوبة بوحدة --u (= 1 مم عند الطباعة)،
+ * وعلى الشاشة تكبر الوحدة حتى يملأ الكرت العرض المتاح.
+ */
+
+@font-face {
+  font-family: "Lalezar";
+  src: url("fonts/lalezar-arabic.woff2") format("woff2");
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/cairo-arabic-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: block;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FEFC;
+}
+/* ملف لاتيني واحد (للأرقام والمسافات) يخدم الوزنين 700 و 800 */
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/cairo-latin-800.woff2") format("woff2");
+  font-weight: 700;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "Cairo";
+  src: url("fonts/cairo-latin-800.woff2") format("woff2");
+  font-weight: 800;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+@font-face {
+  font-family: "Aref Ruqaa";
+  src: url("fonts/aref-ruqaa-arabic-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: block;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+200C-200E, U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FEFC;
+}
+@font-face {
+  font-family: "Aref Ruqaa";
+  src: url("fonts/aref-ruqaa-latin-700.woff2") format("woff2");
+  font-weight: 700;
+  font-display: block;
+  unicode-range: U+0000-00FF, U+2000-206F;
+}
+
+:root {
+  --red: #d7141c;
+  --red-hi: #ff3a2f;
+  --red-deep: #86080d;
+  --soft: #d9d9de;
+  /* حجم الملّيمتر على الشاشة */
+  --u: min(7.5px, calc((100vw - 32px) / 90));
+
+  --page: #e9e9ec;
+  --page-ink: #3a3a40;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --page: #1c1c20; --page-ink: #b9b9c0; }
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--page-ink);
+  font-family: "Cairo", system-ui, sans-serif;
+  font-weight: 700;
+  min-height: 100vh;
+}
+
+.defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+/* ===== صفحة المعاينة ===== */
+.sheet {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 28px 40px;
+  padding: 32px 16px 8px;
+}
+.side { margin: 0; }
+.label {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 14px;
+  opacity: .75;
+}
+.actions {
+  text-align: center;
+  padding: 8px 16px 32px;
+  font-size: 13px;
+}
+.actions p { margin: 10px 0 0; opacity: .7; }
+.actions button {
+  font: inherit;
+  font-size: 15px;
+  color: #fff;
+  background: var(--red);
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 26px;
+  cursor: pointer;
+}
+.actions button:hover { background: #b80f16; }
+
+/* ===== الكرت ===== */
+.card {
+  position: relative;
+  width: calc(90 * var(--u));
+  height: calc(50 * var(--u));
+  overflow: hidden;
+  isolation: isolate;
+  color: #fff;
+  border-radius: calc(1.4 * var(--u));
+  box-shadow: 0 calc(1.6 * var(--u)) calc(5 * var(--u)) rgba(0, 0, 0, .28);
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.card > * { position: absolute; margin: 0; }
+.card p, .card h1, .card h2 { margin: 0; font-weight: inherit; }
+
+/* الخلفية والرسومات تمتد 3 مم خارج حدود القص */
+.card .bg, .card .art {
+  top: calc(-3 * var(--u));
+  left: calc(-3 * var(--u));
+  width: calc(96 * var(--u));
+  height: calc(56 * var(--u));
+}
+.card .art { overflow: visible; }
+
+.name { word-spacing: .12em; }
+.emblem { filter: drop-shadow(0 calc(.7 * var(--u)) calc(1.2 * var(--u)) rgba(0, 0, 0, .45)); }
+
+/* ----- الوجه الأمامي ----- */
+.front .bg {
+  background:
+    radial-gradient(45% 70% at 100% 100%, rgba(215, 20, 28, .22), transparent 70%),
+    radial-gradient(55% 85% at 80% 12%, rgba(255, 255, 255, .07), transparent 65%),
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, .03) 0 calc(.25 * var(--u)), transparent calc(.25 * var(--u)) calc(1.1 * var(--u))),
+    linear-gradient(180deg, #161619, #09090b);
+}
+.front .emblem {
+  left: calc(4.5 * var(--u));
+  top: calc(13.5 * var(--u));
+  width: calc(23 * var(--u));
+  height: calc(23 * var(--u));
+}
+.front .info {
+  top: 0;
+  bottom: 0;
+  right: calc(6 * var(--u));
+  width: calc(46 * var(--u));
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.front .name {
+  font: 400 calc(12.5 * var(--u))/1 "Lalezar", sans-serif;
+  color: #fff;
+}
+.front .trade {
+  margin-top: calc(1.2 * var(--u));
+  font: 700 calc(3.9 * var(--u))/1.4 "Cairo", sans-serif;
+  color: var(--red-hi);
+}
+.front .rule {
+  display: block;
+  width: calc(18 * var(--u));
+  height: calc(.45 * var(--u));
+  margin: calc(2.4 * var(--u)) 0 calc(2.6 * var(--u));
+  background: linear-gradient(to left, var(--red), rgba(215, 20, 28, 0));
+}
+.phone {
+  display: flex;
+  align-items: center;
+  gap: calc(1.8 * var(--u));
+  color: #fff;
+  text-decoration: none;
+}
+.phone .ico {
+  display: grid;
+  place-items: center;
+  width: calc(6.4 * var(--u));
+  height: calc(6.4 * var(--u));
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--red-hi), var(--red-deep));
+}
+.phone .ico svg { width: 56%; height: 56%; fill: #fff; }
+.phone .num {
+  font: 800 calc(5 * var(--u))/1 "Cairo", sans-serif;
+  letter-spacing: calc(.15 * var(--u));
+  white-space: nowrap;
+  unicode-bidi: isolate;
+}
+.front .motto {
+  margin-top: calc(2.8 * var(--u));
+  font: 700 calc(3.9 * var(--u))/1.5 "Aref Ruqaa", serif;
+  color: var(--soft);
+}
+.motto b { color: var(--red-hi); font-weight: inherit; }
+
+/* ----- الوجه الخلفي ----- */
+.back .bg {
+  background:
+    repeating-linear-gradient(135deg, rgba(0, 0, 0, .05) 0 calc(.25 * var(--u)), transparent calc(.25 * var(--u)) calc(1.1 * var(--u))),
+    radial-gradient(75% 95% at 50% 30%, #e61c23 0%, #b80f15 50%, #6c060a 100%);
+}
+.back .emblem {
+  left: calc(35 * var(--u));
+  top: calc(5.5 * var(--u));
+  width: calc(20 * var(--u));
+  height: calc(20 * var(--u));
+}
+.back .name {
+  top: calc(25.5 * var(--u));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 400 calc(9 * var(--u))/1.1 "Lalezar", sans-serif;
+  color: #fff;
+  text-shadow: 0 calc(.4 * var(--u)) calc(1 * var(--u)) rgba(0, 0, 0, .3);
+}
+.back .motto {
+  top: calc(40.5 * var(--u));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font: 700 calc(4.6 * var(--u))/calc(9.5 * var(--u)) "Aref Ruqaa", serif;
+  color: #fff;
+}
+
+/* ===== الطباعة: صفحة لكل وجه بمقاس 90 × 50 مم ===== */
+@page { size: 90mm 50mm; margin: 0; }
+@media print {
+  :root { --u: 1mm; }
+  body { background: none; min-height: 0; }
+  /* كل وجه يبدأ من الزاوية العليا اليسرى للصفحة، والكتابة داخل الكرت تبقى من اليمين */
+  .sheet { display: block; padding: 0; direction: ltr; }
+  .card { direction: rtl; border-radius: 0; box-shadow: none; }
+  .side { break-after: page; }
+  .side:last-child { break-after: auto; }
+  .label, .actions { display: none; }
+}
+
+/* ملف المطبعة مع هامش قص 3 مم من كل جهة (96 × 56 مم) — يُفعَّل من سكربت التصدير */
+html.bleed .side {
+  width: calc(96 * var(--u));
+  height: calc(56 * var(--u));
+  padding: calc(3 * var(--u));
+  overflow: hidden;
+}
+html.bleed .card { overflow: visible; }
