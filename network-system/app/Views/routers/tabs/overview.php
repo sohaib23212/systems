@@ -26,7 +26,7 @@ $v->script('vendor/chart.umd.min.js');
         <div class="panel-head">
           <h3><?= icon('chart-line') ?>حركة الإنترنت المباشرة</h3>
           <div class="panel-tools">
-            <span class="badge badge-success badge-dot" id="live-state">مباشر</span>
+            <span class="badge badge-success badge-dot" id="live-state">مباشر الآن</span>
             <span class="text-sm text-muted">الواجهة: <span class="mono"><?= e($router['wan_interface'] ?: '—') ?></span></span>
           </div>
         </div>
@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
     SN.api(SN.base + '/routers/<?= (int) $router['id'] ?>/live', { silent: true }).then(function (d) {
       if (!d.ok) { throw new Error(d.message); }
       failures = 0;
-      state.className = 'badge badge-success badge-dot'; state.textContent = 'مباشر';
+      state.className = 'badge badge-success badge-dot'; state.textContent = 'مباشر الآن';
       labels.push(d.time); rx.push(d.rx); tx.push(d.tx);
       if (labels.length > 40) { labels.shift(); rx.shift(); tx.shift(); }
       chart.data.labels = labels; chart.data.datasets[0].data = rx; chart.data.datasets[1].data = tx; chart.update('none');

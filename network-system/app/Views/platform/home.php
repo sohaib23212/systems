@@ -86,7 +86,7 @@ $cta = $signup ? url('/signup') : url('/login');
         <div class="lp-app">
           <div class="lp-app-side"><span class="lp-app-logo"><?= Brand::mark(22) ?></span><i class="on"></i><i></i><i></i><i></i><i></i></div>
           <div class="lp-app-main">
-            <div class="lp-app-top"><b>لوحة التحكم</b><span class="lp-live"><i></i>مباشر</span></div>
+            <div class="lp-app-top"><b>لوحة التحكم</b><span class="lp-live"><i></i>مباشر الآن</span></div>
             <div class="lp-kpis">
               <div class="lp-kpi"><small>المتصلون الآن</small><b dir="ltr">248</b><em class="up" dir="ltr">+12%</em></div>
               <div class="lp-kpi"><small>مبيعات اليوم</small><b dir="ltr">1,350 <?= e($currency) ?></b><em class="up" dir="ltr">+8%</em></div>

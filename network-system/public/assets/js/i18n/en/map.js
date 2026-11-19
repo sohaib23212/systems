@@ -68,8 +68,8 @@
       '<div class="pop-sub"><span class="badge ' + st[1] + '">' + st[0] + '</span>' + (r.site ? ' · ' + esc(r.site) : '') + '</div>' +
       '<div class="pop-stats"><span>' + SN.icon('users') + SN.fmtNum(r.clients) + ' Connected</span>' + (r.cpu !== null ? '<span>' + SN.icon('cpu') + r.cpu + '%</span>' : '') + '</div>' +
       '<div class="pop-actions"><a class="btn btn-xs" href="' + url('/routers/' + r.id) + '">' + SN.icon('router') + 'Open MikroTik device</a>' +
-      (cfg.canManage ? '<button type="button" class="btn btn-xs" data-pop="edit-router" data-id="' + r.id + '">' + SN.icon('pencil') + 'Name and Location</button>' : '') +
-      (cfg.canManage && r.own ? '<button type="button" class="btn btn-xs text-danger" data-pop="unplace-router" data-id="' + r.id + '">' + SN.icon('trash-2') + 'Remove from Map</button>' : '') +
+      (cfg.canManage ? '<button type="button" class="btn btn-xs" data-pop="edit-router" data-id="' + r.id + '">' + SN.icon('pencil') + 'Name and location</button>' : '') +
+      (cfg.canManage && r.own ? '<button type="button" class="btn btn-xs text-danger" data-pop="unplace-router" data-id="' + r.id + '">' + SN.icon('trash-2') + 'Remove from map</button>' : '') +
       '</div></div>';
   }
 
@@ -146,7 +146,7 @@
   }
 
   // ------------------------------------------------------------------------
-  // أسماء Devices and Sites on Map: ظاهرة دائماً تحت العلامة, وما يتصادم منها يُخفى كما in خرائط Google
+  // Device and site names on the map: ظاهرة دائماً تحت العلامة, وما يتصادم منها يُخفى كما in Google Maps
   // (MikroTik devices أولاً then Sites), وتظهر عند التكبير or بالمرور on العلامة
   // ------------------------------------------------------------------------
   function label(m, text, cls, dy) {
@@ -305,8 +305,8 @@
     });
     if (mode !== 'link') { markLinkFrom(null); }
     var hint = {
-      add: 'اضغط on Map in مكان Location الجديد.', router: 'اضغط on Map in مكان Device.',
-      link: 'اضغط on First site then on Second site.', move: 'اسحب العلامات to أماكنها, ويُحفظ Every Site فوراً.'
+      add: 'Tap the map where the new site is.', router: 'Tap the map where the device is.',
+      link: 'Tap the first site, then the second.', move: 'Drag the markers into place; each position is saved right away.'
     }[mode];
     if (hint) { SN.toast('info', hint); }
   }
@@ -374,7 +374,7 @@
   });
 
   // ------------------------------------------------------------------------
-  // Add MikroTik device to Map: اختيار Device and Edit اسمه, or Add device New for the system بهذا Location
+  // Add a MikroTik device to the map: اختيار Device and Edit اسمه, or Add device New for the system بهذا Location
   // ------------------------------------------------------------------------
   var routerForm = document.querySelector('[data-router-form]');
   function routerName(id) {
@@ -411,7 +411,7 @@
         SN.closeModal(document.getElementById('router-modal'));
         (cfg.routers || []).forEach(function (x) { if (x.id === r.id) { x.placed = true; x.name = r.name; } });
         var opt = routerForm.id.querySelector('option[value="' + r.id + '"]');
-        if (opt) { opt.textContent = r.name + ' · on Map'; }
+        if (opt) { opt.textContent = r.name + ' · on the map'; }
         load().then(function () { reveal('routers', r.id); });
       });
     });
@@ -445,7 +445,7 @@
       map.closePopup();
       if (rr) { openRouter(id, L.latLng(rr.lat, rr.lng)); }
     } else if (kind === 'unplace-router') {
-      SN.confirm('Remove Device from Map? يبقى الDevice in the system, ويعود to Site برجه إن كان is owed Tower.').then(function (ok) {
+      SN.confirm('Remove the device from the map? It stays in the system, and goes back to its tower’s location if it has one.').then(function (ok) {
         if (!ok) { return; }
         SN.api(url('/map/router/' + id + '/remove'), { method: 'POST', data: {} }).then(function (r) {
           SN.toast('success', r.message);

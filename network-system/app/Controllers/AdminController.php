@@ -736,6 +736,31 @@ final class AdminController extends Controller
         return $this->ok('تم حفظ الإعدادات.', '/admin/settings');
     }
 
+    /** شعار النظام لكل الحسابات (PNG أو WebP بخلفية شفافة؛ ملف SVG يحوّله المتصفح إلى PNG قبل الرفع) */
+    public function logoSave(Request $request): Response
+    {
+        if ($err = $request->uploadError('logo')) {
+            return $this->backWithErrors($request, ['logo' => $err], '/admin/settings');
+        }
+        $file = $request->file('logo');
+        if (!$file) {
+            return $this->backWithErrors($request, ['logo' => 'اختر صورة الشعار.'], '/admin/settings');
+        }
+        $r = \App\Services\BrandLogo::store((string) $file['tmp_name'], (int) $file['size']);
+        if (!$r['ok']) {
+            return $this->backWithErrors($request, ['logo' => $r['error']], '/admin/settings');
+        }
+        Platform::log(null, 'admin', 'platform.logo', 'تغيير شعار النظام', AdminAuth::user()['name']);
+        return $this->ok('تم تغيير شعار النظام في كل الحسابات.', '/admin/settings');
+    }
+
+    public function logoReset(Request $request): Response
+    {
+        \App\Services\BrandLogo::reset();
+        Platform::log(null, 'admin', 'platform.logo', 'استعادة شعار النظام الأصلي', AdminAuth::user()['name']);
+        return $this->ok('عاد شعار النظام الأصلي.', '/admin/settings');
+    }
+
     /** كلمة مرور المسؤول نفسه: بالحالية، وتنتهي جلساته الأخرى */
     public function ownPassword(Request $request): Response
     {

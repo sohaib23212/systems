@@ -3221,223 +3221,171 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
 .segmented { max-width: 100%; flex-wrap: wrap; }
 
 /* ==========================================================================
-   شاشات الدخول والتسجيل (2026): لوحة عرض حيّة بألوان التصميم المختار + بطاقة نموذج زجاجية/صلبة حسب نمط النظام.
-   لا ألوان ثابتة: الهوية (--brand و--brand-2) والأساسي والزوايا والأزرار من التصميم، فتتبع الشاشة أي تصميم.
+   شاشات الدخول والتسجيل: عمود النموذج + لوحة عرض على الحاسوب (بألوان التصميم المختار) فيها جهاز يعرض لوحة النظام.
+   على الجوال لا لوحة ولا صور: صفحة نظيفة أنيقة. كل الألوان والزوايا والأزرار من التصميم المطبّق.
    ========================================================================== */
-.login-body { margin: 0; background: var(--bg); }
-.login-shell { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(420px, 44%) minmax(0, 1fr); }
+.login-body { margin: 0; background: var(--surface); }
+.auth-shell { min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); }
 
-/* ---- لوحة العرض ---- */
-.login-pane {
-  --pane-ink: color-mix(in srgb, var(--brand) 34%, #030617);
-  position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; color: #fff; isolation: isolate;
-  display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 34px 42px 28px;
-  background:
-    radial-gradient(120% 70% at 50% 120%, color-mix(in srgb, var(--brand-2) 55%, transparent), transparent 62%),
-    linear-gradient(160deg, var(--pane-ink) 0%, color-mix(in srgb, var(--brand) 72%, #030617) 58%, color-mix(in srgb, var(--brand) 88%, #030617) 100%);
-}
-.login-aurora { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-.login-aurora span { position: absolute; width: 62%; aspect-ratio: 1; border-radius: 50%; filter: blur(60px); opacity: .55; animation: login-drift 22s ease-in-out infinite alternate; }
-.login-aurora span:nth-child(1) { inset-inline-end: -18%; top: -22%; background: color-mix(in srgb, var(--brand-2) 85%, #000); }
-.login-aurora span:nth-child(2) { inset-inline-start: -24%; bottom: -26%; background: color-mix(in srgb, var(--brand) 70%, #22d3ee); animation-duration: 28s; animation-delay: -6s; }
-.login-aurora span:nth-child(3) { inset-inline-start: 30%; top: 38%; width: 34%; background: color-mix(in srgb, var(--brand-2) 55%, var(--brand)); opacity: .35; animation-duration: 19s; animation-delay: -11s; }
-@keyframes login-drift {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  50% { transform: translate3d(6%, 8%, 0) scale(1.12); }
-  100% { transform: translate3d(-5%, -4%, 0) scale(.94); }
-}
-.login-gridfx {
-  position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background-image: linear-gradient(rgba(255, 255, 255, .055) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .055) 1px, transparent 1px);
-  background-size: 42px 42px;
-  -webkit-mask-image: radial-gradient(ellipse 75% 60% at 50% 45%, #000 20%, transparent 78%); mask-image: radial-gradient(ellipse 75% 60% at 50% 45%, #000 20%, transparent 78%);
-}
-.login-net { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; color: color-mix(in srgb, var(--brand-2) 35%, #fff); opacity: .22; pointer-events: none; }
-.login-net circle { animation: login-pulse 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-.login-net .n2 { animation-delay: 1.5s; }
-.login-net .n3 { animation-delay: 3s; }
-@keyframes login-pulse { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.5); } }
-.login-pane-top { display: flex; align-items: center; gap: 10px; }
-.login-pane-top .wordmark { font-size: 15px; }
-.wordmark.is-light span { color: color-mix(in srgb, var(--brand-2) 30%, #fff); }
-.login-pane-center { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
-/* مركز الشبكة: الشعار في الوسط، وحوله أجهزة متصلة بخطوط تسري فيها نبضات البيانات */
-.login-hub { position: relative; width: 300px; height: 300px; margin-bottom: 4px; display: grid; place-items: center; }
-.login-hub-svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
-.login-orbit { fill: none; stroke: rgba(255, 255, 255, .14); stroke-width: 1; }
-.login-orbit.is-inner { stroke-dasharray: 3 6; stroke: rgba(255, 255, 255, .12); animation: login-dash 30s linear infinite; }
-.login-link { fill: none; stroke: color-mix(in srgb, var(--brand-2) 45%, #fff); stroke-opacity: .32; stroke-width: 1.2; stroke-dasharray: 4 5; animation: login-dash 2.4s linear infinite; }
-@keyframes login-dash { to { stroke-dashoffset: -36; } }
-.login-packet { fill: #fff; filter: drop-shadow(0 0 4px color-mix(in srgb, var(--brand-2) 40%, #fff)); }
-.login-node { position: absolute; left: 50%; top: 50%; width: 0; height: 0; transform: rotate(var(--a)) translate(124px) rotate(calc(-1 * var(--a))); }
-.login-node > span {
-  position: absolute; left: -21px; top: -21px; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; color: #fff;
-  background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .22); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
-  box-shadow: 0 12px 26px -10px rgba(0, 0, 0, .6), 0 0 22px -6px color-mix(in srgb, var(--brand-2) 70%, transparent);
-  animation: login-bob 5s ease-in-out infinite; animation-delay: var(--d, 0s);
-}
-.login-node .icon { width: 19px; height: 19px; }
-@keyframes login-bob { 50% { transform: translateY(-5px); } }
-.login-hub-core { position: relative; z-index: 1; display: grid; place-items: center; border-radius: 30px; }
-.login-hub-core::before { content: ""; position: absolute; inset: -22px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--brand-2) 55%, transparent), transparent 70%); filter: blur(6px); animation: login-glow 4s ease-in-out infinite; }
-@keyframes login-glow { 50% { opacity: .55; transform: scale(.92); } }
-.login-hub-core > .net-mark, .login-hub-core > .brand-logo { position: relative; box-shadow: 0 22px 50px -12px rgba(0, 0, 0, .6), 0 0 0 1px rgba(255, 255, 255, .22); }
-.login-pane .net-mark:not(.has-logo) { background: rgba(255, 255, 255, .12); color: #fff; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); font-size: 42px; }
-.login-brand-mark { border-radius: 28%; }
-.login-network { font-size: 32px; font-weight: 800; letter-spacing: -.01em; line-height: 1.2; overflow-wrap: anywhere; }
-.login-tagline { font-size: 15px; color: rgba(255, 255, 255, .82); }
-.login-features { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; max-width: 480px; }
-.login-features li {
-  display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px 6px 7px; border-radius: 999px;
-  background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .14); color: #fff; font-size: 13px; font-weight: 500;
-  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-  animation: login-chip .6s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(240ms + var(--i, 0) * 70ms);
-}
-[dir="rtl"] .login-features li { padding: 6px 7px 6px 14px; }
-.login-feature-icon { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .14); flex: none; }
-.login-feature-icon .icon { width: 14px; height: 14px; }
-@keyframes login-chip { from { opacity: 0; transform: translateY(10px) scale(.96); } }
-.login-pane-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 12px; color: rgba(255, 255, 255, .72); }
-.login-secure { display: inline-flex; align-items: center; gap: 6px; }
-.login-secure .icon { width: 15px; height: 15px; }
+/* ---- عمود النموذج ---- */
+.auth-main { position: relative; isolation: isolate; min-width: 0; display: flex; flex-direction: column; padding: 28px clamp(24px, 5vw, 72px) 18px; }
+.auth-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.auth-brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.auth-brand .net-mark, .auth-brand .net-mark-xl { --size: 42px; border-radius: 13px; font-size: 19px; flex: none; }
+.auth-brand .brand-logo { width: 42px; height: 42px; flex: none; }
+.auth-brand-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
+.auth-brand-text b { font-size: 16px; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-brand-text small { font-size: 12.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.auth-body { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 0 28px; }
+.login-card { position: relative; width: 100%; max-width: 410px; animation: login-rise .5s cubic-bezier(.2, .8, .2, 1) both; }
+.is-wide-card .login-card { max-width: 540px; }
+@keyframes login-rise { from { opacity: 0; transform: translateY(12px); } }
 
-@media (min-width: 961px) and (max-height: 820px) {
-  .login-hub { width: 240px; height: 240px; }
-  .login-node { transform: rotate(var(--a)) translate(99px) rotate(calc(-1 * var(--a))); }
-  .login-network { font-size: 28px; }
-}
-@media (min-width: 961px) and (max-height: 700px) { .login-features { display: none; } }
-
-/* ---- جهة النموذج ---- */
-.login-main { position: relative; isolation: isolate; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 76px 28px 22px; }
-.login-main::before {
-  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(560px 380px at 8% 6%, color-mix(in srgb, var(--primary) 11%, transparent), transparent 70%),
-    radial-gradient(520px 380px at 96% 98%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%);
-}
-[data-bg="dots"] .login-main::after, [data-bg="grid"] .login-main::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
-[data-bg="dots"] .login-main::after { background-image: radial-gradient(color-mix(in srgb, var(--text) 10%, transparent) 1px, transparent 1.5px); background-size: 20px 20px; -webkit-mask-image: linear-gradient(#000, transparent 85%); mask-image: linear-gradient(#000, transparent 85%); }
-[data-bg="grid"] .login-main::after { background-image: linear-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px); background-size: 30px 30px; -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0, #000 30%, transparent 90%); mask-image: radial-gradient(ellipse 80% 60% at 50% 0, #000 30%, transparent 90%); }
-
-.login-tools { display: flex; align-items: center; gap: 8px; }
-.login-tools.is-desktop { position: absolute; top: 20px; inset-inline-end: 24px; z-index: 2; }
-.login-tools.is-mobile { display: none; }
+.login-tools { display: flex; align-items: center; gap: 8px; flex: none; }
 .login-tool {
-  display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 13px; border-radius: 999px;
-  border: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 82%, transparent); color: var(--text-2);
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 13px; border-radius: 999px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-2);
   font: 600 13px/1 var(--font); cursor: pointer; text-decoration: none; transition: border-color .18s, color .18s, background-color .18s;
 }
 .login-tool:hover { border-color: var(--primary); color: var(--primary); }
-.login-tool .icon { width: 16px; height: 16px; }
+.login-tool .icon { width: 17px; height: 17px; }
 
-.login-card {
-  position: relative; width: 100%; max-width: 440px; padding: 36px 34px 30px;
-  background: var(--surface); border: 1px solid color-mix(in srgb, var(--border) 85%, transparent); border-radius: calc(var(--radius-lg) + 6px);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 32px 70px -38px color-mix(in srgb, var(--primary) 50%, rgba(15, 23, 42, .5));
-  animation: login-rise .55s cubic-bezier(.2, .8, .2, 1) both;
-}
-.is-wide-card .login-card { max-width: 600px; }
-/* خيط ضوئي بلوني التصميم أعلى البطاقة */
-.login-card::before { content: ""; position: absolute; top: -1px; inset-inline: 16%; height: 2px; border-radius: 2px; background: linear-gradient(90deg, transparent, var(--primary), var(--accent-2), transparent); opacity: .9; }
-/* شعاع ضوئي يدور ببطء على حافة البطاقة */
-@property --login-beam { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
-.login-card::after {
-  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
-  background: conic-gradient(from var(--login-beam), transparent 0 72%, color-mix(in srgb, var(--primary) 70%, transparent) 84%, color-mix(in srgb, var(--accent-2) 80%, transparent) 92%, transparent 100%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  animation: login-beam 8s linear infinite; opacity: .85;
-}
-@keyframes login-beam { to { --login-beam: 360deg; } }
-[data-skin="flat"] .login-card::after { opacity: .5; }
-@keyframes login-rise { from { opacity: 0; transform: translateY(16px) scale(.985); } }
-[data-theme="dark"] .login-card { box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset, 0 34px 80px -40px rgba(0, 0, 0, .9); }
-[data-skin="glass"] .login-card { background: color-mix(in srgb, var(--surface) 74%, transparent); border-color: rgba(255, 255, 255, .7); -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%); }
-[data-theme="dark"][data-skin="glass"] .login-card { background: color-mix(in srgb, var(--surface) 70%, transparent); border-color: rgba(255, 255, 255, .08); }
-[data-skin="elevated"] .login-card { box-shadow: 0 2px 4px rgba(15, 23, 42, .05), 0 40px 80px -36px rgba(15, 23, 42, .45); }
-[data-skin="flat"] .login-card, [data-skin="outline"] .login-card { box-shadow: none; }
-[data-skin="outline"] .login-card { border-color: var(--border-strong); }
-
-.login-head { margin-bottom: 26px; text-align: center; display: flex; flex-direction: column; align-items: center; }
-.login-badge {
-  width: 58px; height: 58px; border-radius: calc(var(--radius) + 7px); display: grid; place-items: center; margin-bottom: 16px; color: #fff;
-  background: linear-gradient(140deg, color-mix(in srgb, var(--brand) 88%, #000), var(--brand-2));
-  box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--brand) 80%, transparent), inset 0 1px 0 rgba(255, 255, 255, .25);
-}
-.login-badge .icon { width: 26px; height: 26px; }
-.login-head h1 { font-size: 26px; font-weight: 800; letter-spacing: -.015em; line-height: 1.25; margin: 0 0 6px; }
-.login-head p { margin: 0; color: var(--muted); font-size: 14.5px; }
+.login-head { margin-bottom: 26px; display: flex; flex-direction: column; align-items: flex-start; text-align: start; }
+.login-badge { display: none; }
+.login-head h1 { font-size: 28px; font-weight: 800; letter-spacing: -.015em; line-height: 1.3; margin: 0 0 6px; color: var(--text); }
+.login-head p { margin: 0; color: var(--muted); font-size: 15px; }
 .login-form { display: flex; flex-direction: column; gap: 16px; }
-.login-form .field > label { font-weight: 600; font-size: 13px; color: var(--text-2); }
-.login-form .input { height: 52px; border-radius: calc(var(--radius) + 3px); font-size: 15px; background: var(--surface-2); transition: border-color .18s, box-shadow .18s, background-color .18s; }
-.login-form .input:hover { border-color: var(--border-strong); }
-.login-form .input:focus { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
+.login-form .field > label { font-weight: 600; font-size: 13.5px; color: var(--text); }
+.login-form .input { height: 50px; border-radius: calc(var(--radius) + 2px); font-size: 15px; background: var(--surface); border-color: var(--border-strong); box-shadow: 0 1px 2px rgba(15, 23, 42, .05); transition: border-color .18s, box-shadow .18s; }
+.login-form .input:hover { border-color: color-mix(in srgb, var(--primary) 35%, var(--border-strong)); }
+.login-form .input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent); }
 .login-form .input-icon > .icon { transition: color .18s; }
 .login-form .input-icon:focus-within > .icon { color: var(--primary); }
-.login-submit, .login-bio { position: relative; overflow: hidden; height: 52px; font-size: 16px; font-weight: 700; margin-top: 4px; }
-:root:not([data-buttons="pill"]) .login-submit, :root:not([data-buttons="pill"]) .login-bio { border-radius: calc(var(--radius) + 3px); }
-.login-submit { box-shadow: 0 14px 28px -14px color-mix(in srgb, var(--primary) 85%, transparent); transition: transform .16s, box-shadow .2s, filter .2s, background-color .2s; }
-.login-submit:hover { transform: translateY(-1px); box-shadow: 0 18px 34px -14px color-mix(in srgb, var(--primary) 90%, transparent); }
-.login-submit:active { transform: translateY(0); }
-/* لمعة تعبر الزر عند المرور */
-.login-submit::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, .28) 50%, transparent 65%); transform: translateX(-120%); transition: transform .7s ease; pointer-events: none; }
-.login-submit:hover::after { transform: translateX(120%); }
+.login-submit, .login-bio { height: 50px; font-size: 15.5px; font-weight: 700; margin-top: 4px; }
+:root:not([data-buttons="pill"]) .login-submit, :root:not([data-buttons="pill"]) .login-bio { border-radius: calc(var(--radius) + 2px); }
+.login-submit { box-shadow: 0 10px 24px -12px color-mix(in srgb, var(--primary) 80%, transparent); transition: transform .16s, box-shadow .2s, background-color .2s; }
+.login-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 30px -12px color-mix(in srgb, var(--primary) 85%, transparent); }
+.login-submit:active { transform: none; }
 [data-skin="flat"] .login-submit, [data-skin="outline"] .login-submit { box-shadow: none; }
-.login-bio { margin-top: 0; }
-.login-alt { margin-top: 20px; text-align: center; font-size: 14px; color: var(--muted); }
+.login-bio { margin-top: 0; background: var(--surface); }
+.login-alt { margin-top: 22px; text-align: center; font-size: 14px; color: var(--muted); }
 .login-alt a, .login-forgot a { font-weight: 600; color: var(--primary); }
-.login-foot { width: 100%; max-width: 440px; display: flex; justify-content: center; }
-.is-wide-card .login-foot { max-width: 600px; }
+.login-foot { display: flex; justify-content: center; }
 .login-foot .madix-credit { padding: 6px 10px; font-size: 11.5px; }
-.login-mobile-head { display: none; }
+.login-form .slug-field { border-radius: calc(var(--radius) + 2px); background: var(--surface); border-color: var(--border-strong); }
+.login-form .slug-field:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent); }
+.login-form .slug-field input { height: 48px; }
 
-@media (max-width: 960px) {
-  .login-shell { grid-template-columns: minmax(0, 1fr); }
-  .login-pane, .login-tools.is-desktop { display: none; }
-  .login-main { justify-content: flex-start; padding: 0 0 22px; gap: 0; }
-  .login-main::before { background: radial-gradient(420px 320px at 50% 100%, color-mix(in srgb, var(--accent-2) 9%, transparent), transparent 70%); }
-  .login-mobile-head {
-    display: block; width: 100%; color: #fff; position: relative; overflow: hidden; isolation: isolate;
-    padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 84px;
+/* ---- لوحة العرض (الحاسوب فقط) ---- */
+.auth-show {
+  position: relative; overflow: hidden; isolation: isolate; display: flex; flex-direction: column; margin: 14px; margin-inline-start: 0; border-radius: calc(var(--radius-lg) + 12px); color: #fff;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--brand) 92%, #fff) 0%, var(--brand) 45%, color-mix(in srgb, var(--brand) 62%, #050816) 100%);
+}
+.auth-show-fx { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.auth-show-fx span { position: absolute; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .12); }
+.auth-show-fx span:nth-child(1) { width: 760px; height: 760px; top: -260px; inset-inline-end: -300px; box-shadow: inset 0 0 0 90px rgba(255, 255, 255, .025); }
+.auth-show-fx span:nth-child(2) { width: 520px; height: 520px; bottom: -230px; inset-inline-start: -170px; background: radial-gradient(circle, color-mix(in srgb, var(--brand-2) 55%, transparent), transparent 70%); border: 0; }
+.auth-show-head { position: relative; padding: clamp(36px, 5vw, 64px) clamp(32px, 4.4vw, 60px) 0; max-width: 560px; }
+.auth-show-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 30px; }
+.auth-show-brand .wordmark { font-size: 15px; }
+.wordmark.is-light { color: #fff; }
+.wordmark.is-light span { color: rgba(255, 255, 255, .78); }
+.auth-show-head h2 { margin: 0; font-size: clamp(26px, 2.6vw, 36px); font-weight: 700; line-height: 1.3; letter-spacing: -.015em; color: #fff; }
+.auth-show-head p { margin: 12px 0 0; font-size: 15.5px; line-height: 1.8; color: rgba(255, 255, 255, .86); max-width: 470px; }
+
+/* مساحة الجهاز تبدأ بعد العنوان والوصف دائماً، فلا يغطيهما مهما طال النص */
+.auth-stage { position: relative; flex: 1; min-height: 300px; }
+/* الجهاز المائل: إطار داكن وشاشة بألوان النظام (تتبع الوضع الداكن) */
+.auth-device {
+  --s: 1; position: absolute; top: 40px; inset-inline-start: 34px; width: 780px; height: 560px; padding: 14px; border-radius: 34px;
+  background: #0b0d12; box-shadow: 0 0 0 1.5px #2b2f3a, 0 60px 90px -40px rgba(0, 0, 0, .7), 0 30px 60px -30px rgba(0, 0, 0, .5);
+  transform: rotate(-11deg) scale(var(--s)); transform-origin: 100% 0;
+  animation: device-in 1s cubic-bezier(.2, .8, .2, 1) .1s both;
+}
+[dir="ltr"] .auth-device { transform: rotate(11deg) scale(var(--s)); transform-origin: 0 0; }
+@keyframes device-in { from { opacity: 0; translate: 0 40px; } }
+.auth-device-screen { width: 100%; height: 100%; border-radius: 22px; overflow: hidden; display: flex; background: var(--bg); color: var(--text); font-size: 12px; }
+.ad-side { width: 168px; flex: none; display: flex; flex-direction: column; gap: 3px; padding: 16px 10px; background: var(--surface); border-inline-end: 1px solid var(--border); }
+.ad-brand { display: flex; align-items: center; gap: 8px; padding: 2px 6px 14px; font-weight: 800; letter-spacing: .08em; font-size: 12px; color: var(--text); }
+.ad-nav { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 9px; color: var(--text-2); font-weight: 500; white-space: nowrap; }
+.ad-nav .icon { width: 15px; height: 15px; color: var(--muted); }
+.ad-nav.is-on { background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.ad-nav.is-on .icon { color: var(--primary); }
+.ad-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 18px; }
+.ad-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.ad-top > div { display: flex; flex-direction: column; }
+.ad-top b { font-size: 17px; font-weight: 800; color: var(--text); }
+.ad-top small { font-size: 11.5px; color: var(--muted); }
+.ad-live { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; color: var(--success); background: var(--success-soft); }
+.ad-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
+.ad-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.ad-kpi { display: flex; flex-direction: column; gap: 2px; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.ad-kpi-ic { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; margin-bottom: 6px; background: var(--primary-soft); color: var(--primary); }
+.ad-kpi-ic.is-2 { background: var(--success-soft); color: var(--success); }
+.ad-kpi-ic.is-3 { background: var(--warning-soft); color: var(--warning); }
+.ad-kpi-ic .icon { width: 15px; height: 15px; }
+.ad-kpi small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.ad-kpi b { font-size: 19px; font-weight: 800; color: var(--text); }
+.ad-chart, .ad-table { padding: 12px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.ad-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.ad-card-head b { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.ad-card-head small { font-size: 12px; font-weight: 700; color: var(--primary); }
+.ad-chart svg { display: block; width: 100%; height: 64px; }
+.ad-area { fill: color-mix(in srgb, var(--primary) 16%, transparent); }
+.ad-line { fill: none; stroke: var(--primary); stroke-width: 2.4; stroke-linecap: round; }
+.ad-row { display: grid; grid-template-columns: 1.1fr 1fr auto; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); color: var(--text-2); }
+.ad-code { font-family: ui-monospace, monospace; color: var(--text); text-align: start; }
+.ad-st { font-size: 10.5px; font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.ad-st.is-ok { color: var(--success); background: var(--success-soft); }
+.ad-st.is-new { color: var(--info); background: var(--info-soft); }
+.ad-st.is-end { color: var(--danger); background: var(--danger-soft); }
+
+/* ---- الأحجام ---- */
+@media (max-width: 1360px) { .auth-device { --s: .9; } }
+@media (max-width: 1200px) { .auth-device { --s: .8; } }
+@media (max-height: 760px) and (min-width: 1024px) { .auth-show-head p { display: none; } .auth-show-brand { margin-bottom: 20px; } }
+.auth-secure { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 22px; font-size: 12.5px; color: var(--muted); }
+.auth-secure .icon { width: 15px; height: 15px; color: var(--success); }
+
+/* ---- الجوال واللوحي: لا لوحة عرض ولا صور، صفحة نظيفة بلمسة لونية خفيفة من التصميم ---- */
+@media (max-width: 1023px) {
+  .auth-shell { grid-template-columns: minmax(0, 1fr); }
+  .auth-show { display: none; }
+  .auth-main { padding: calc(14px + env(safe-area-inset-top, 0px)) 20px calc(10px + env(safe-area-inset-bottom, 0px)); }
+  .auth-main::before {
+    content: ""; position: absolute; inset: 0 0 auto; height: 340px; z-index: -1; pointer-events: none;
     background:
-      radial-gradient(360px 220px at 100% 0, color-mix(in srgb, var(--brand-2) 70%, transparent), transparent 70%),
-      radial-gradient(300px 200px at 0 100%, color-mix(in srgb, var(--brand) 60%, #22d3ee), transparent 72%),
-      linear-gradient(160deg, color-mix(in srgb, var(--brand) 40%, #030617), color-mix(in srgb, var(--brand) 85%, #030617));
+      radial-gradient(120% 90% at 50% -20%, color-mix(in srgb, var(--primary) 13%, transparent), transparent 70%),
+      radial-gradient(60% 60% at 100% 0%, color-mix(in srgb, var(--accent-2) 10%, transparent), transparent 70%);
   }
-  .login-mobile-head::after {
-    content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background-image: linear-gradient(rgba(255, 255, 255, .06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, .06) 1px, transparent 1px);
-    background-size: 30px 30px; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent);
+  .auth-main::after {
+    content: ""; position: absolute; inset: 0 0 auto; height: 300px; z-index: -1; pointer-events: none;
+    background-image: linear-gradient(color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--text) 5%, transparent) 1px, transparent 1px);
+    background-size: 26px 26px; -webkit-mask-image: linear-gradient(#000, transparent); mask-image: linear-gradient(#000, transparent);
   }
-  .login-tools.is-mobile { display: flex; justify-content: flex-end; margin-bottom: 14px; }
-  .login-tools.is-mobile .login-tool { height: 34px; padding: 0 12px; background: rgba(255, 255, 255, .12); border-color: rgba(255, 255, 255, .22); color: #fff; }
-  .login-tools.is-mobile .login-tool:hover { background: rgba(255, 255, 255, .2); color: #fff; }
-  .login-mobile-brand { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; min-width: 0; }
-  .login-mobile-brand > div { min-width: 0; max-width: 100%; }
-  .login-mobile-brand > .net-mark, .login-mobile-brand > .brand-logo { position: relative; box-shadow: 0 0 0 6px rgba(255, 255, 255, .08), 0 0 0 13px rgba(255, 255, 255, .04), 0 18px 40px -12px rgba(0, 0, 0, .6) !important; }
-  .login-mobile-brand .net-mark { --size: 64px; border-radius: 20px; font-size: 28px; flex: none; }
-  .login-mobile-brand .net-mark:not(.has-logo) { background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); }
-  .login-mobile-brand .login-brand-mark { width: 64px; height: 64px; flex: none; }
-  .login-mobile-head .login-network { font-size: 23px; line-height: 1.3; }
-  .login-mobile-head .login-tagline { font-size: 13px; }
-  .login-card, .is-wide-card .login-card { max-width: none; width: calc(100% - 28px); margin-top: -50px; padding: 28px 20px 24px; border-radius: calc(var(--radius-lg) + 4px); }
-  .login-head { margin-bottom: 22px; }
-  .login-head h1 { font-size: 23px; }
-  .login-badge { width: 52px; height: 52px; margin-bottom: 14px; }
-  .login-foot, .is-wide-card .login-foot { max-width: none; margin-top: 16px; }
+  .auth-body { align-items: center; padding: 30px 0 24px; }
+  .login-card, .is-wide-card .login-card { max-width: 480px; margin-inline: auto; }
+  .login-head { margin-bottom: 24px; }
+  .login-head h1 { font-size: 27px; }
+  .login-form .input { height: 52px; font-size: 16px; }
+  .login-submit, .login-bio { height: 52px; }
+  .login-tool span { display: none; }
+  .login-tool { width: 40px; height: 40px; padding: 0; }
 }
-@media (max-width: 340px) {
-  .login-tools.is-mobile .login-tool span { display: none; }
-  .login-tools.is-mobile .login-tool { width: 34px; padding: 0; justify-content: center; }
-  .login-card, .is-wide-card .login-card { width: calc(100% - 20px); padding: 24px 16px 20px; }
+@media (max-width: 380px) {
+  .auth-main { padding-inline: 16px; }
+  .auth-brand .net-mark, .auth-brand .net-mark-xl { --size: 38px; }
+  .auth-brand .brand-logo { width: 38px; height: 38px; }
+  .login-head h1 { font-size: 24px; }
 }
-[data-motion="none"] .login-card, [data-motion="none"] .login-features li { animation: none; }
-@media (prefers-reduced-motion: reduce) {
-  .login-card, .login-card::after, .login-features li, .login-aurora span, .login-net circle, .login-orbit, .login-link, .login-node > span, .login-hub-core::before { animation: none; }
-  .login-packet { display: none; }
-  .login-submit::after { display: none; }
-}
-.login-form .slug-field { border-radius: calc(var(--radius) + 3px); background: var(--surface-2); border-color: var(--border); transition: border-color .18s, box-shadow .18s, background-color .18s; }
-.login-form .slug-field:focus-within { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent); }
-.login-form .slug-field input { height: 50px; }
-.login-form .slug-field span { background: transparent; }
+[data-motion="none"] .login-card, [data-motion="none"] .auth-device { animation: none; }
+@media (prefers-reduced-motion: reduce) { .login-card, .auth-device { animation: none; } }
+/* سطر حالة الرابط واسم المستخدم في التسجيل لا يحجز مساحة وهو فارغ */
+.login-form .slug-status:empty { display: none; }
+
+/* معاينة شعار النظام على خلفية فاتحة وداكنة بنقش يُظهر الشفافية */
+.logo-preview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.logo-preview-tile { display: grid; place-items: center; aspect-ratio: 1.4; border-radius: 12px; border: 1px solid var(--border); background-size: 16px 16px; background-position: 0 0, 8px 8px; }
+.logo-preview-tile.is-light { background-color: #fff; background-image: linear-gradient(45deg, #eef1f5 25%, transparent 25%, transparent 75%, #eef1f5 75%), linear-gradient(45deg, #eef1f5 25%, transparent 25%, transparent 75%, #eef1f5 75%); }
+.logo-preview-tile.is-dark { background-color: #0b0f19; background-image: linear-gradient(45deg, #151b2b 25%, transparent 25%, transparent 75%, #151b2b 75%), linear-gradient(45deg, #151b2b 25%, transparent 25%, transparent 75%, #151b2b 75%); }
+.logo-preview-tile img { width: 56%; height: 56%; object-fit: contain; }

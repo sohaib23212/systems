@@ -9,7 +9,7 @@ $dialog = $dialog ?? true;
 ?>
 <button type="button" class="madix-credit" data-madix-open dir="ltr" aria-haspopup="dialog">
   <span>Powered by</span>
-  <img src="<?= e(asset('img/brand/mark.svg')) ?>" width="16" height="16" alt="">
+  <img src="<?= e(Brand::markSrc()) ?>" width="16" height="16" alt="">
   <b>Madix</b>
   <span class="madix-credit-sep">—</span>
   <span class="madix-credit-dev">Developed by <?= Brand::developer(14) ?></span>
@@ -22,7 +22,7 @@ $dialog = $dialog ?? true;
     <div class="madix-grid"></div>
     <button type="button" class="madix-close" data-madix-close aria-label="إغلاق"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="madix-head">
-      <span class="madix-logo"><img src="<?= e(asset('img/brand/mark.svg')) ?>" width="58" height="58" alt="Madix"></span>
+      <span class="madix-logo"><img src="<?= e(Brand::markSrc()) ?>" width="58" height="58" alt="Madix"></span>
       <div class="madix-titles" dir="ltr">
         <div class="madix-name">MADIX <span>NEXUS</span></div>
         <div class="madix-by">Developed by <?= Brand::developer(17) ?></div>

@@ -403,3 +403,10 @@ html, a, button, summary, label, input, select, textarea, [role="button"], [tabi
   .lp-js [data-lp-anim].is-in, .lp-js .lp-hero-text > *, .lp-js .lp-stage, .lp-js .lp-chart-line { animation: none !important; }
   .lp-window { transition: none; }
 }
+/* الشاشات الضيقة: اسم المنصة أصغر قليلاً حتى يتسع الشريط لزر الدخول والقائمة دون تلامس */
+@media (max-width: 420px) {
+  .lp-brand { gap: 8px; }
+  .lp-brand .brand-logo { width: 30px; height: 30px; }
+  .lp-brand .wordmark { font-size: 12.5px; letter-spacing: .03em; }
+  .lp-nav-cta .lp-btn { padding: 0 11px; }
+}

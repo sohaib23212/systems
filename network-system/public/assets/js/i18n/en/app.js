@@ -862,6 +862,45 @@
   });
 
   // Preview Network logo before saving
+  // System logo (Admin panel): Preview before saving, and File SVG يُرسم in المتصفح صورةَ PNG شفافة 1024×1024 before Upload
+  // (Server لا يقبل SVG in Folder Upload لأنه قد يحوي شيفرة)
+  on(doc, 'change', '[data-brand-logo-input]', function (e, input) {
+    var form = input.closest('[data-brand-logo]');
+    var file = input.files && input.files[0];
+    var save = $('[data-brand-logo-save]', form), name = $('[data-brand-logo-name]', form);
+    if (!file) { return; }
+    save.disabled = true;
+    var show = function (src) { $$('[data-logo-prev]').forEach(function (img) { img.src = src; }); };
+    var isSvg = /svg/i.test(file.type) || /\.svg$/i.test(file.name);
+    if (!isSvg) {
+      name.textContent = file.name;
+      var r = new FileReader();
+      r.onload = function () { show(r.result); save.disabled = false; };
+      r.readAsDataURL(file);
+      return;
+    }
+    var url = URL.createObjectURL(file), img = new Image();
+    img.onload = function () {
+      var size = 1024, w = img.naturalWidth || size, h = img.naturalHeight || size;
+      var k = Math.min(size / w, size / h);
+      var c = doc.createElement('canvas');
+      c.width = c.height = size;
+      c.getContext('2d').drawImage(img, (size - w * k) / 2, (size - h * k) / 2, w * k, h * k);
+      URL.revokeObjectURL(url);
+      c.toBlob(function (blob) {
+        if (!blob || typeof DataTransfer === 'undefined') { toast('error', 'The file could not be converted to an image. Upload the logo as PNG.'); return; }
+        var dt = new DataTransfer();
+        dt.items.add(new File([blob], file.name.replace(/\.svg$/i, '') + '.png', { type: 'image/png' }));
+        input.files = dt.files;
+        name.textContent = file.name + ' → PNG';
+        show(c.toDataURL('image/png'));
+        save.disabled = false;
+      }, 'image/png');
+    };
+    img.onerror = function () { URL.revokeObjectURL(url); toast('error', 'The file could not be read.'); };
+    img.src = url;
+  });
+
   on(doc, 'change', '[data-logo-input]', function (e, input) {
     var box = input.closest('[data-logo-picker]');
     var file = input.files && input.files[0];

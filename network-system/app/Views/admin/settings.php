@@ -38,6 +38,29 @@ $zones = ['Asia/Gaza', 'Asia/Hebron', 'Asia/Jerusalem', 'Asia/Amman', 'Africa/Ca
 
   <div class="stack">
     <div class="panel">
+      <div class="panel-head"><h3><?= icon('image') ?>شعار النظام</h3></div>
+      <div class="panel-body stack" style="gap:12px">
+        <div class="logo-preview">
+          <span class="logo-preview-tile is-light"><img src="<?= e(\App\Core\Brand::markSrc()) ?>" alt="" data-logo-prev></span>
+          <span class="logo-preview-tile is-dark"><img src="<?= e(\App\Core\Brand::markSrc()) ?>" alt="" data-logo-prev></span>
+        </div>
+        <p class="text-sm text-muted" style="margin:0">يظهر في كل الحسابات: القائمة الجانبية وشاشات الدخول وصفحة الهبوط وأيقونة المتصفح والتطبيق. استخدم صورة مربعة بخلفية شفافة (PNG أو WebP أو SVG) بمقاس 512×512 أو أكبر.</p>
+        <form method="post" action="<?= e(url('/admin/settings/logo')) ?>" enctype="multipart/form-data" class="stack" style="gap:10px" data-brand-logo>
+          <?= csrf_field() ?>
+          <label class="btn btn-block"><?= icon('upload') ?>اختيار صورة الشعار<input type="file" name="logo" accept="image/png,image/webp,image/svg+xml,.svg" hidden data-brand-logo-input></label>
+          <span class="text-sm text-muted text-center" data-brand-logo-name>PNG · WebP · SVG</span>
+          <?= error_html('logo') ?>
+          <button class="btn btn-primary btn-block" data-brand-logo-save disabled><?= icon('save') ?>حفظ الشعار</button>
+        </form>
+        <?php if (\App\Services\BrandLogo::dir() !== null): ?>
+        <form method="post" action="<?= e(url('/admin/settings/logo/reset')) ?>" data-confirm="استعادة شعار النظام الأصلي في كل الحسابات؟" data-confirm-type="primary">
+          <?= csrf_field() ?>
+          <button class="btn btn-ghost btn-block"><?= icon('rotate-ccw') ?>استعادة الشعار الأصلي</button>
+        </form>
+        <?php endif; ?>
+      </div>
+    </div>
+    <div class="panel">
       <div class="panel-head"><h3><?= icon('user-cog') ?>فريق الإدارة</h3></div>
       <div class="panel-body stack" style="gap:10px">
         <p class="text-sm text-muted" style="margin:0">المسؤولون وأدوارهم وصلاحياتهم يديرها مالك المنصة من صفحة «فريق الإدارة»، وكل مسؤول يغيّر كلمة مروره من صفحة «الأمان».</p>

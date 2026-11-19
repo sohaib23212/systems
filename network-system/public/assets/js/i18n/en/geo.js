@@ -9,7 +9,7 @@
   var L = window.L;
 
   // ------------------------------------------------------------------------
-  // خرائط Google (Map Tiles API): Working حين يضع Platform admin or صاحب Account Key Google,
+  // Google Maps (Map Tiles API): Working حين يضع Platform admin or صاحب Account Key Google,
   // وإلا تبقى الخرائط Open كما هي. الجلسة تُحفظ in المتصفح until انتهائها فلا تُطلب مع Every Page.
   // ------------------------------------------------------------------------
   var geoCfg = (function () {
@@ -79,7 +79,7 @@
       googleLogo(map, null);
       L.TileLayer.prototype.onRemove.call(this, map);
     },
-    // حقوق Data للمنطقة الظاهرة from Google (شرط in استخدام الخرائط)
+    // حقوق Data للمنطقة الظاهرة In Google (شرط in استخدام الخرائط)
     _updateCredit: function () {
       var map = this._map, self = this;
       if (!map) { return; }
@@ -122,15 +122,15 @@
     if (!map.hasLayer(open)) { open.addTo(map); }
     if (!googleFailed && window.SN) {
       googleFailed = true;
-      SN.toast('warning', 'تعذّر تحميل خرائط Google, فتظهر Map العادية. Check from Key Google and Enable Map Tiles API.');
+      SN.toast('warning', 'Google Maps could not load, so the regular map is shown. Check the Google key and enable Map Tiles API.');
     }
     if (window.console) { console.warn('Google Map Tiles:', err && err.message); }
   }
 
   var STREET = 'Map';
-  var G_ROAD = 'خرائط Google', G_HYBRID = 'Google Satellite', G_TERRAIN = 'Google تضاريس';
+  var G_ROAD = 'Google Maps', G_HYBRID = 'Google Satellite', G_TERRAIN = 'Google Terrain';
 
-  /** طبقات Map: خرائط Google (عند ضبط Key), والشوارع والقمر الصناعي Open */
+  /** طبقات Map: Google Maps (عند ضبط Key), والشوارع والقمر الصناعي Open */
   function baseLayers() {
     var street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19, className: 'tiles-street',
@@ -157,7 +157,7 @@
     try { return localStorage.getItem('sn-map-base') || ''; } catch (e) { return ''; }
   }
 
-  /** Add Layers للخريطة مع تذكّر Last اختيار (وخرائط Google أولاً عند ضبط مفتاحها) */
+  /** Add Layers للخريطة مع تذكّر Last اختيار (وGoogle Maps أولاً عند ضبط مفتاحها) */
   function attachLayers(map) {
     var layers = baseLayers();
     map._snLayers = layers;

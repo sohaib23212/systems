@@ -145,6 +145,8 @@ return static function (Router $r): void {
     $r->post('/admin/cookies/tenants/{id}', [\App\Controllers\AdminCookieController::class, 'tenant'], $a + ['aperm' => 'settings.manage']);
     $r->get('/admin/settings', [AdminController::class, 'settings'], $a + ['aperm' => 'settings.manage']);
     $r->post('/admin/settings', [AdminController::class, 'settingsSave'], $a + ['aperm' => 'settings.manage']);
+    $r->post('/admin/settings/logo', [AdminController::class, 'logoSave'], $a + ['aperm' => 'settings.manage']);
+    $r->post('/admin/settings/logo/reset', [AdminController::class, 'logoReset'], $a + ['aperm' => 'settings.manage']);
     // فريق الإدارة: المالك وحده
     $r->get('/admin/team', [\App\Controllers\AdminTeamController::class, 'index'], $a + ['owner' => true]);
     $r->post('/admin/team', [\App\Controllers\AdminTeamController::class, 'save'], $a + ['owner' => true]);

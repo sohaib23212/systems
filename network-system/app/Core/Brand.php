@@ -59,10 +59,16 @@ final class Brand
         }
     }
 
+    /** رابط صورة شعار النظام: الشعار الذي وضعه مسؤول المنصة، وإلا الأصلي */
+    public static function markSrc(): string
+    {
+        return \App\Services\BrandLogo::url('mark-512') ?? asset('img/brand/mark.svg');
+    }
+
     /** شعار النظام كصورة */
     public static function mark(int $size = 40, string $class = ''): string
     {
-        return '<img class="' . e(trim('brand-logo ' . $class)) . '" src="' . e(asset('img/brand/mark.svg')) . '" width="' . $size . '" height="' . $size . '" alt="' . self::NAME . '">';
+        return '<img class="' . e(trim('brand-logo ' . $class)) . '" src="' . e(self::markSrc()) . '" width="' . $size . '" height="' . $size . '" alt="' . self::NAME . '">';
     }
 
     /** علامة التوثيق الزرقاء بجانب اسم المطوّر (بنمط علامة التوثيق في إنستغرام) */
@@ -87,11 +93,26 @@ final class Brand
     public static function headTags(): string
     {
         $logo = self::networkLogo();
-        $icon = $logo !== '' ? upload_url($logo) : asset('img/brand/mark.svg');
-        $type = $logo !== '' ? '' : ' type="image/svg+xml"';
+        $custom = \App\Services\BrandLogo::dir() !== null;
+        if ($logo !== '') {
+            $icon = upload_url($logo);
+            $type = '';
+            $alt = '';
+            $apple = upload_url($logo);
+        } elseif ($custom) {
+            $icon = (string) \App\Services\BrandLogo::url('mark-192');
+            $type = ' type="image/png"';
+            $alt = (string) \App\Services\BrandLogo::url('mark-32');
+            $apple = (string) \App\Services\BrandLogo::url('apple-180');
+        } else {
+            $icon = asset('img/brand/mark.svg');
+            $type = ' type="image/svg+xml"';
+            $alt = asset('img/brand/favicon-32.png');
+            $apple = asset('img/brand/apple-touch-icon.png');
+        }
         return '<link rel="icon"' . $type . ' href="' . e($icon) . '">' . "\n"
-            . ($logo === '' ? '<link rel="alternate icon" href="' . e(asset('img/brand/favicon-32.png')) . '">' . "\n" : '')
-            . '<link rel="apple-touch-icon" href="' . e($logo !== '' ? upload_url($logo) : asset('img/brand/apple-touch-icon.png')) . '">' . "\n"
+            . ($alt !== '' ? '<link rel="alternate icon" href="' . e($alt) . '">' . "\n" : '')
+            . '<link rel="apple-touch-icon" href="' . e($apple) . '">' . "\n"
             . '<link rel="manifest" href="' . e(url('/manifest.webmanifest')) . '">' . "\n"
             . '<meta name="theme-color" content="' . self::COLOR . '">' . "\n"
             . '<meta name="application-name" content="' . self::NAME . '">';

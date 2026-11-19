@@ -13,8 +13,10 @@ final class BrandController extends Controller
     public function manifest(Request $request): Response
     {
         $name = Brand::networkName();
+        // شعار المنصة المرفوع (إن وُجد) بمقاساته المولَّدة، وإلا الأيقونات الأصلية
+        $custom = ['icon-192.png' => 'mark-192', 'icon-512.png' => 'mark-512', 'maskable-512.png' => 'maskable-512'];
         $icon = static fn (string $file, int $size, string $purpose = 'any') => [
-            'src' => asset('img/brand/' . $file), 'sizes' => $size . 'x' . $size, 'type' => 'image/png', 'purpose' => $purpose,
+            'src' => \App\Services\BrandLogo::url($custom[$file]) ?? asset('img/brand/' . $file), 'sizes' => $size . 'x' . $size, 'type' => 'image/png', 'purpose' => $purpose,
         ];
         return Response::json([
             'name' => $name . ' · ' . Brand::NAME,
