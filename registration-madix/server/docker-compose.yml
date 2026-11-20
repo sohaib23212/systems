@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-madix}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-madix}
+      POSTGRES_DB: ${POSTGRES_DB:-madix}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-madix}']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATABASE_URL: postgres://${POSTGRES_USER:-madix}:${POSTGRES_PASSWORD:-madix}@db:5432/${POSTGRES_DB:-madix}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      STORAGE_LOCAL_DIR: /app/data/recordings
+      MAX_UPLOAD_BYTES: ${MAX_UPLOAD_BYTES:-4294967296}
+      STUN_URLS: ${STUN_URLS:-stun:stun.l.google.com:19302}
+      TURN_URLS: ${TURN_URLS:-}
+      TURN_SECRET: ${TURN_SECRET:-}
+      TURN_TTL: ${TURN_TTL:-3600}
+    volumes:
+      - recordings:/app/data/recordings
+    ports:
+      - '8080:8080'
+
+  # TURN server for WebRTC live view across NAT. Uses host networking so it can
+  # relay on the full UDP port range. Set TURN_SECRET and TURN_URLS in .env.
+  coturn:
+    image: coturn/coturn:4.6-alpine
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: ['-c', '/etc/coturn/turnserver.conf']
+
+volumes:
+  pgdata:
+  recordings:

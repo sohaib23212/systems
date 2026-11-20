@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">registration madix</string>
+    <string name="tile_label">تسجيل الشاشة</string>
+
+    <!-- Auth -->
+    <string name="server_address">عنوان الخادم</string>
+    <string name="username">اسم المستخدم</string>
+    <string name="password">كلمة المرور</string>
+    <string name="login">تسجيل الدخول</string>
+    <string name="register">إنشاء حساب</string>
+    <string name="switch_to_register">ما عندك حساب؟ أنشئ واحد</string>
+    <string name="switch_to_login">عندك حساب؟ سجّل الدخول</string>
+    <string name="logout">تسجيل الخروج</string>
+
+    <!-- Nav -->
+    <string name="nav_home">الرئيسية</string>
+    <string name="nav_library">التسجيلات</string>
+    <string name="nav_devices">الأجهزة</string>
+    <string name="nav_settings">الإعدادات</string>
+
+    <!-- Home -->
+    <string name="start_recording">ابدأ التسجيل</string>
+    <string name="stop_recording">إيقاف التسجيل</string>
+    <string name="pause">إيقاف مؤقت</string>
+    <string name="resume">استئناف</string>
+    <string name="recording_now">جارٍ التسجيل</string>
+    <string name="paused">متوقف مؤقتاً</string>
+
+    <!-- Notification -->
+    <string name="notif_channel_name">التسجيل</string>
+    <string name="notif_recording_title">جارٍ تسجيل الشاشة</string>
+    <string name="notif_paused_title">التسجيل متوقف مؤقتاً</string>
+
+    <!-- Live -->
+    <string name="live_view">المشاهدة المباشرة</string>
+    <string name="live_watching">مشاهدة مباشرة</string>
+    <string name="live_offline">الجهاز غير متصل</string>
+    <string name="stop_remote">إيقاف التسجيل عن بُعد</string>
+
+    <!-- Common -->
+    <string name="delete">حذف</string>
+    <string name="rename">إعادة تسمية</string>
+    <string name="share">مشاركة</string>
+    <string name="cancel">إلغاء</string>
+    <string name="confirm">تأكيد</string>
+    <string name="save">حفظ</string>
+    <string name="retry">إعادة المحاولة</string>
+</resources>
