@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -36,9 +36,20 @@ jobs:
       - name: Build debug APK
         run: ./gradlew :app:assembleDebug --stacktrace
 
-      - name: Upload APK
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk app/build/outputs/apk/debug/registration-madix.apk
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: registration-madix-debug
-          path: registration-madix/android/app/build/outputs/apk/debug/app-debug.apk
+          path: registration-madix/android/app/build/outputs/apk/debug/registration-madix.apk
           if-no-files-found: warn
+
+      - name: Publish APK to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: registration madix (latest)
+          prerelease: true
+          files: registration-madix/android/app/build/outputs/apk/debug/registration-madix.apk
