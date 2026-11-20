@@ -5,11 +5,7 @@ import kotlinx.coroutines.withContext
 
 class AuthRepository(private val graph: AppGraph) {
 
-    private fun normalize(url: String): String {
-        val t = url.trim()
-        val withScheme = if (t.startsWith("http://") || t.startsWith("https://")) t else "https://$t"
-        return withScheme.trimEnd('/')
-    }
+    private fun normalize(url: String): String = ServerUrl.normalize(url)
 
     suspend fun login(serverUrl: String, username: String, password: String): Result<Unit> =
         withContext(Dispatchers.IO) {

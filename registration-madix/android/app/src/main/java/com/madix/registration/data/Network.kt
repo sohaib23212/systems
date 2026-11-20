@@ -32,7 +32,8 @@ class HostSelectionInterceptor(private val tokens: TokenHolder) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()
         val configured = tokens.serverUrl.trim()
-        val base = normalize(configured)?.toHttpUrlOrNull()
+        if (configured.isEmpty()) return chain.proceed(request)
+        val base = ServerUrl.normalize(configured).toHttpUrlOrNull()
             ?: return chain.proceed(request)
         val newUrl: HttpUrl = request.url.newBuilder()
             .scheme(base.scheme)
@@ -40,12 +41,6 @@ class HostSelectionInterceptor(private val tokens: TokenHolder) : Interceptor {
             .port(base.port)
             .build()
         return chain.proceed(request.newBuilder().url(newUrl).build())
-    }
-
-    private fun normalize(url: String): String? {
-        if (url.isEmpty()) return null
-        val withScheme = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
-        return withScheme.trimEnd('/')
     }
 }
 
@@ -103,7 +98,7 @@ class TokenAuthenticator(
 
     private fun refreshBlocking(serverUrl: String, refreshToken: String): AuthResponse? {
         return try {
-            val base = (if (serverUrl.startsWith("http")) serverUrl else "https://$serverUrl").trimEnd('/')
+            val base = ServerUrl.normalize(serverUrl)
             val client = OkHttpClient()
             val body = MadixJson.encodeToString(RefreshRequest.serializer(), RefreshRequest(refreshToken))
             val req = Request.Builder()

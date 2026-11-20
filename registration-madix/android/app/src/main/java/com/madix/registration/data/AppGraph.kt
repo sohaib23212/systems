@@ -63,19 +63,7 @@ class AppGraph(val appContext: Context) {
     }
 
     /** Base server URL normalized with scheme, used for raw streaming calls and WebSocket. */
-    fun serverBase(): String {
-        val url = tokens.serverUrl.trim()
-        if (url.isEmpty()) return ""
-        val withScheme = if (url.startsWith("http://") || url.startsWith("https://")) url else "https://$url"
-        return withScheme.trimEnd('/')
-    }
+    fun serverBase(): String = ServerUrl.normalize(tokens.serverUrl)
 
-    fun wsBase(): String {
-        val base = serverBase()
-        return when {
-            base.startsWith("https://") -> "wss://" + base.removePrefix("https://")
-            base.startsWith("http://") -> "ws://" + base.removePrefix("http://")
-            else -> base
-        }
-    }
+    fun wsBase(): String = ServerUrl.toWs(serverBase())
 }
