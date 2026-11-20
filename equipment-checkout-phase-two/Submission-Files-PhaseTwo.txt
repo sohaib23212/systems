@@ -1,0 +1,503 @@
+مشروع Simple Equipment Checkout System - المرحلة الثانية (Custom Singly Linked Lists)
+======================================================================
+
+شو المطلوب تعمل:
+
+1) اعمل مشروع Java جديد (أو افتح مشروع المرحلة الأولى).
+
+2) اعمل 3 ملفات بهاي الأسماء بالزبط، كلهم بنفس المجلد:
+     - Equipment.java
+     - EquipmentLinkedList.java
+     - EquipmentCheckoutSystem.java
+
+3) انسخ كود كل ملف من تحت والصقه بالملف اللي بنفس الاسم.
+   كل كود بيبدأ بسطر "بداية ملف" وبيخلص بسطر "نهاية ملف".
+   انسخ اللي بيناتهم بس.
+
+4) إذا مشروعك على NetBeans أو IntelliJ وفيه package
+   (مثلاً package equipmentcheckout;)، زيد نفس سطر الـ package
+   بأول سطر بكل ملف من الثلاثة.
+
+5) شغّل الملف EquipmentCheckoutSystem.java، لأنه هو اللي فيه main.
+   رح تطلعلك منيو فيها 6 خيارات.
+
+6) التسليم على المودل:
+     - الملفات الثلاثة (Equipment.java و EquipmentLinkedList.java
+       و EquipmentCheckoutSystem.java).
+     - فيديو شرح، مدته أقصى إشي 10 دقايق.
+
+شو كل ملف:
+  - Equipment.java: كلاس الجهاز (رقمه، اسمه، متاح أو مستعار).
+  - EquipmentLinkedList.java: القائمة المترابطة، وجواها كلاس Node،
+    وفيها addLast و findById و removeById و isEmpty و size و display.
+  - EquipmentCheckoutSystem.java: البرنامج الرئيسي (المنيو والتحقق من المدخلات).
+
+======================================================================
+>>> بداية ملف 1: Equipment.java
+======================================================================
+/**
+ * Equipment.java
+ *
+ * Represents one piece of equipment in the Simple Equipment Checkout System.
+ * This class is reused from Phase One. It has no linked list fields:
+ * an Equipment object describes the equipment itself, while a node
+ * (inside EquipmentLinkedList) describes a position in a list.
+ */
+public class Equipment {
+
+    private String id;          // unique equipment ID, e.g. "E101"
+    private String name;        // equipment name, e.g. "Projector"
+    private boolean available;  // true = available, false = checked out
+
+    /**
+     * Creates a new equipment item. New equipment is available by default.
+     *
+     * @param id   the (already trimmed and validated) equipment ID
+     * @param name the (already trimmed and validated) equipment name
+     */
+    public Equipment(String id, String name) {
+        this.id = id;
+        this.name = name;
+        this.available = true;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isAvailable() {
+        return available;
+    }
+
+    /**
+     * Changes the availability of this equipment.
+     * Called by the application on checkout (false) and on return (true).
+     */
+    public void setAvailable(boolean available) {
+        this.available = available;
+    }
+
+    /**
+     * Returns the equipment in the required display format, for example:
+     * "E101 - Projector (Available)" or "E101 - Projector (Checked Out)".
+     */
+    @Override
+    public String toString() {
+        String status = available ? "Available" : "Checked Out";
+        return id + " - " + name + " (" + status + ")";
+    }
+}
+======================================================================
+<<< نهاية ملف 1: Equipment.java
+======================================================================
+
+======================================================================
+>>> بداية ملف 2: EquipmentLinkedList.java
+======================================================================
+/**
+ * EquipmentLinkedList.java
+ *
+ * A custom singly linked list that stores references to Equipment objects.
+ * In Phase Two this class replaces the fixed-size arrays of Phase One:
+ * array indexing becomes node traversal, and array shifting becomes link updates.
+ *
+ * Every method keeps these rules true:
+ *  - head is null exactly when the list is empty (size == 0).
+ *  - the number of nodes reachable from head always equals size.
+ *  - the last node's next is null, so the list always ends and has no cycle.
+ *
+ * The list only manages nodes and links. It never changes equipment
+ * availability; that is the job of the application class.
+ */
+public class EquipmentLinkedList {
+
+    /**
+     * A node represents one position in the list.
+     * It holds a reference to an Equipment object and a link to the next node.
+     */
+    private static class Node {
+        private Equipment data;   // the equipment stored at this position
+        private Node next;        // the following node, or null at the end of the list
+
+        Node(Equipment data) {
+            this.data = data;
+            this.next = null;
+        }
+    }
+
+    private Node head;  // first node of the list, or null when the list is empty
+    private int size;   // number of nodes currently in the list
+
+    /**
+     * Creates an empty list.
+     */
+    public EquipmentLinkedList() {
+        head = null;
+        size = 0;
+    }
+
+    /**
+     * Appends a new node containing the given equipment at the end of the list.
+     * The caller must validate the equipment before calling this method.
+     */
+    public void addLast(Equipment equipment) {
+        Node newNode = new Node(equipment);
+
+        if (head == null) {
+            // Empty list: the new node becomes the first node.
+            head = newNode;
+        } else {
+            // Walk to the last node (the one whose next is null),
+            // then link the new node after it.
+            Node current = head;
+            while (current.next != null) {
+                current = current.next;
+            }
+            current.next = newNode;
+        }
+        size++;
+    }
+
+    /**
+     * Traverses the list and returns the equipment whose ID matches,
+     * or null if no node matches. The list is not changed.
+     * IDs are compared after trimming and ignoring letter case.
+     */
+    public Equipment findById(String equipmentId) {
+        if (equipmentId == null) {
+            return null;
+        }
+        String target = equipmentId.trim();
+
+        Node current = head;
+        while (current != null) {
+            if (idMatches(current, target)) {
+                return current.data;
+            }
+            current = current.next;
+        }
+        return null;
+    }
+
+    /**
+     * Unlinks the node whose equipment ID matches, decreases the size once,
+     * and returns the equipment it contained.
+     * Returns null and leaves the list unchanged if no node matches.
+     * IDs are compared after trimming and ignoring letter case.
+     */
+    public Equipment removeById(String equipmentId) {
+        if (equipmentId == null || head == null) {
+            return null;  // nothing to remove from an empty list
+        }
+        String target = equipmentId.trim();
+
+        // Case 1: the first node matches, so head moves to the second node.
+        // If it was the only node, head.next is null and the list becomes empty.
+        if (idMatches(head, target)) {
+            Node removed = head;
+            head = head.next;
+            removed.next = null;  // detach the removed node from the list
+            size--;
+            return removed.data;
+        }
+
+        // Case 2: a middle or last node matches.
+        // Keep a reference to the previous node so we can reconnect
+        // the predecessor directly to the successor of the removed node.
+        Node previous = head;
+        Node current = head.next;
+        while (current != null) {
+            if (idMatches(current, target)) {
+                previous.next = current.next;  // skip the node (becomes null if it was last)
+                current.next = null;           // detach the removed node from the list
+                size--;
+                return current.data;
+            }
+            previous = current;
+            current = current.next;
+        }
+
+        // No match: nothing was changed.
+        return null;
+    }
+
+    /**
+     * Reports whether the list contains no nodes.
+     */
+    public boolean isEmpty() {
+        return head == null;
+    }
+
+    /**
+     * Returns the current number of nodes in the list.
+     */
+    public int size() {
+        return size;
+    }
+
+    /**
+     * Traverses the list from head to the end and prints each equipment
+     * using its toString() method. Prints a message if the list is empty.
+     */
+    public void display() {
+        if (head == null) {
+            System.out.println("Message: The list is empty.");
+            return;
+        }
+        Node current = head;
+        while (current != null) {
+            System.out.println(current.data.toString());
+            current = current.next;
+        }
+    }
+
+    /**
+     * Helper: checks whether the node's equipment ID equals the given
+     * (already trimmed) ID, ignoring letter case.
+     */
+    private boolean idMatches(Node node, String trimmedId) {
+        return node.data.getId().trim().equalsIgnoreCase(trimmedId);
+    }
+}
+======================================================================
+<<< نهاية ملف 2: EquipmentLinkedList.java
+======================================================================
+
+======================================================================
+>>> بداية ملف 3: EquipmentCheckoutSystem.java
+======================================================================
+import java.util.Scanner;
+
+/**
+ * EquipmentCheckoutSystem.java
+ *
+ * Menu-driven application for the Simple Equipment Checkout System (Phase Two).
+ * Equipment is stored in two separate custom singly linked lists:
+ *  - inventory : every registered equipment item, in registration order.
+ *  - checkedOut: references to the equipment currently in use, in checkout order.
+ *
+ * Checking out adds a NEW node to checkedOut that points to the SAME Equipment
+ * object that is already in the inventory, so both lists always show the same
+ * availability. Returning removes only the checkout node; the equipment stays
+ * in the inventory.
+ *
+ * Input validation, capacity rules and availability changes are kept in this
+ * class. The list class only manages nodes and links.
+ */
+public class EquipmentCheckoutSystem {
+
+    private static final int MAX_INVENTORY = 5;   // application rule: at most 5 registered items
+    private static final int MAX_CHECKOUTS = 3;   // application rule: at most 3 active checkouts
+
+    private static final Scanner input = new Scanner(System.in);
+
+    // Two separate list objects, both using the custom EquipmentLinkedList class.
+    private static final EquipmentLinkedList inventory = new EquipmentLinkedList();
+    private static final EquipmentLinkedList checkedOut = new EquipmentLinkedList();
+
+    public static void main(String[] args) {
+        int choice;
+
+        // Show the menu again after every action until the user chooses 6.
+        do {
+            displayMenu();
+            choice = readMenuChoice();
+            System.out.println();
+
+            switch (choice) {
+                case 1:
+                    addEquipment();
+                    break;
+                case 2:
+                    checkOutEquipment();
+                    break;
+                case 3:
+                    returnEquipment();
+                    break;
+                case 4:
+                    viewInventory();
+                    break;
+                case 5:
+                    viewCheckedOutEquipment();
+                    break;
+                case 6:
+                    System.out.println("Goodbye!");
+                    break;
+                default:
+                    System.out.println("Error:");
+                    System.out.println("Invalid menu choice. Please select 1 through 6.");
+            }
+            System.out.println();
+        } while (choice != 6);
+
+        input.close();
+    }
+
+    /**
+     * Prints the six menu options and the choice prompt.
+     */
+    private static void displayMenu() {
+        System.out.println("----- Equipment Checkout System -----");
+        System.out.println("1. Add Equipment");
+        System.out.println("2. Check Out Equipment");
+        System.out.println("3. Return Equipment");
+        System.out.println("4. View Equipment Inventory");
+        System.out.println("5. View Checked-Out Equipment");
+        System.out.println("6. Exit");
+        System.out.print("Enter your choice: ");
+    }
+
+    /**
+     * Reads the menu choice as a whole line and converts it to a number.
+     * Non-numeric input (such as "abc") returns -1, which the menu treats
+     * as an invalid choice, so the program never crashes.
+     */
+    private static int readMenuChoice() {
+        if (!input.hasNextLine()) {
+            return 6;  // input has ended: exit normally instead of crashing
+        }
+        String line = input.nextLine().trim();
+        try {
+            return Integer.parseInt(line);
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * Prints a prompt and returns the user's input with surrounding spaces removed.
+     */
+    private static String readText(String prompt) {
+        System.out.print(prompt);
+        if (!input.hasNextLine()) {
+            return "";  // input has ended: treated as an empty value
+        }
+        return input.nextLine().trim();
+    }
+
+    /**
+     * Option 1: validates the ID, name, inventory capacity and ID uniqueness,
+     * then creates the equipment and appends its node to the inventory.
+     */
+    private static void addEquipment() {
+        // Capacity check uses the list's own size() instead of a separate counter.
+        if (inventory.size() >= MAX_INVENTORY) {
+            System.out.println("Error: Inventory is full. Maximum of "
+                    + MAX_INVENTORY + " equipment items reached.");
+            return;
+        }
+
+        String id = readText("Equipment ID   : ");
+        if (id.isEmpty()) {
+            System.out.println("Error: Equipment ID cannot be empty.");
+            return;
+        }
+
+        String name = readText("Equipment Name : ");
+        if (name.isEmpty()) {
+            System.out.println("Error: Equipment name cannot be empty.");
+            return;
+        }
+
+        // findById compares trimmed IDs ignoring case, so "e101" equals "E101".
+        if (inventory.findById(id) != null) {
+            System.out.println("Error: An item with this equipment ID already exists.");
+            return;
+        }
+
+        inventory.addLast(new Equipment(id, name));
+        System.out.println("Equipment added successfully.");
+    }
+
+    /**
+     * Option 2: finds the equipment in the inventory, checks that it is
+     * available and that the checkout limit is not reached, then appends a
+     * new checkout node that references the same equipment object.
+     */
+    private static void checkOutEquipment() {
+        String id = readText("Equipment ID: ");
+        if (id.isEmpty()) {
+            System.out.println("Error: Equipment ID cannot be empty.");
+            return;
+        }
+
+        Equipment equipment = inventory.findById(id);
+        if (equipment == null) {
+            System.out.println("Error: No equipment with this ID exists in the inventory.");
+            return;
+        }
+        if (!equipment.isAvailable()) {
+            System.out.println("Error: This equipment is already checked out.");
+            return;
+        }
+        if (checkedOut.size() >= MAX_CHECKOUTS) {
+            System.out.println("Error: Maximum of " + MAX_CHECKOUTS + " active checkouts reached.");
+            return;
+        }
+
+        // A new node is created inside addLast, but it stores the SAME object
+        // reference: the equipment is not copied.
+        checkedOut.addLast(equipment);
+        equipment.setAvailable(false);
+        System.out.println("Equipment checked out successfully.");
+    }
+
+    /**
+     * Option 3: removes the equipment's node from the checkout list by
+     * updating links, then marks the same equipment object as available.
+     * The inventory list is not changed.
+     */
+    private static void returnEquipment() {
+        String id = readText("Equipment ID: ");
+        if (id.isEmpty()) {
+            System.out.println("Error: Equipment ID cannot be empty.");
+            return;
+        }
+
+        Equipment returned = checkedOut.removeById(id);
+        if (returned == null) {
+            // removeById changed nothing; explain why the return was rejected.
+            if (inventory.findById(id) == null) {
+                System.out.println("Error: No equipment with this ID exists in the inventory.");
+            } else {
+                System.out.println("Error: This equipment is not currently checked out.");
+            }
+            return;
+        }
+
+        returned.setAvailable(true);
+        System.out.println("Equipment returned successfully.");
+    }
+
+    /**
+     * Option 4: shows every registered item in registration order.
+     */
+    private static void viewInventory() {
+        if (inventory.isEmpty()) {
+            System.out.println("Message: The equipment inventory is empty.");
+            return;
+        }
+        System.out.println("----- Equipment Inventory -----");
+        inventory.display();
+    }
+
+    /**
+     * Option 5: shows the checked-out items in checkout order.
+     */
+    private static void viewCheckedOutEquipment() {
+        if (checkedOut.isEmpty()) {
+            System.out.println("Message: No equipment is currently checked out.");
+            return;
+        }
+        System.out.println("----- Checked-Out Equipment -----");
+        checkedOut.display();
+    }
+}
+======================================================================
+<<< نهاية ملف 3: EquipmentCheckoutSystem.java
+======================================================================
+
