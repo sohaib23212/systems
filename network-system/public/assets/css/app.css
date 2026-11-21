@@ -3388,3 +3388,42 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
 .logo-preview-tile.is-light { background-color: #fff; background-image: linear-gradient(45deg, #eef1f5 25%, transparent 25%, transparent 75%, #eef1f5 75%), linear-gradient(45deg, #eef1f5 25%, transparent 25%, transparent 75%, #eef1f5 75%); }
 .logo-preview-tile.is-dark { background-color: #0b0f19; background-image: linear-gradient(45deg, #151b2b 25%, transparent 25%, transparent 75%, #151b2b 75%), linear-gradient(45deg, #151b2b 25%, transparent 25%, transparent 75%, #151b2b 75%); }
 .logo-preview-tile img { width: 56%; height: 56%; object-fit: contain; }
+
+/* بوت خدمة الزبائن: صندوق المحادثات، المحادثة، والإعدادات */
+.bot-list { display: flex; flex-direction: column; }
+.bot-row { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); color: var(--text); text-decoration: none; min-width: 0; }
+.bot-row:hover { background: var(--hover); }
+.bot-row.is-waiting { background: var(--danger-soft); }
+.bot-row-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--surface-2); color: var(--text-2); }
+.bot-row-icon.is-whatsapp { background: var(--success-soft); color: var(--success); }
+.bot-row-icon.is-telegram { background: var(--info-soft); color: var(--info); }
+.bot-row-icon.is-web { background: var(--primary-soft); color: var(--primary); }
+.bot-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.bot-row-title { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+.bot-row-title b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.bot-row-last { color: var(--muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bot-row-end { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.bot-thread-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
+.bot-thread .chat-log { max-height: calc(100vh - var(--topbar-h) - 260px); min-height: 320px; }
+.bot-msg-meta { display: block; font-size: 11px; opacity: .75; margin-bottom: 2px; white-space: normal; }
+.chat-msg.is-staff { background: var(--info-soft); border-color: transparent; }
+.bot-note { align-self: center; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 90%; font-size: 12px; color: var(--text-2); background: var(--surface-2); border: 1px dashed var(--border-strong); border-radius: 10px; padding: 6px 10px; white-space: pre-wrap; }
+.bot-note small { color: var(--muted); }
+.bot-note .icon { width: 14px; height: 14px; flex: none; }
+.bot-thread-note { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-2); }
+.bot-thread-note.is-warning { background: var(--warning-soft); color: var(--text); }
+.bot-side .panel-body { display: flex; flex-direction: column; gap: 14px; }
+.bot-side-actions { display: flex; flex-direction: column; gap: 8px; }
+.bot-facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 12px; margin: 0; font-size: 13px; }
+.bot-facts dt { color: var(--muted); }
+.bot-facts dd { margin: 0; overflow-wrap: anywhere; }
+.bot-sub { padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; display: flex; flex-direction: column; gap: 2px; }
+.bot-settings { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
+.bot-try { position: sticky; top: calc(var(--topbar-h) + 12px); min-height: 0; }
+.bot-try .chat-log { min-height: 300px; max-height: 52vh; }
+.bot-knowledge { min-height: 220px; resize: vertical; line-height: 1.8; }
+.bot-test-cell { display: flex; align-items: flex-end; }
+@media (max-width: 1100px) {
+  .bot-thread-wrap, .bot-settings { grid-template-columns: minmax(0, 1fr); }
+  .bot-try { position: static; }
+}

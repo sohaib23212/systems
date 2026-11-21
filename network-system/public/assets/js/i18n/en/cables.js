@@ -124,7 +124,7 @@
       .catch(function (err) { modal.querySelector('[data-cb-error-msg]').textContent = err.message; state('error'); });
   });
 
-  // ---------------- العرض ----------------
+  // ---------------- Show ----------------
   function kv(rows) {
     return '<dl class="cb-kv">' + rows.map(function (r) { return '<div><dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd></div>'; }).join('') + '</dl>';
   }

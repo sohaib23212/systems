@@ -292,7 +292,7 @@
     renderPreview();
   }
 
-  // Refresh خفيف yet Edit خاصية دون Redo بناء لوحة الخصائص
+  // Refresh خفيف yet Edit خاصية دون Redo بناء panel الخصائص
   function refresh() {
     renderCard();
     renderLayers();
@@ -714,7 +714,7 @@
   stage.addEventListener('lostpointercapture', endDrag);
 
   // ------------------------------------------------------------------------
-  // لوحة المفاتيح
+  // panel المفاتيح
   // ------------------------------------------------------------------------
   document.addEventListener('keydown', function (e) {
     var tag = (e.target.tagName || '').toLowerCase();

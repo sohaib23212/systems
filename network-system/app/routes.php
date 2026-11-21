@@ -15,6 +15,8 @@ use App\Controllers\AuditController;
 use App\Controllers\AuthController;
 use App\Controllers\CableController;
 use App\Controllers\BatchController;
+use App\Controllers\BotController;
+use App\Controllers\BotPublicController;
 use App\Controllers\BrandController;
 use App\Controllers\CardController;
 use App\Controllers\CardMonitorController;
@@ -71,6 +73,12 @@ return static function (Router $r): void {
     $r->get('/lang/{code:ar|en}', [\App\Controllers\LangController::class, 'switch'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/webhook/{secret:[a-f0-9]{32}}', [TelegramController::class, 'webhook'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/customer/{secret:[a-f0-9]{32}}', [TelegramController::class, 'customerWebhook'], ['auth' => false, 'csrf' => false]);
+    // بوت خدمة الزبائن: Webhook واتساب ونافذة المحادثة في الموقع
+    $r->get('/whatsapp/webhook/{hook:[a-f0-9]{32}}', [BotPublicController::class, 'whatsappVerify'], ['auth' => false, 'csrf' => false]);
+    $r->post('/whatsapp/webhook/{hook:[a-f0-9]{32}}', [BotPublicController::class, 'whatsappWebhook'], ['auth' => false, 'csrf' => false]);
+    $r->post('/bot/web/{key:[a-f0-9]{32}}/send', [BotPublicController::class, 'webSend'], $public);
+    $r->get('/bot/web/{key:[a-f0-9]{32}}/poll', [BotPublicController::class, 'webPoll'], $public);
+    $r->get('/bot/chat/{key:[a-f0-9]{32}}', [BotPublicController::class, 'webPage'], ['auth' => false, 'csrf' => false]);
 
     // ------------------------------------------------------------------
     // تطبيق الجوال (الدخول برمز التطبيق، والصلاحيات نفسها في الموقع)
@@ -459,6 +467,20 @@ return static function (Router $r): void {
     $r->post('/sms/test', [SmsController::class, 'test'], ['perm' => 'sms.manage']);
     $r->post('/sms/templates', [SmsController::class, 'templateSave'], ['perm' => 'sms.manage']);
     $r->post('/sms/templates/{id}/delete', [SmsController::class, 'templateDelete'], ['perm' => 'sms.manage']);
+    $r->get('/bot', [BotController::class, 'index'], ['perm' => 'bot.inbox']);
+    $r->get('/bot/chats/{id}', [BotController::class, 'show'], ['perm' => 'bot.inbox']);
+    $r->get('/bot/chats/{id}/poll', [BotController::class, 'poll'], ['perm' => 'bot.inbox']);
+    $r->post('/bot/chats/{id}/reply', [BotController::class, 'reply'], ['perm' => 'bot.inbox']);
+    $r->post('/bot/chats/{id}/mode', [BotController::class, 'mode'], ['perm' => 'bot.inbox']);
+    $r->post('/bot/chats/{id}/close', [BotController::class, 'close'], ['perm' => 'bot.inbox']);
+    $r->post('/bot/chats/{id}/link', [BotController::class, 'link'], ['perm' => 'bot.inbox']);
+    $r->get('/bot/settings', [BotController::class, 'settings'], ['perm' => 'bot.manage']);
+    $r->post('/bot/settings', [BotController::class, 'save'], ['perm' => 'bot.manage']);
+    $r->post('/bot/settings/try', [BotController::class, 'try'], ['perm' => 'bot.manage']);
+    $r->post('/bot/settings/whatsapp-test', [BotController::class, 'whatsappTest'], ['perm' => 'bot.manage']);
+    $r->post('/bot/settings/erp-test', [BotController::class, 'erpTest'], ['perm' => 'bot.manage']);
+    $r->post('/bot/settings/web-key', [BotController::class, 'webKey'], ['perm' => 'bot.manage']);
+
     $r->get('/telegram', [TelegramController::class, 'index'], ['perm' => 'telegram.manage']);
     $r->post('/telegram', [TelegramController::class, 'save'], ['perm' => 'telegram.manage']);
     $r->post('/telegram/test', [TelegramController::class, 'test'], ['perm' => 'telegram.manage']);

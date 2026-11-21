@@ -12,7 +12,7 @@ use Throwable;
 final class Migrator
 {
     /** نسخة البنية التي تتوقعها الشيفرة الحالية */
-    public const VERSION = 9;
+    public const VERSION = 10;
 
     private static bool $checked = false;
 
@@ -111,6 +111,10 @@ final class Migrator
             case 9:
                 // ربط دفعات الكروت بأجهزة MikroTik محددة
                 self::createTables(['batch_routers']);
+                break;
+            case 10:
+                // بوت خدمة الزبائن: المحادثات ورسائلها
+                self::createTables(['bot_chats', 'bot_messages']);
                 break;
         }
     }

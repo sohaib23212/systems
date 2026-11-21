@@ -13,7 +13,7 @@ $geminiSavedAt ??= '';
 $geminiModel ??= '';
 $v->script('vendor/chart.umd.min.js');
 $usd = static fn ($x) => ltr('$' . number_format((float) $x, (float) $x < 1 ? 4 : 2));
-$features = ['test' => 'اختبار الاتصال', 'admin_chat' => 'مساعد المسؤول', 'weekly' => 'التقرير الأسبوعي', 'ticket_reply' => 'اقتراح رد تذكرة', 'chat' => 'المساعد الذكي', 'router_check' => 'فحص جهاز MikroTik', 'digest' => 'الملخص اليومي', 'import' => 'الاستيراد الذكي'];
+$features = ['test' => 'اختبار الاتصال', 'admin_chat' => 'مساعد المسؤول', 'weekly' => 'التقرير الأسبوعي', 'ticket_reply' => 'اقتراح رد تذكرة', 'chat' => 'المساعد الذكي', 'router_check' => 'فحص جهاز MikroTik', 'digest' => 'الملخص اليومي', 'import' => 'الاستيراد الذكي', 'bot' => 'بوت خدمة الزبائن'];
 $totalCost = array_sum(array_map(static fn ($u) => (float) $u['cost'], $usage));
 $totalMsgs = array_sum(array_map(static fn ($u) => (int) $u['messages'], $usage));
 $badge = ['ok' => 'badge-success', 'off' => 'badge-danger', 'no_key' => 'badge-warning'][$state] ?? 'badge-outline';

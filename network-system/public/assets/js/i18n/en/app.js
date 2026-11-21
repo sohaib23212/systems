@@ -788,14 +788,14 @@
   window.addEventListener('pageshow', stopProgress);
   window.addEventListener('pagehide', function () { setTimeout(stopProgress, 4000); });
 
-  // لوحة المفاتيح on Phone: ارتفاعها in --kb ليبقى شريط الحقوق السفلي فوقها
-  // لا تظهر لوحة المفاتيح إلا مع Field كتابة Active: أي تغيّر Last in ارتفاع Screen (شريط Address, التكبير) لا يحرّك الشريط.
+  // panel المفاتيح on Phone: ارتفاعها in --kb ليبقى شريط الحقوق السفلي فوقها
+  // لا تظهر panel المفاتيح إلا مع Field كتابة Active: أي تغيّر Last in ارتفاع Screen (شريط Address, التكبير) لا يحرّك الشريط.
   // والحقل الذي يُكتب فيه يبقى ظاهراً فوق الشريط لا behind it.
   (function () {
     var vv = window.visualViewport;
     var bar = doc.querySelector('.app-footer');
     if (!vv || !bar) { return; }
-    // تبدأ from صفر (Value CSS Default): لا يُكتب المتغير on Page إلا عند ظهور لوحة المفاتيح فعلاً,
+    // تبدأ from صفر (Value CSS Default): لا يُكتب المتغير on Page إلا عند ظهور panel المفاتيح فعلاً,
     // فكتابته on جذر Page تعيد Account أنماط Every عناصرها
     var last = 0, queued = false;
     function typing() {

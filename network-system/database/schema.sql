@@ -1089,3 +1089,46 @@ CREATE TABLE IF NOT EXISTS cable_checks (
   KEY idx_cc_created (created_at),
   CONSTRAINT fk_cc_router FOREIGN KEY (router_id) REFERENCES routers (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- بوت خدمة الزبائن: محادثة لكل زبون في كل قناة (تيليجرام، واتساب، الموقع) ورسائلها
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bot_chats (
+  id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  channel          VARCHAR(16)  NOT NULL,
+  external_id      VARCHAR(80)  NOT NULL,
+  name             VARCHAR(120) NULL,
+  phone            VARCHAR(32)  NULL,
+  subscriber_id    INT UNSIGNED NULL,
+  mode             ENUM('bot','human') NOT NULL DEFAULT 'bot',
+  status           ENUM('open','closed') NOT NULL DEFAULT 'open',
+  needs_human      TINYINT(1)   NOT NULL DEFAULT 0,
+  unread           INT UNSIGNED NOT NULL DEFAULT 0,
+  assigned_to      INT UNSIGNED NULL,
+  meta             TEXT         NULL,
+  last_message     VARCHAR(255) NULL,
+  last_at          DATETIME     NOT NULL,
+  last_inbound_at  DATETIME     NULL,
+  created_at       DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_bot_chat (channel, external_id),
+  KEY idx_bot_chat_last (status, last_at),
+  KEY idx_bot_chat_sub (subscriber_id),
+  CONSTRAINT fk_bot_chat_sub FOREIGN KEY (subscriber_id) REFERENCES subscribers (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS bot_messages (
+  id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  chat_id       INT UNSIGNED NOT NULL,
+  role          ENUM('user','bot','staff','note') NOT NULL,
+  body          TEXT         NOT NULL,
+  employee_id   INT UNSIGNED NULL,
+  tools         VARCHAR(255) NULL,
+  external_id   VARCHAR(100) NULL,
+  created_at    DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_bot_msg_ext (external_id),
+  KEY idx_bot_msg_chat (chat_id, id),
+  KEY idx_bot_msg_created (created_at),
+  CONSTRAINT fk_bot_msg_chat FOREIGN KEY (chat_id) REFERENCES bot_chats (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

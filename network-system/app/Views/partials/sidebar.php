@@ -58,6 +58,10 @@ $nav = [
         ['سجل الرسائل', '/sms/log', 'history', ['sms.log', 'sms.send']],
         ['إعدادات الرسائل', '/sms/settings', 'settings', 'sms.manage'],
     ]],
+    ['خدمة الزبائن', [
+        ['المحادثات', '/bot', 'message-square', 'bot.inbox', 'bot', ['/bot/chats']],
+        ['إعدادات البوت', '/bot/settings', 'bot-message-square', 'bot.manage'],
+    ]],
     ['بوت تيليجرام', [
         ['إعداد البوت والتقارير', '/telegram', 'bot', 'telegram.manage'],
         ['المشتركون المرتبطون', '/telegram/links', 'link', 'telegram.manage'],
@@ -128,7 +132,7 @@ $allowed = static function ($perm): bool {
   <div class="sidebar-body" data-nav-body>
   <nav class="sidebar-nav" data-nav-scroll>
     <?php foreach ($nav as [$groupTitle, $items]):
-        $visible = array_filter($items, static fn ($i) => $allowed($i[3]) && (($i[4] ?? null) !== 'tunnel' || \App\Services\Tunnel::available()) && (($i[4] ?? null) !== 'outages' || can('outages.view')));
+        $visible = array_filter($items, static fn ($i) => $allowed($i[3]) && (($i[4] ?? null) !== 'tunnel' || \App\Services\Tunnel::available()) && (($i[4] ?? null) !== 'outages' || can('outages.view')) && (($i[4] ?? null) !== 'bot' || \App\Core\Settings::bool('bot.enabled')));
         if (!$visible) { continue; } ?>
       <div class="nav-group"<?= $groupTitle ? ' data-nav-group="' . e($groupTitle) . '"' : '' ?>>
         <?php if ($groupTitle): ?><button type="button" class="nav-group-title" data-nav-toggle aria-expanded="true"><span><?= e($groupTitle) ?></span><?= icon('chevron-down', 'nav-chevron') ?></button><?php endif; ?>
@@ -137,6 +141,7 @@ $allowed = static function ($perm): bool {
           <a class="nav-link<?= $item[1] === $active ? ' is-active' : '' ?>" href="<?= e(url($item[1])) ?>"<?= $item[1] === $active ? ' aria-current="page"' : '' ?>>
             <?= icon($item[2]) ?><span class="nav-text"><?= e($item[0]) ?></span>
             <?php if (($item[4] ?? null) === 'ai'): ?><span class="nav-badge is-ai">AI</span><?php endif; ?>
+            <?php if (($item[4] ?? null) === 'bot' && ($botWaiting = \App\Services\BotAgent::waiting()) > 0): ?><span class="nav-badge is-danger" title="بانتظار موظف"><?= $botWaiting > 99 ? '99+' : $botWaiting ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'maintenance' && ($myTasks = \App\Services\Maintenance::mineOpen()) > 0): ?><span class="nav-badge is-danger" title="مهامي المفتوحة"><?= $myTasks > 99 ? '99+' : $myTasks ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'alerts' && $unreadAlerts > 0): ?><span class="nav-badge is-danger"><?= $unreadAlerts > 99 ? '99+' : $unreadAlerts ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'support' && ($supportUnread ?? 0) > 0): ?><span class="nav-badge is-danger"><?= (int) $supportUnread ?></span><?php endif; ?>
