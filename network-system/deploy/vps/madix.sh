@@ -28,6 +28,8 @@ mysql_root() { mysql --protocol=socket -uroot "$@"; }
 has_systemd() { [ -d /run/systemd/system ]; }
 svc() { if has_systemd; then systemctl "$1" "$2"; else service "$2" "$1"; fi; }
 svc_active() { if has_systemd; then systemctl is-active --quiet "$1"; else service "$1" status >/dev/null 2>&1; fi; }
+# PHP-FPM service when Apache runs PHP through it (empty when PHP runs inside Apache)
+php_service() { local f; for f in /etc/apache2/conf-enabled/php*-fpm.conf; do [ -e "$f" ] && { basename "$f" .conf; return; }; done; }
 db_service() { if [ -f /etc/init.d/mariadb ] || [ -f /lib/systemd/system/mariadb.service ] || [ -f /usr/lib/systemd/system/mariadb.service ]; then echo mariadb; else echo mysql; fi; }
 app_url() { php -r '$c = require $argv[1]; echo $c["app"]["url"] ?? "";' "$APP_DIR/config/config.php"; }
 agent() { [ -f "$AGENT" ] && php "$AGENT" "$@" >/dev/null 2>&1 || true; }
@@ -295,7 +297,7 @@ cmd_status() {
     echo "${B}MADIX NEXUS${N} ${MADIX_VERSION:-}  ($MODE)"
     echo "Address : $url"
     [ "$MODE" = platform ] && echo "Admin   : $url/admin"
-    for s in apache2 "$(db_service)" cron; do
+    for s in apache2 $(php_service) "$(db_service)" cron; do
         if svc_active "$s"; then printf '%-8s: %srunning%s\n' "$s" "$G" "$N"; else printf '%-8s: %sstopped%s\n' "$s" "$R" "$N"; fi
     done
     if [ -n "$DOMAIN" ] && [ -f "/etc/letsencrypt/live/$DOMAIN/cert.pem" ]; then
@@ -315,6 +317,10 @@ cmd_doctor() {
 
     echo "${B}MADIX NEXUS check${N}  ${MADIX_VERSION:-}"
     if svc_active apache2; then ok "Web server"; else bad "Web server is stopped" "madix restart"; fi
+    v=$(php_service)
+    if [ -n "$v" ]; then
+        if svc_active "$v"; then ok "PHP ($v, HTTP/2)"; else bad "PHP ($v) is stopped" "madix restart"; fi
+    fi
     if svc_active "$(db_service)"; then ok "Database server"; else bad "Database server is stopped" "madix restart"; fi
     if svc_active cron; then ok "Scheduler"; else bad "Scheduler (cron) is stopped" "systemctl start cron"; fi
 
@@ -496,7 +502,7 @@ case "${1:-help}" in
     tunnel|vpn) cmd_tunnel ;;
     logs)     cmd_logs ;;
     repair)   fix_permissions; rm -f "$MAINT"; svc reload apache2 >/dev/null 2>&1 || true; agent tick; echo "Done." ;;
-    restart)  svc restart "$(db_service)"; svc restart apache2; echo "Restarted." ;;
+    restart)  svc restart "$(db_service)"; v=$(php_service); [ -n "$v" ] && svc restart "$v"; svc restart apache2; echo "Restarted." ;;
     update)   cmd_update "${2:-}" ;;
     *)
         cat <<'EOF'

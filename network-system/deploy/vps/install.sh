@@ -471,7 +471,7 @@ install_packages() {
     step "Installing server packages (a few minutes)"
     setup_swap
     apt_get update || die "Cannot reach the package servers. Check the server's internet connection."
-    local pkgs=(apache2 libapache2-mod-php php-cli php-mysql php-mbstring php-xml php-zip php-curl
+    local pkgs=(apache2 libapache2-mod-php php-fpm php-cli php-mysql php-mbstring php-xml php-zip php-curl
         php-intl php-gd php-bcmath curl ca-certificates unzip cron openssl tar gzip
         util-linux procps iproute2 wireguard-tools unattended-upgrades)
     if dpkg -s mysql-server >/dev/null 2>&1; then
@@ -497,11 +497,11 @@ tune_services() {
     local mem_mb workers pool
     mem_mb=$(awk '/MemTotal/{print int($2/1024)}' /proc/meminfo)
 
-    # PHP
+    # PHP (mod_php and PHP-FPM take the same settings)
     local ini
-    for ini in /etc/php/"$PHPV"/apache2/conf.d /etc/php/"$PHPV"/cli/conf.d; do
+    for ini in /etc/php/"$PHPV"/apache2/conf.d /etc/php/"$PHPV"/fpm/conf.d /etc/php/"$PHPV"/cli/conf.d; do
         [ -d "$ini" ] || continue
-        if [[ "$ini" == */apache2/* ]]; then
+        if [[ "$ini" != */cli/* ]]; then
             cat >"$ini/99-madix.ini" <<EOF
 memory_limit = 256M
 upload_max_filesize = 32M
@@ -516,6 +516,9 @@ opcache.memory_consumption = 128
 opcache.max_accelerated_files = 10000
 opcache.validate_timestamps = 1
 opcache.revalidate_freq = 2
+opcache.interned_strings_buffer = 16
+realpath_cache_size = 4096K
+realpath_cache_ttl = 600
 EOF
         else
             cat >"$ini/99-madix.ini" <<EOF
@@ -525,6 +528,31 @@ EOF
         fi
     done
 
+    # Database memory first: PHP gets what is left
+    pool=$((mem_mb / 4))
+    [ "$pool" -lt 128 ] && pool=128
+    [ "$pool" -gt 4096 ] && pool=4096
+
+    # PHP-FPM: a fixed number of PHP workers sized to the memory, so the server never runs out of memory and swaps
+    # (about 40 MB each, after the database, the system and Apache)
+    local children
+    children=$(( (mem_mb - pool - 300) / 40 ))
+    [ "$children" -lt 5 ] && children=5
+    [ "$children" -gt 60 ] && children=60
+    if [ -d /etc/php/"$PHPV"/fpm/pool.d ]; then
+        cat >/etc/php/"$PHPV"/fpm/pool.d/zz-madix.conf <<EOF
+; MADIX NEXUS: PHP workers sized to this server's memory ($mem_mb MB)
+[www]
+pm = dynamic
+pm.max_children = $children
+pm.start_servers = $(( children > 8 ? 4 : 2 ))
+pm.min_spare_servers = 1
+pm.max_spare_servers = $(( children > 8 ? children / 2 : 3 ))
+pm.max_requests = 500
+listen.backlog = 511
+EOF
+    fi
+
     # Apache
     workers=$((mem_mb / 64))
     [ "$workers" -lt 20 ] && workers=20
@@ -533,12 +561,36 @@ EOF
 ServerTokens Prod
 ServerSignature Off
 TraceEnable Off
+# HTTP/2 and long keep-alive: one fast connection per visitor instead of a new one for every click
+Protocols h2 http/1.1
+KeepAlive On
+KeepAliveTimeout 15
+MaxKeepAliveRequests 500
+<IfModule http2_module>
+    # HTTP/2 only through HTTPS (ALPN); no Upgrade header on plain requests (old Safari fails on it)
+    H2Upgrade off
+</IfModule>
 <IfModule mpm_prefork_module>
     StartServers 4
     MinSpareServers 4
     MaxSpareServers 12
     MaxRequestWorkers $workers
     MaxConnectionsPerChild 2000
+</IfModule>
+<IfModule mpm_event_module>
+    StartServers 2
+    ThreadsPerChild 25
+    MaxRequestWorkers 150
+    MaxConnectionsPerChild 0
+</IfModule>
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
+</IfModule>
+<IfModule mod_headers.c>
+    # files with a version in the link (?v=…) never change: the browser keeps them without asking again
+    <If "%{REQUEST_URI} =~ m#^/assets/# && %{QUERY_STRING} =~ /(^|&)v=[0-9a-f]+/">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
 </IfModule>
 EOF
     quiet a2enconf madix
@@ -547,15 +599,14 @@ EOF
         quiet a2enmod php"$PHPV" || true
     fi
 
-    # Database
-    pool=$((mem_mb / 4))
-    [ "$pool" -lt 128 ] && pool=128
-    [ "$pool" -gt 4096 ] && pool=4096
+    # Database (fewer connections on small servers: PHP never opens more than its workers)
+    local conns=200
+    [ "$mem_mb" -lt 2048 ] && conns=100
     local cnf_dir=/etc/mysql/mariadb.conf.d
     [ -d "$cnf_dir" ] || cnf_dir=/etc/mysql/mysql.conf.d
     if [ -d "$cnf_dir" ]; then
         local cnf
-        cnf=$(printf '[mysqld]\nbind-address = 127.0.0.1\ninnodb_buffer_pool_size = %sM\nmax_connections = 200\ncharacter-set-server = utf8mb4\ncollation-server = utf8mb4_unicode_ci\n' "$pool")
+        cnf=$(printf '[mysqld]\nbind-address = 127.0.0.1\ninnodb_buffer_pool_size = %sM\nmax_connections = %s\ncharacter-set-server = utf8mb4\ncollation-server = utf8mb4_unicode_ci\n' "$pool" "$conns")
         if [ "$(cat "$cnf_dir/99-madix.cnf" 2>/dev/null)" != "$cnf" ]; then
             printf '%s\n' "$cnf" >"$cnf_dir/99-madix.cnf"
             DB_CNF_CHANGED=1
@@ -764,19 +815,82 @@ EOF
     } >/etc/apache2/sites-available/madix.conf
 }
 
+# PHP through PHP-FPM with the event MPM and HTTP/2 (light on memory, many visitors at once) → 0 when ready
+php_fpm_on() {
+    [ -f /etc/apache2/conf-available/php"$PHPV"-fpm.conf ] && [ -f /etc/apache2/mods-available/mpm_event.load ] || return 1
+    svc enable php"$PHPV"-fpm
+    svc restart php"$PHPV"-fpm || return 1
+    quiet a2dismod php"$PHPV" || true
+    quiet a2dismod mpm_prefork || true
+    quiet a2enmod mpm_event proxy_fcgi setenvif || return 1
+    quiet a2enmod http2 || true
+    quiet a2enconf php"$PHPV"-fpm || return 1
+    quiet apache2ctl configtest
+}
+
+# the previous setup: PHP inside Apache (mod_php, prefork)
+php_fpm_off() {
+    quiet a2disconf php"$PHPV"-fpm || true
+    quiet a2dismod http2 || true
+    quiet a2dismod mpm_event || true
+    quiet a2enmod mpm_prefork || true
+    quiet a2enmod php"$PHPV" || true
+}
+
+php_fpm_active() { apache2ctl -M 2>/dev/null | grep -q proxy_fcgi_module && apache2ctl -M 2>/dev/null | grep -q mpm_event_module; }
+
 configure_web() {
     step "Web server"
     write_vhost
     quiet a2dissite 000-default || true
     quiet a2ensite madix
+    local was_fpm=0
+    php_fpm_active && was_fpm=1
+    if php_fpm_on; then
+        PHP_MODE=fpm
+    else
+        php_fpm_off
+        PHP_MODE=mod_php
+        warn "PHP-FPM is not available; PHP stays inside Apache"
+    fi
     quiet apache2ctl configtest || die "Apache configuration error. Details: $LOG_FILE"
     svc enable apache2
-    if [ "$ACTION" = update ] && svc_active apache2; then
+    if [ "$ACTION" = update ] && svc_active apache2 && { [ "$PHP_MODE" = fpm ] && [ "$was_fpm" = 1 ]; }; then
         svc reload apache2 || svc restart apache2 || die "Apache does not start. Details: $LOG_FILE"
     else
+        # changing how PHP runs needs a full restart
         svc restart apache2 || die "Apache does not start. Details: $LOG_FILE"
     fi
-    ok "Apache serves $APP_DIR/public"
+    if [ "$PHP_MODE" = fpm ]; then
+        ok "Apache serves $APP_DIR/public (PHP-FPM, HTTP/2)"
+    else
+        ok "Apache serves $APP_DIR/public"
+    fi
+}
+
+# a page answers through PHP; when it does not with PHP-FPM, go back to PHP inside Apache
+page_code() { # page_code PATH → HTTP code
+    local host=${DOMAIN:-localhost} url
+    url=$(php -r '$c = require $argv[1]; echo $c["app"]["url"] ?? "";' "$APP_DIR/config/config.php" 2>/dev/null)
+    if [[ "$url" == https://* ]] && [ -n "$DOMAIN" ]; then
+        curl -s -o /dev/null -w '%{http_code}' --max-time 20 --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN$1" || true
+    else
+        curl -s -o /dev/null -w '%{http_code}' --max-time 20 -H "Host: $host" "http://127.0.0.1$1" || true
+    fi
+}
+
+verify_php() {
+    [ "${PHP_MODE:-}" = fpm ] || return 0
+    local code tries
+    for tries in 1 2 3; do
+        code=$(page_code /login)
+        case "$code" in 200|301|302|303) return 0 ;; esac
+        sleep 2
+    done
+    warn "The site answered $code with PHP-FPM; switching back to PHP inside Apache"
+    php_fpm_off
+    PHP_MODE=mod_php
+    svc restart apache2 || die "Apache does not start. Details: $LOG_FILE"
 }
 
 configure_cron() {
@@ -1166,6 +1280,7 @@ main() {
         configure_cron
         configure_ssl
         configure_firewall
+        verify_php
         setup_agent
         health_check
     else
@@ -1183,6 +1298,7 @@ main() {
         configure_web
         configure_cron
         maintenance off
+        verify_php
         finish_update
         setup_agent
         health_check

@@ -131,6 +131,15 @@ function service_restart(string $name): bool
     return $r['code'] === 0;
 }
 
+/** PHP-FPM service when Apache runs PHP through it, or '' */
+function php_service(): string
+{
+    foreach (glob('/etc/apache2/conf-enabled/php*-fpm.conf') ?: [] as $f) {
+        return basename($f, '.conf');
+    }
+    return '';
+}
+
 function db_service(): string
 {
     static $name = null;
@@ -526,6 +535,11 @@ function watchdog(array $s): void
             alert($ok ? 'service_restarted' : 'service_down', $ok ? 'warning' : 'danger', ['name' => $key], 600);
         }
     }
+    // PHP-FPM: when it stops, every page answers 503 although Apache runs
+    if (($php = php_service()) !== '' && !service_active($php)) {
+        $ok = service_restart($php) && service_active($php);
+        alert($ok ? 'service_restarted' : 'service_down', $ok ? 'warning' : 'danger', ['name' => 'web'], 600);
+    }
 
     // the site itself must answer
     if ($s['services']['web'] && has('curl')) {
@@ -538,6 +552,9 @@ function watchdog(array $s): void
         $mem = memory();
         $fails = in_array($code, ['200', '301', '302', '308'], true) ? 0 : (int) ($mem['web_fails'] ?? 0) + 1;
         if ($fails >= 3) {
+            if (($php = php_service()) !== '') {
+                service_restart($php);
+            }
             $ok = service_restart('apache2');
             alert($ok ? 'web_recovered' : 'web_unresponsive', $ok ? 'warning' : 'danger', [], 900);
             $fails = 0;
