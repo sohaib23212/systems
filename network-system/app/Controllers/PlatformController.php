@@ -618,6 +618,11 @@ final class PlatformController extends Controller
         } catch (Throwable $e) {
             log_message('error', 'weekly report: ' . $e->getMessage());
         }
+        try {
+            \App\Services\BotAgent::cleanup();
+        } catch (Throwable $e) {
+            log_message('error', 'bot cleanup: ' . $e->getMessage());
+        }
         $tenants = DB::rows("SELECT * FROM tenants WHERE status IN ('trial', 'active') ORDER BY COALESCE(last_cron_at, '1970-01-01') LIMIT 500");
         $ran = 0;
         foreach ($tenants as $t) {

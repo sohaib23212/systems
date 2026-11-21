@@ -3,39 +3,29 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Core\Crypto;
-use App\Core\Settings;
-use Throwable;
+use App\Core\Platform;
 
 /**
  * الربط مع لوحة MADIX Cloud (نظام الكاشير MADIX ERP) عبر واجهة v1.php بمفتاح «مفتاح بوت»:
  * قراءة بيانات صاحب المحل (الترخيص والأجهزة) والباقات والإصدارات ومعلومات الشركة، وفتح تذاكر الدعم وطلبات التجديد فقط.
- * المفتاح يُحفظ مشفّراً ولا يُعرض ولا يُسجَّل.
+ * يُضبط من لوحة المسؤول (بوت خدمة الزبائن)، والمفتاح يُحفظ مشفّراً بمفتاح المنصة ولا يُعرض ولا يُسجَّل.
  */
 final class MadixCloud
 {
     public static function key(): string
     {
-        $v = (string) Settings::get('bot.erp_key', '');
-        if ($v === '') {
-            return '';
-        }
-        try {
-            return Crypto::decrypt($v);
-        } catch (Throwable) {
-            return '';
-        }
+        return Platform::secret('bot.erp_key');
     }
 
     public static function base(): string
     {
-        $url = trim((string) Settings::get('bot.erp_url', ''));
+        $url = trim(Platform::setting('bot.erp_url'));
         return preg_match('#^https?://[^\s/]+#i', $url) ? rtrim($url, '/') : '';
     }
 
     public static function enabled(): bool
     {
-        return Settings::bool('bot.erp') && self::base() !== '' && self::key() !== '';
+        return Platform::enabled() && Platform::setting('bot.erp') === '1' && self::base() !== '' && self::key() !== '';
     }
 
     /** حذف المفتاح وأي رمز يشبهه من نص قبل عرضه أو تسجيله */
@@ -154,7 +144,7 @@ final class MadixCloud
     /** معلومات الشركة للبوت (تُخزَّن عشر دقائق حتى لا تُطلب مع كل رسالة) */
     public static function knowledge(): string
     {
-        $cache = json_decode((string) Settings::get('bot.erp_cache', ''), true);
+        $cache = json_decode(Platform::setting('bot.erp_cache'), true);
         if (is_array($cache) && (int) ($cache['at'] ?? 0) > time() - 600) {
             return (string) ($cache['text'] ?? '');
         }
@@ -165,7 +155,7 @@ final class MadixCloud
             $text = mb_substr(trim($text), 0, 12000);
         }
         // الفشل يُخزَّن أيضاً فلا يتأخر كل رد بانتظار خادم لا يستجيب
-        Settings::set('bot.erp_cache', (string) json_encode(['at' => time(), 'text' => $text], JSON_UNESCAPED_UNICODE));
+        Platform::setSettings(['bot.erp_cache' => (string) json_encode(['at' => time(), 'text' => $text], JSON_UNESCAPED_UNICODE)]);
         return $text;
     }
 }

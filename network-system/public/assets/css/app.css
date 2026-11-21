@@ -3421,6 +3421,9 @@ body:has(.app-footer) .toasts { bottom: calc(20px + var(--footbar-h) + env(safe-
 .bot-settings { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; align-items: start; }
 .bot-try { position: sticky; top: calc(var(--topbar-h) + 12px); min-height: 0; }
 .bot-try .chat-log { min-height: 300px; max-height: 52vh; }
+.bot-try-as { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+.bot-try-as label { flex: 0 0 auto; font-size: .85rem; color: var(--muted); }
+.bot-try-as .input { flex: 1 1 auto; min-width: 0; }
 .bot-knowledge { min-height: 220px; resize: vertical; line-height: 1.8; }
 .bot-test-cell { display: flex; align-items: flex-end; }
 @media (max-width: 1100px) {

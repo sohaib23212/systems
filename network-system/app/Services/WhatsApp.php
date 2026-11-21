@@ -4,13 +4,11 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Core\Config;
-use App\Core\Crypto;
-use App\Core\Settings;
-use Throwable;
+use App\Core\Platform;
 
 /**
  * واتساب عبر WhatsApp Cloud API الرسمي من Meta: استقبال رسائل الزبائن على رابط Webhook، والرد عليها.
- * الرمز (Access Token) وسر التطبيق (App Secret) يُحفظان مشفّرين ولا يُعرضان.
+ * رقم واحد للمنصة يُضبط من لوحة المسؤول، والرمز (Access Token) وسر التطبيق (App Secret) يُحفظان مشفّرين بمفتاح المنصة ولا يُعرضان.
  * الرد الحر مسموح خلال 24 ساعة من آخر رسالة للزبون؛ بعدها تحتاج Meta قالباً معتمداً.
  */
 final class WhatsApp
@@ -25,58 +23,45 @@ final class WhatsApp
         return rtrim((string) Config::get('whatsapp.graph', self::GRAPH), '/');
     }
 
-    private static function secret(string $key): string
-    {
-        $v = (string) Settings::get($key, '');
-        if ($v === '') {
-            return '';
-        }
-        try {
-            return Crypto::decrypt($v);
-        } catch (Throwable) {
-            return '';
-        }
-    }
-
     public static function token(): string
     {
-        return self::secret('bot.wa_token');
+        return Platform::secret('bot.wa_token');
     }
 
     public static function appSecret(): string
     {
-        return self::secret('bot.wa_secret');
+        return Platform::secret('bot.wa_secret');
     }
 
     public static function phoneId(): string
     {
-        $id = trim((string) Settings::get('bot.wa_phone_id', ''));
+        $id = trim(Platform::setting('bot.wa_phone_id'));
         return preg_match('/^\d{5,25}$/', $id) ? $id : '';
     }
 
     public static function configured(): bool
     {
-        return Settings::bool('bot.whatsapp') && self::phoneId() !== '' && self::token() !== '';
+        return Platform::enabled() && Platform::setting('bot.whatsapp') === '1' && self::phoneId() !== '' && self::token() !== '';
     }
 
     /** مسار Webhook السري ورمز التحقق: يُولَّدان مرة واحدة */
     public static function ensureKeys(): void
     {
         $set = [];
-        if (!preg_match('/^[a-f0-9]{32}$/', (string) Settings::get('bot.wa_hook', ''))) {
+        if (!preg_match('/^[a-f0-9]{32}$/', Platform::setting('bot.wa_hook'))) {
             $set['bot.wa_hook'] = bin2hex(random_bytes(16));
         }
-        if ((string) Settings::get('bot.wa_verify', '') === '') {
+        if (Platform::setting('bot.wa_verify') === '') {
             $set['bot.wa_verify'] = bin2hex(random_bytes(12));
         }
         if ($set) {
-            Settings::setMany($set);
+            Platform::setSettings($set);
         }
     }
 
     public static function webhookUrl(): string
     {
-        return Settings::panelUrl() . '/whatsapp/webhook/' . (string) Settings::get('bot.wa_hook', '');
+        return BotAgent::publicUrl() . '/api/whatsapp/' . Platform::setting('bot.wa_hook');
     }
 
     public static function scrub(string $text, ?string $token = null): string

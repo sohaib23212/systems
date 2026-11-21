@@ -68,6 +68,25 @@ final class Platform
         'notify.ticket'          => '1',
         'notify.weekly'          => '1',
         'notify.weekly_day'      => '6',
+        'notify.bot'             => '1',
+        // بوت خدمة الزبائن (واتساب ونافذة الموقع) لأصحاب الشبكات ومشتركيهم وأصحاب محلات MADIX ERP
+        'bot.enabled'            => '0',
+        'bot.name'               => '',
+        'bot.knowledge'          => '',
+        'bot.per_day'            => '40',
+        'bot.web'                => '0',
+        'bot.web_key'            => '',
+        'bot.whatsapp'           => '0',
+        'bot.wa_phone_id'        => '',
+        'bot.wa_token'           => '',
+        'bot.wa_secret'          => '',
+        'bot.wa_verify'          => '',
+        'bot.wa_hook'            => '',
+        'bot.erp'                => '0',
+        'bot.erp_url'            => 'https://cpanel.madix.org',
+        'bot.erp_key'            => '',
+        'bot.erp_cache'          => '',
+        'bot.retention_days'     => '180',
     ];
 
     /** الأقسام التي يمكن تفعيلها أو إيقافها لكل باقة: المفتاح => [التسمية، بادئات الصلاحيات] */
@@ -308,7 +327,7 @@ final class Platform
     }
 
     /** إصدار جداول المنصة — يُرفع عند إضافة جداول جديدة إلى platform.sql */
-    public const SCHEMA = 8;
+    public const SCHEMA = 9;
 
     /** أعمدة تُضاف إلى الجداول القائمة عند الترقية */
     private const COLUMNS = [

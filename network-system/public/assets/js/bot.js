@@ -1,5 +1,6 @@
 /*
- * بوت خدمة الزبائن: صفحة المحادثة (تحديث تلقائي ورد الموظف) وصفحة الإعدادات (فحص القنوات وتجربة المساعد).
+ * بوت خدمة الزبائن: صفحة المحادثة (تحديث تلقائي والرد، في لوحة المسؤول ونظام صاحب الشبكة)
+ * وصفحة الإعدادات في لوحة المسؤول (فحص القنوات وتجربة المساعد برقم).
  */
 (function (window, document) {
   'use strict';
@@ -32,7 +33,13 @@
   if (thread) {
     var log = thread.querySelector('[data-bot-log]');
     var last = parseInt(thread.getAttribute('data-last'), 10) || 0;
-    var labels = { user: 'الزبون', bot: 'المساعد الآلي', staff: 'موظف', note: 'ملاحظة' };
+    var userLabel = thread.getAttribute('data-user-label') || 'المرسل';
+    var label = function (m) {
+      if (m.role === 'user') { return userLabel; }
+      if (m.role === 'bot') { return 'المساعد الآلي'; }
+      if (m.role === 'staff') { return (m.sender ? m.sender + ' · ' : '') + (m.side === 'network' ? 'صاحب الشبكة' : 'فريق المنصة'); }
+      return 'ملاحظة';
+    };
     var toBottom = function () { log.scrollTop = log.scrollHeight; };
     toBottom();
 
@@ -46,7 +53,7 @@
         node.appendChild(el('small', '', m.at));
       } else {
         node = el('div', 'chat-msg ' + (m.role === 'user' ? 'is-user' : 'is-assistant') + (m.role === 'staff' ? ' is-staff' : ''));
-        node.appendChild(el('span', 'bot-msg-meta', (m.role === 'staff' && m.employee ? m.employee : labels[m.role]) + ' · ' + m.at + (m.tools ? ' · ' + m.tools : '')));
+        node.appendChild(el('span', 'bot-msg-meta', label(m) + ' · ' + m.at + (m.tools ? ' · ' + m.tools : '')));
         node.appendChild(document.createTextNode(m.body));
       }
       node.setAttribute('data-id', m.id);
@@ -65,9 +72,9 @@
           (r.messages || []).forEach(add);
           if (r.messages && r.messages.length && near) { toBottom(); }
           var waiting = thread.querySelector('[data-bot-waiting]');
-          if (waiting) { waiting.hidden = !r.needs_human; }
+          if (waiting) { waiting.hidden = !(r.needs_human && r.status === 'open'); }
           if (modeBadge) {
-            modeBadge.textContent = r.mode === 'human' ? 'مع موظف' : 'مع المساعد الآلي';
+            modeBadge.textContent = r.mode === 'human' ? 'مع شخص' : 'مع المساعد الآلي';
             modeBadge.className = 'badge ' + (r.mode === 'human' ? 'badge-info' : 'badge-primary');
           }
         })
@@ -133,6 +140,11 @@
     var tform = tryBox.querySelector('[data-bot-try-form]');
     var tinput = tform.querySelector('textarea');
     var tbtn = tform.querySelector('button');
+    var tphone = tryBox.querySelector('[data-bot-try-phone]');
+    if (tphone) {
+      // رقم جديد يبدأ محادثة جديدة بهويته (والخادم يمسح القديمة)
+      tphone.addEventListener('change', function () { tlog.innerHTML = ''; });
+    }
     var bubble = function (cls, text, meta) {
       var n = el('div', 'chat-msg ' + cls);
       if (meta) { n.appendChild(el('span', 'bot-msg-meta', meta)); }
@@ -151,12 +163,13 @@
       bubble('is-user', text);
       var typing = bubble('is-assistant is-typing', '');
       tbtn.disabled = true;
-      SN.api(tryBox.getAttribute('data-url'), { method: 'POST', data: { text: text } })
+      SN.api(tryBox.getAttribute('data-url'), { method: 'POST', data: { text: text, phone: tphone ? tphone.value.trim() : '' } })
         .then(function (r) {
           typing.remove();
           var meta = [];
+          if (r.as) { meta.push(r.as); }
           if (r.tools) { meta.push(r.tools); }
-          if (r.handoff) { meta.push('حُوّلت لموظف'); }
+          if (r.handoff) { meta.push(r.handoff); }
           bubble('is-assistant', r.reply, meta.join(' · '));
         })
         .catch(function (err) {

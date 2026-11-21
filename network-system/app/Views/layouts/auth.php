@@ -18,6 +18,7 @@ $flash = Config::installed() || PHP_SAPI !== 'cli' ? (Session::pull('_flash', []
 <meta name="icons-url" content="<?= e(asset('img/icons.svg')) ?>">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e(($v->title !== '' ? $v->title . ' · ' : '') . $networkName) ?></title>
+<?= $v->partial('rum', ['area' => 'login']) ?>
 <script>
 (function () {
   var p = 'system';

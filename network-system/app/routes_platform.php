@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 use App\Controllers\AdminAiController;
 use App\Controllers\AdminBillingController;
+use App\Controllers\AdminBotController;
 use App\Controllers\AdminController;
 use App\Controllers\AdminSupportController;
 use App\Controllers\AdminSmsController;
+use App\Controllers\BotPublicController;
 use App\Controllers\BrandController;
 use App\Controllers\DesignController;
 use App\Controllers\MobileController;
@@ -41,6 +43,15 @@ return static function (Router $r): void {
     $r->get('/lang/{code:ar|en}', [\App\Controllers\LangController::class, 'switch'], ['auth' => false, 'csrf' => false]);
     $r->get('/cron', [PlatformController::class, 'cron'], ['auth' => false, 'csrf' => false]);
     $r->get('/health', [PlatformController::class, 'health'], ['auth' => false, 'csrf' => false]);
+    // بوت خدمة الزبائن: Webhook واتساب، ونافذة المحادثة (في موقع المنصة أو أي موقع)، وصفحة المحادثة
+    $open = ['auth' => false, 'csrf' => false];
+    $r->get('/api/whatsapp/{hook:[a-f0-9]{32}}', [BotPublicController::class, 'whatsappVerify'], $open);
+    $r->post('/api/whatsapp/{hook:[a-f0-9]{32}}', [BotPublicController::class, 'whatsappWebhook'], $open);
+    $r->post('/api/bot/{key:[a-f0-9]{32}}/send', [BotPublicController::class, 'webSend'], $open);
+    $r->get('/api/bot/{key:[a-f0-9]{32}}/poll', [BotPublicController::class, 'webPoll'], $open);
+    $r->get('/help', [BotPublicController::class, 'webPage'], $open);
+    // قياس سرعة الصفحات من جهاز المستخدم (لوحة المسؤول وأنظمة الشبكات وصفحات الدخول)
+    $r->post('/api/rum', [\App\Controllers\RumController::class, 'store'], $open);
 
     $a = ['auth' => false, 'admin' => true];
     $r->get('/admin/login', [AdminController::class, 'loginForm'], ['auth' => false, 'adminGuest' => true]);
@@ -123,6 +134,23 @@ return static function (Router $r): void {
     $r->post('/admin/announcements', [AdminSupportController::class, 'announcementSave'], $a + ['aperm' => 'support.manage']);
     $r->post('/admin/announcements/{id}/delete', [AdminSupportController::class, 'announcementDelete'], $a + ['aperm' => 'support.manage']);
     $r->post('/admin/announcements/{id}/toggle', [AdminSupportController::class, 'announcementToggle'], $a + ['aperm' => 'support.manage']);
+    // بوت خدمة الزبائن للمنصة: المحادثات والإعدادات
+    $bc = $a + ['aperm' => ['bot.chats', 'bot.manage']];
+    $bm = $a + ['aperm' => 'bot.manage'];
+    $r->get('/admin/bot', [AdminBotController::class, 'index'], $bc);
+    $r->get('/admin/bot/chats/{id}', [AdminBotController::class, 'show'], $bc);
+    $r->get('/admin/bot/chats/{id}/poll', [AdminBotController::class, 'poll'], $bc);
+    $r->post('/admin/bot/chats/{id}/reply', [AdminBotController::class, 'reply'], $bc);
+    $r->post('/admin/bot/chats/{id}/mode', [AdminBotController::class, 'mode'], $bc);
+    $r->post('/admin/bot/chats/{id}/handler', [AdminBotController::class, 'handler'], $bc);
+    $r->post('/admin/bot/chats/{id}/close', [AdminBotController::class, 'close'], $bc);
+    $r->post('/admin/bot/chats/{id}/identify', [AdminBotController::class, 'identify'], $bc);
+    $r->get('/admin/bot/settings', [AdminBotController::class, 'settings'], $bm);
+    $r->post('/admin/bot/settings', [AdminBotController::class, 'save'], $bm);
+    $r->post('/admin/bot/settings/try', [AdminBotController::class, 'try'], $bm);
+    $r->post('/admin/bot/settings/whatsapp-test', [AdminBotController::class, 'whatsappTest'], $bm);
+    $r->post('/admin/bot/settings/erp-test', [AdminBotController::class, 'erpTest'], $bm);
+    $r->post('/admin/bot/settings/web-key', [AdminBotController::class, 'webKey'], $bm);
     // الأمان والإشعارات
     $r->get('/admin/login/verify', [AdminController::class, 'verifyForm'], ['auth' => false]);
     $r->post('/admin/login/verify', [AdminController::class, 'verify'], ['auth' => false]);

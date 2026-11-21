@@ -27,6 +27,7 @@ $initial = mb_substr(trim((string) $user['name']), 0, 1);
 <meta name="auth" content="1">
 <title><?= e(($v->title !== '' ? $v->title . ' · ' : '') . $networkName) ?></title>
 <?= $v->partial('prefetch-fresh') ?>
+<?= $v->partial('rum', ['area' => 'net']) ?>
 <script>
 (function () {
   var p = document.documentElement.getAttribute('data-theme-pref') || 'system';

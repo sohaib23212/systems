@@ -12,7 +12,7 @@ use Throwable;
 final class Migrator
 {
     /** نسخة البنية التي تتوقعها الشيفرة الحالية */
-    public const VERSION = 11;
+    public const VERSION = 12;
 
     private static bool $checked = false;
 
@@ -113,13 +113,17 @@ final class Migrator
                 self::createTables(['batch_routers']);
                 break;
             case 10:
-                // بوت خدمة الزبائن: المحادثات ورسائلها
-                self::createTables(['bot_chats', 'bot_messages']);
+                // كانت جداول بوت خدمة الزبائن في كل شبكة؛ انتقل البوت إلى المنصة (الخطوة 12 تحذفها)
                 break;
             case 11:
                 // سرعة لوحة التحكم والباقات: إجماليات الكروت تُقرأ من فهرس صغير بدل قراءة كل الكروت
                 self::addIndex('cards', 'idx_cards_state', '(status, is_disabled)');
                 self::addIndex('cards', 'idx_cards_cat_state', '(category_id, status, is_disabled)');
+                break;
+            case 12:
+                // بوت خدمة الزبائن صار للمنصة كلها (قاعدة المنصة): جداوله القديمة في الشبكة لم تعد تُستخدم
+                DB::pdo()->exec('DROP TABLE IF EXISTS bot_messages');
+                DB::pdo()->exec('DROP TABLE IF EXISTS bot_chats');
                 break;
         }
     }

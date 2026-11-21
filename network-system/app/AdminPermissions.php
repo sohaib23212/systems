@@ -23,6 +23,8 @@ final class AdminPermissions
         'التواصل' => [
             'support.manage' => 'تذاكر الدعم والإعلانات للزبائن',
             'messages.send'  => 'إرسال الرسائل النصية والبريد لأصحاب الحسابات',
+            'bot.chats'      => 'محادثات بوت خدمة الزبائن (واتساب والموقع) والرد عليها',
+            'bot.manage'     => 'إعدادات بوت خدمة الزبائن وقنواته والربط مع MADIX Cloud',
         ],
         'الذكاء والتحليلات' => [
             'ai.manage'      => 'إعداد الذكاء الاصطناعي ومساعد المسؤول والتحليلات',
@@ -39,7 +41,7 @@ final class AdminPermissions
     public const PRESETS = [
         'full'    => ['مدير كامل', 'كل شيء عدا إدارة الفريق', '*'],
         'sales'   => ['المبيعات والاشتراكات', 'الحسابات والاشتراكات والدفعات ومراسلة الزبائن', ['tenants.view', 'tenants.manage', 'billing.view', 'billing.manage', 'messages.send']],
-        'support' => ['الدعم الفني', 'تذاكر الدعم والدخول إلى أنظمة الزبائن لمساعدتهم', ['tenants.view', 'tenants.access', 'support.manage', 'messages.send']],
+        'support' => ['الدعم الفني', 'تذاكر الدعم ومحادثات البوت والدخول إلى أنظمة الزبائن لمساعدتهم', ['tenants.view', 'tenants.access', 'support.manage', 'messages.send', 'bot.chats']],
         'viewer'  => ['مراقب', 'عرض الحسابات والمدفوعات دون أي تعديل', ['tenants.view', 'billing.view']],
     ];
 

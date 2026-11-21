@@ -8,7 +8,7 @@ use Throwable;
 final class Kernel
 {
     /** مسارات عامة بلا جلسة (واجهات الهوتسبوت وجهاز MikroTik والمهام المجدولة) */
-    private const STATELESS = ['/api/hotspot', '/api/router', '/api/app', '/cron', '/hotspot/sdk', '/health'];
+    private const STATELESS = ['/api/hotspot', '/api/router', '/api/app', '/api/whatsapp', '/api/bot', '/api/rum', '/cron', '/hotspot/sdk', '/health'];
 
     /** أقصى مدة لوضع الصيانة؛ بعدها يُتجاهل الملف حتى لا يبقى النظام مغلقاً إن تعطّل التحديث */
     private const MAINTENANCE_MAX = 900;

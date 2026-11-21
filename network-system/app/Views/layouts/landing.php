@@ -21,6 +21,7 @@ $flash = Session::pull('_flash', []) ?: [];
 <meta property="og:description" content="<?= e(Landing::get('hero_text')) ?>">
 <meta property="og:type" content="website">
 <title><?= e(Brand::NAME . ' — ' . Brand::TAGLINE) ?></title>
+<?= $v->partial('rum', ['area' => 'landing']) ?>
 <link rel="stylesheet" href="<?= e(asset('css/landing.css')) ?>">
 <?= Theme::style() ?>
 <?= Brand::headTags() ?>
@@ -31,5 +32,8 @@ $flash = Session::pull('_flash', []) ?: [];
 <?php endforeach; ?>
 <?= $content ?>
 <script src="<?= e(asset('js/landing.js')) ?>" defer></script>
+<?php if (\App\Controllers\BotPublicController::webOn()): ?>
+<script src="<?= e(asset('widget/bot-widget.js')) ?>" data-endpoint="<?= e(\App\Controllers\BotPublicController::endpoint(false)) ?>" data-title="<?= e(\App\Services\BotAgent::name()) ?>" data-greeting="<?= e('أهلاً بك! اسألني عن ' . \App\Core\Platform::setting('platform.name') . ' وباقاتها، أو عن اشتراكك أو كرتك.') ?>" defer></script>
+<?php endif; ?>
 </body>
 </html>

@@ -328,3 +328,53 @@ CREATE TABLE IF NOT EXISTS platform_mail_log (
   KEY idx_pml_created (created_at),
   KEY idx_pml_tenant (tenant_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ---------------------------------------------------------------------------
+-- بوت خدمة الزبائن للمنصة (واتساب ونافذة الموقع): أصحاب الشبكات ومشتركوهم وأصحاب محلات MADIX ERP والزوار.
+-- kind: من المرسل (guest | owner | subscriber) · tenant_id: الشبكة المعنية بالمحادثة
+-- handler: من يرد حين تحتاج المحادثة شخصاً: فريق المنصة (admin) أو صاحب شبكة المشترك (network)
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS platform_bot_chats (
+  id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  channel         VARCHAR(16)  NOT NULL,
+  external_id     VARCHAR(80)  NOT NULL,
+  name            VARCHAR(120) NULL,
+  phone           VARCHAR(32)  NULL,
+  kind            VARCHAR(16)  NOT NULL DEFAULT 'guest',
+  tenant_id       INT UNSIGNED NULL,
+  subscriber_id   INT UNSIGNED NULL,
+  handler         VARCHAR(10)  NOT NULL DEFAULT 'admin',
+  mode            VARCHAR(8)   NOT NULL DEFAULT 'bot',
+  needs_human     TINYINT(1)   NOT NULL DEFAULT 0,
+  status          VARCHAR(8)   NOT NULL DEFAULT 'open',
+  unread          INT UNSIGNED NOT NULL DEFAULT 0,
+  assigned_to     VARCHAR(120) NULL,
+  meta            TEXT         NULL,
+  identified_at   DATETIME     NULL,
+  last_message    VARCHAR(255) NULL,
+  last_at         DATETIME     NOT NULL,
+  last_inbound_at DATETIME     NULL,
+  created_at      DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pbot_chat (channel, external_id),
+  KEY idx_pbot_list (status, needs_human, last_at),
+  KEY idx_pbot_tenant (tenant_id, kind, last_at),
+  CONSTRAINT fk_pbot_tenant FOREIGN KEY (tenant_id) REFERENCES tenants (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS platform_bot_messages (
+  id          BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  chat_id     INT UNSIGNED NOT NULL,
+  role        VARCHAR(8)   NOT NULL,
+  body        TEXT         NOT NULL,
+  sender      VARCHAR(120) NULL,
+  side        VARCHAR(10)  NULL,
+  tools       VARCHAR(255) NULL,
+  external_id VARCHAR(100) NULL,
+  created_at  DATETIME     NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uq_pbot_msg_ext (external_id),
+  KEY idx_pbot_msg_chat (chat_id, id),
+  KEY idx_pbot_msg_created (created_at),
+  CONSTRAINT fk_pbot_msg_chat FOREIGN KEY (chat_id) REFERENCES platform_bot_chats (id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

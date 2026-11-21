@@ -1,7 +1,7 @@
 /*!
  * MADIX — نافذة بوت خدمة الزبائن للموقع
  * تُضاف بسطر واحد:
- *   <script src=".../assets/widget/bot-widget.js" data-endpoint="https://.../bot/web/KEY" data-title="..." defer></script>
+ *   <script src=".../assets/widget/bot-widget.js" data-endpoint="https://.../api/bot/KEY" data-title="..." defer></script>
  * خيارات: data-mode="page" مع data-target (صفحة كاملة) · data-side="right" · data-color="#4f46e5"
  * مكتوبة بصيغة ES5 لتعمل على المتصفحات القديمة، ولا تحتاج أي مكتبة.
  */
@@ -23,7 +23,7 @@
   var mode = script.getAttribute('data-mode') === 'page' ? 'page' : 'float';
   var side = script.getAttribute('data-side') === 'right' ? 'right' : 'left';
   var color = /^#[0-9a-f]{3,8}$/i.test(script.getAttribute('data-color') || '') ? script.getAttribute('data-color') : '#4f46e5';
-  var greeting = script.getAttribute('data-greeting') || 'أهلاً بك! اكتب سؤالك أو رقم كرتك وسنرد عليك.';
+  var greeting = script.getAttribute('data-greeting') || 'أهلاً بك! اكتب سؤالك وسنرد عليك.';
 
   // ---------- هوية الزائر (تبقى في متصفحه) ----------
   var storeKey = 'mxb:' + endpoint.slice(-32);
@@ -137,7 +137,7 @@
       if (seen[m.id]) { continue; }
       seen[m.id] = true;
       lastId = Math.max(lastId, m.id);
-      bubble(m.role === 'user' ? 'user' : (m.role === 'staff' ? 'staff' : 'bot'), m.body, m.role === 'staff' ? 'موظف خدمة الزبائن' : '');
+      bubble(m.role === 'user' ? 'user' : (m.role === 'staff' ? 'staff' : 'bot'), m.body, m.role === 'staff' ? 'فريق خدمة الزبائن' : '');
     }
   }
 
@@ -145,7 +145,8 @@
     var xhr = new XMLHttpRequest();
     xhr.open(method, endpoint + path, true);
     xhr.setRequestHeader('Accept', 'application/json');
-    if (body) { xhr.setRequestHeader('Content-Type', 'application/json'); }
+    // نص عادي لا application/json: طلب بسيط لا يحتاج إذناً مسبقاً حين تكون النافذة في موقع آخر
+    if (body) { xhr.setRequestHeader('Content-Type', 'text/plain;charset=UTF-8'); }
     xhr.timeout = 90000;
     xhr.onreadystatechange = function () {
       if (xhr.readyState !== 4) { return; }
