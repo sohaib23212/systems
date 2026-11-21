@@ -63,21 +63,6 @@ final class CustomerBot
                 return;
         }
 
-        // بوت خدمة الزبائن الذكي: الأسئلة والكلام العادي له، وأرقام الكروت وبيانات الربط تبقى للفحص المباشر
-        if (self::toAgent($chat, $clean)) {
-            $name = trim((string) ($msg['from']['first_name'] ?? '') . ' ' . (string) ($msg['from']['last_name'] ?? ''));
-            $links = DB::column('SELECT subscriber_id FROM telegram_links WHERE chat_id = ? LIMIT 2', [$chat]);
-            $r = BotAgent::receive('telegram', $chat, $text, [
-                'name' => $name !== '' ? $name : (string) ($msg['from']['username'] ?? ''),
-                'message_id' => isset($msg['message_id']) ? 'tg:' . $chat . ':' . $msg['message_id'] : '',
-                'subscriber_id' => count($links) === 1 ? (int) $links[0] : null,
-            ]);
-            if ($r['reply'] !== null) {
-                Telegram::send($chat, Telegram::esc($r['reply']), $kb);
-            }
-            return;
-        }
-
         $key = 'tgc:' . $chat;
         $wait = Throttle::lockedFor($key);
         if ($wait > 0) {
@@ -133,24 +118,6 @@ final class CustomerBot
         }
         Throttle::fail($key, 8, 900, 1800);
         Telegram::send($chat, 'لا يوجد كرت أو حساب بهذا الرقم.');
-    }
-
-    /** الرسالة للمساعد الذكي: كلام عادي (لا رقم كرت ولا اسم مستخدم وكلمة مرور)، أو المحادثة مع موظف الآن */
-    private static function toAgent(string $chat, string $text): bool
-    {
-        if (!BotAgent::enabled() || !Settings::bool('bot.telegram')) {
-            return false;
-        }
-        if (DB::value("SELECT mode FROM bot_chats WHERE channel = 'telegram' AND external_id = ?", [$chat]) === 'human') {
-            return true;
-        }
-        // الأرقام العربية (١٢٣) تُعامل كأرقام قبل فحص الحروف العربية
-        $text = latin_digits(trim($text));
-        $parts = preg_split('/\s+/u', $text, -1, PREG_SPLIT_NO_EMPTY) ?: [];
-        $codeLike = count($parts) >= 1 && count($parts) <= 2 && mb_strlen($text) <= 80
-            && !preg_match('/[\p{Arabic}?؟]/u', $text)
-            && preg_match('/^[\p{L}\p{N}@._\-]+(\s+[\p{L}\p{N}@._\-]+)?$/u', $text);
-        return !$codeLike;
     }
 
     private static function command(string $text): string

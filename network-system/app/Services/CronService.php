@@ -206,7 +206,6 @@ final class CronService
         $del("DELETE FROM router_tasks WHERE status = 'pending' AND created_at < ?", 30);
         $del("DELETE FROM jobs WHERE status IN ('done','failed','cancelled') AND created_at < ?", 30);
         $del('DELETE FROM alerts WHERE is_read = 1 AND created_at < ?', 90);
-        BotAgent::cleanup();
         // ملفات مؤقتة
         foreach (glob(storage_path('tmp') . '/*') ?: [] as $f) {
             if (is_file($f) && filemtime($f) < time() - 86400) {
