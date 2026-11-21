@@ -51,7 +51,7 @@ final class MadixCloud
     /**
      * طلب واحد إلى v1.php.
      * @param array{base?:string, key?:string} $with قيم مكتوبة قبل الحفظ (للاختبار)
-     * @return array{ok:bool, status:int, data:mixed, message:string}
+     * @return array{ok:bool, status:int, data:mixed, message:string, code?:string}
      */
     public static function call(string $route, array $query = [], ?array $body = null, array $with = [], int $timeout = 12): array
     {
@@ -93,16 +93,19 @@ final class MadixCloud
             return ['ok' => true, 'status' => $status, 'data' => $data, 'message' => ''];
         }
         $error = $json['error'] ?? ($json['message'] ?? '');
-        $message = is_array($error) ? (string) ($error['message'] ?? ($error['code'] ?? '')) : (string) $error;
+        $code = is_array($error) ? (string) ($error['code'] ?? '') : '';
+        $message = is_array($error) ? (string) ($error['message'] ?? $code) : (string) $error;
         $message = match (true) {
+            $status === 401 && $code === 'key_expired' => 'مفتاح MADIX Cloud منتهي الصلاحية.',
             $status === 401 => 'مفتاح MADIX Cloud غير صحيح أو ملغى.',
+            $status === 403 && $code === 'ip_not_allowed' => 'عنوان هذا الخادم غير مسموح لمفتاح MADIX Cloud؛ أضفه في «عناوين IP المسموحة» أو اترك القائمة فارغة.',
             $status === 403 => 'المفتاح لا يملك صلاحية هذا الطلب' . ($message !== '' ? ': ' . self::scrub($message, $key) : '.'),
             $status === 404 && $message === '' => 'غير موجود.',
             $status === 429 => 'تم تجاوز حد الطلبات على MADIX Cloud. حاول بعد قليل.',
             $message !== '' => self::scrub(mb_substr($message, 0, 200), $key),
             default => 'تعذّر تنفيذ الطلب على MADIX Cloud (HTTP ' . $status . ').',
         };
-        return ['ok' => false, 'status' => $status, 'data' => $json['data'] ?? null, 'message' => $message];
+        return ['ok' => false, 'status' => $status, 'data' => $json['data'] ?? null, 'message' => $message, 'code' => $code];
     }
 
     /** اختبار الاتصال: اسم المفتاح وصلاحياته */
@@ -117,29 +120,35 @@ final class MadixCloud
         $scopes = $d['scopes'] ?? ($d['key']['scopes'] ?? []);
         $scopes = is_array($scopes) ? array_map('strval', $scopes) : array_filter(array_map('trim', explode(',', (string) $scopes)));
         $dangerous = array_values(array_intersect($scopes, ['licenses.issue', 'customers.control', 'notifications.send']));
-        $message = 'الاتصال يعمل' . ($name !== '' ? ' · ' . $name : '') . ($scopes ? ' · ' . implode('، ', $scopes) : '');
+        $message = 'الاتصال يعمل' . ($name !== '' ? ' · ' . $name : '') . ($scopes ? ' · ' . implode('، ', $scopes) : '')
+            . (is_string($d['your_ip'] ?? null) && $d['your_ip'] !== '' ? ' · عنوان هذا الخادم: ' . $d['your_ip'] : '');
         if ($dangerous) {
             $message .= '. تنبيه: المفتاح يملك صلاحيات لا يحتاجها البوت (' . implode('، ', $dangerous) . ')، استعمل «مفتاح بوت».';
         }
         return ['ok' => true, 'message' => $message, 'scopes' => $scopes];
     }
 
-    /** معرّف الزبون من رد البحث مهما كان شكله */
-    public static function customerId(mixed $data): ?string
+    /**
+     * محلات رد البحث بالهاتف: data.items[] وفي كل عنصر رقم المحل في customer.
+     * @return list<array{customer:string, shop:string}>
+     */
+    public static function shops(mixed $data): array
     {
         if (!is_array($data)) {
-            return null;
+            return [];
         }
-        foreach ([$data, $data['customer'] ?? null, $data['customers'][0] ?? null, $data[0] ?? null, $data['items'][0] ?? null] as $c) {
-            if (is_array($c)) {
-                foreach (['id', 'customer_id', 'code'] as $k) {
-                    if (isset($c[$k]) && is_scalar($c[$k]) && (string) $c[$k] !== '') {
-                        return (string) $c[$k];
-                    }
-                }
+        $items = isset($data['items']) && is_array($data['items']) ? $data['items'] : (isset($data['customer']) ? [$data] : []);
+        $out = [];
+        foreach ($items as $it) {
+            if (!is_array($it)) {
+                continue;
+            }
+            $id = $it['customer'] ?? ($it['id'] ?? null);
+            if (is_scalar($id) && preg_match('/^[A-Za-z0-9\-]{2,40}$/', (string) $id)) {
+                $out[] = ['customer' => strtoupper((string) $id), 'shop' => mb_substr((string) ($it['shop'] ?? ''), 0, 120)];
             }
         }
-        return null;
+        return array_slice($out, 0, 10);
     }
 
     /** معلومات الشركة للبوت (تُخزَّن عشر دقائق حتى لا تُطلب مع كل رسالة) */

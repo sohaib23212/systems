@@ -39,26 +39,35 @@ final class BotTools
              ], 'required' => ['reason', 'summary']]],
         ];
         if (MadixCloud::enabled()) {
+            $shop = ['type' => 'string', 'description' => 'رقم المحل (C-XXXXX)، فقط إن كان لرقم الزبون أكثر من محل وحدّد أيّها'];
             $defs = array_merge($defs, [
-                ['name' => 'erp_my_account', 'description' => 'MADIX ERP (نظام الكاشير): بيانات محل الزبون وحالة ترخيصه وتاريخ انتهائه والأيام المتبقية والميزات. تعتمد رقم واتساب الزبون الموثّق، فلا تعمل في القنوات الأخرى. بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_licenses', 'description' => 'MADIX ERP: تراخيص محل الزبون بالتفصيل (الباقة، البداية، الانتهاء، الحالة). بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_devices', 'description' => 'MADIX ERP: أجهزة محل الزبون (ويندوز أو أندرويد، الإصدار المثبّت، آخر ظهور ومزامنة، وهل يوجد تحديث). بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_plans', 'description' => 'MADIX ERP: الباقات وأسعارها (شهري وسنوي) وميزات كل باقة. بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_releases', 'description' => 'MADIX ERP: آخر إصدار لكل نظام (ويندوز، أندرويد) مع رابط التحميل وما الجديد فيه. بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_service_status', 'description' => 'MADIX ERP: حالة خدمة MADIX Cloud والإعلانات أو الأعطال المعروفة الآن. بلا مدخلات.', 'input_schema' => self::NONE],
-                ['name' => 'erp_open_ticket', 'description' => 'MADIX ERP: فتح تذكرة دعم فني لمشكلة في نظام الكاشير لم تُحل بالشرح. يراها فريق الدعم في MADIX Cloud.',
+                ['name' => 'erp_my_account', 'description' => 'MADIX ERP (نظام الكاشير): محلات الزبون وحالة ترخيص كل محل (الباقة، الانتهاء، الأيام المتبقية، عدد الأجهزة، الميزات). تعتمد رقم واتساب الزبون الموثّق، فلا تعمل في القنوات الأخرى. بلا مدخلات.', 'input_schema' => self::NONE],
+                ['name' => 'erp_licenses', 'description' => 'MADIX ERP: تراخيص محل الزبون بالتفصيل لكل جهاز (الباقة، البداية، الانتهاء الفعلي، الحالة).',
+                 'input_schema' => ['type' => 'object', 'properties' => ['customer' => $shop]]],
+                ['name' => 'erp_devices', 'description' => 'MADIX ERP: أجهزة محل الزبون (رقم الجهاز، الاسم، ويندوز أو أندرويد، الإصدار المثبّت، آخر ظهور ومزامنة، متصل الآن، وهل يوجد تحديث).',
+                 'input_schema' => ['type' => 'object', 'properties' => ['customer' => $shop]]],
+                ['name' => 'erp_plans', 'description' => 'MADIX ERP: الباقات وأسعارها (شهري، سنوي، مدى الحياة) وميزات كل باقة ومدة التجربة المجانية. بلا مدخلات.', 'input_schema' => self::NONE],
+                ['name' => 'erp_releases', 'description' => 'MADIX ERP: آخر إصدار لكل نظام مع رابط التحميل وما الجديد فيه.',
+                 'input_schema' => ['type' => 'object', 'properties' => ['platform' => ['type' => 'string', 'enum' => ['windows', 'android', 'mac', 'ios'], 'description' => 'نظام واحد، أو اتركه للكل']]]],
+                ['name' => 'erp_service_status', 'description' => 'MADIX ERP: حالة خدمة MADIX Cloud (تعمل، بطء، عطل، صيانة) والإعلانات الحالية. بلا مدخلات.', 'input_schema' => self::NONE],
+                ['name' => 'erp_open_ticket', 'description' => 'MADIX ERP: فتح تذكرة دعم فني لمشكلة في نظام الكاشير لم تُحل بالشرح، تصل فريق الدعم في MADIX Cloud مع مقتطف المحادثة. لصاحب المحل على واتساب فقط.',
                  'input_schema' => ['type' => 'object', 'properties' => [
                      'subject' => ['type' => 'string', 'description' => 'موضوع قصير'],
                      'message' => ['type' => 'string', 'description' => 'وصف المشكلة كما شرحها الزبون، مع الجهاز والإصدار إن عُرفا'],
+                     'category' => ['type' => 'string', 'enum' => ['problem', 'question', 'billing', 'feature', 'other'], 'description' => 'نوع التذكرة: مشكلة، سؤال، دفع واشتراك، طلب ميزة، أخرى'],
+                     'device' => ['type' => 'string', 'description' => 'رقم الجهاز المعني إن عُرف من erp_devices'],
+                     'customer' => $shop,
                  ], 'required' => ['subject', 'message']]],
-                ['name' => 'erp_ticket_status', 'description' => 'MADIX ERP: حالة تذكرة دعم فُتحت من هذه المحادثة وآخر رد عليها.',
+                ['name' => 'erp_ticket_status', 'description' => 'MADIX ERP: حالة تذكرة دعم فُتحت من هذه المحادثة وآخر رد عليها من فريق الدعم.',
                  'input_schema' => ['type' => 'object', 'properties' => [
                      'id' => ['type' => 'string', 'description' => 'رقم التذكرة إن ذكره الزبون؛ اتركه فارغاً لآخر تذكرة'],
                  ]]],
-                ['name' => 'erp_renewal_request', 'description' => 'MADIX ERP: تسجيل طلب تجديد ترخيص لصاحب المحل؛ يراجعه المدير ويؤكده بعد الدفع، ولا يجدد شيئاً بنفسه.',
+                ['name' => 'erp_renewal_request', 'description' => 'MADIX ERP: تسجيل طلب تجديد ترخيص لجهاز في محل الزبون؛ ينتظر موافقة المدير بعد الدفع، ولا يجدد شيئاً بنفسه. إن كان للمحل أكثر من جهاز فحدّد الجهاز (من erp_devices) بعد سؤال الزبون.',
                  'input_schema' => ['type' => 'object', 'properties' => [
-                     'plan' => ['type' => 'string', 'enum' => ['month', 'year'], 'description' => 'المدة المطلوبة إن ذكرها الزبون'],
+                     'plan' => ['type' => 'string', 'enum' => ['month', 'year', 'life'], 'description' => 'المدة المطلوبة إن ذكرها الزبون'],
+                     'device' => ['type' => 'string', 'description' => 'رقم الجهاز المطلوب تجديده'],
                      'note' => ['type' => 'string', 'description' => 'ملاحظة الزبون (طريقة الدفع، وقت التواصل…)'],
+                     'customer' => $shop,
                  ]]],
             ]);
         }
@@ -79,15 +88,15 @@ final class BotTools
             'network_status' => self::networkStatus($chat),
             'sale_points' => self::salePoints(),
             'handoff' => self::handoff($chat, (string) ($input['reason'] ?? ''), (string) ($input['summary'] ?? '')),
-            'erp_my_account' => self::erpAccount($chat, true),
-            'erp_licenses' => self::erpFor($chat, 'licenses'),
-            'erp_devices' => self::erpFor($chat, 'devices'),
+            'erp_my_account' => self::erpMyAccount($chat),
+            'erp_licenses' => self::erpFor($chat, 'licenses', (string) ($input['customer'] ?? '')),
+            'erp_devices' => self::erpFor($chat, 'devices', (string) ($input['customer'] ?? '')),
             'erp_plans' => self::erpPublic('plans'),
-            'erp_releases' => self::erpPublic('releases'),
+            'erp_releases' => self::erpPublic('releases', in_array($input['platform'] ?? '', ['windows', 'android', 'mac', 'ios'], true) ? ['platform' => $input['platform']] : []),
             'erp_service_status' => self::erpPublic('status'),
-            'erp_open_ticket' => self::erpTicket($chat, (string) ($input['subject'] ?? ''), (string) ($input['message'] ?? '')),
+            'erp_open_ticket' => self::erpTicket($chat, $input),
             'erp_ticket_status' => self::erpTicketStatus($chat, (string) ($input['id'] ?? '')),
-            'erp_renewal_request' => self::erpRenewal($chat, (string) ($input['plan'] ?? ''), (string) ($input['note'] ?? '')),
+            'erp_renewal_request' => self::erpRenewal($chat, $input),
             default => ['ok' => false, 'message' => 'أداة غير معروفة.'],
         };
         $json = (string) json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
@@ -258,93 +267,127 @@ final class BotTools
         return ['ok' => false, 'message' => 'الربط مع MADIX Cloud غير مفعّل.'];
     }
 
+    /** نتيجة طلب فاشل للنموذج: الرسالة ورمز الخطأ */
+    private static function erpFail(array $r): array
+    {
+        return array_filter(['ok' => false, 'code' => $r['code'] ?? null, 'message' => $r['message']], static fn ($v) => $v !== null);
+    }
+
     /**
-     * صاحب المحل في MADIX Cloud برقم واتساب الموثّق (يُحفظ في المحادثة ساعة).
-     * @return array{ok:bool, id?:string, data?:mixed, message?:string}
+     * محلات صاحب رقم واتساب الموثّق في MADIX Cloud (تُحفظ في المحادثة ساعة).
+     * @return array{ok:bool, shops?:list<array{customer:string, shop:string}>, data?:mixed, message?:string}
      */
-    private static function erpAccount(array $chat, bool $fresh = false): array
+    private static function erpShops(array $chat, bool $fresh = false): array
     {
         if (!MadixCloud::enabled()) {
             return self::erpOff();
         }
         if ($chat['channel'] !== 'whatsapp') {
-            return ['ok' => false, 'verified' => false, 'message' => 'بيانات ترخيص المحل تُعطى فقط على واتساب من رقم صاحب المحل المسجّل في MADIX ERP.'];
+            return ['ok' => false, 'verified' => false, 'message' => 'بيانات المحل تُعطى فقط على واتساب من رقم صاحب المحل المسجّل في MADIX ERP.'];
         }
         $meta = BotAgent::meta($chat);
-        if (!$fresh && isset($meta['erp']['id']) && (int) ($meta['erp']['at'] ?? 0) > time() - 3600) {
-            return ['ok' => true, 'id' => (string) $meta['erp']['id']];
+        if (!$fresh && !empty($meta['erp']['shops']) && (int) ($meta['erp']['at'] ?? 0) > time() - 3600) {
+            return ['ok' => true, 'shops' => $meta['erp']['shops']];
         }
         $r = MadixCloud::call('lookup', ['phone' => '+' . $chat['external_id']]);
-        $id = $r['ok'] ? MadixCloud::customerId($r['data']) : null;
-        if ($id === null) {
-            return ['ok' => false, 'found' => false, 'message' => $r['ok'] || $r['status'] === 404 ? 'رقم واتساب هذا غير مسجّل لأي محل في MADIX ERP.' : $r['message']];
+        if (!$r['ok']) {
+            return $r['status'] === 404 ? ['ok' => false, 'found' => false, 'message' => 'رقم واتساب هذا غير مسجّل لأي محل في MADIX ERP.'] : self::erpFail($r);
         }
-        $meta['erp'] = ['id' => $id, 'at' => time()];
+        $shops = MadixCloud::shops($r['data']);
+        if (!$shops) {
+            return ['ok' => false, 'found' => false, 'message' => 'رقم واتساب هذا غير مسجّل لأي محل في MADIX ERP.'];
+        }
+        $meta['erp'] = ['shops' => $shops, 'at' => time()];
         BotAgent::setMeta((int) $chat['id'], $meta);
-        return ['ok' => true, 'id' => $id, 'data' => $r['data']];
+        return ['ok' => true, 'shops' => $shops, 'data' => $r['data']];
     }
 
-    private static function erpFor(array $chat, string $route): array
+    /** المحل المقصود: ما حدّده الزبون من محلاته، أو محله الوحيد */
+    private static function erpCustomer(array $chat, string $wanted): array
     {
-        $acc = self::erpAccount($chat);
+        $acc = self::erpShops($chat);
         if (!$acc['ok']) {
             return $acc;
         }
-        $r = MadixCloud::call($route, ['customer' => $acc['id']]);
-        return $r['ok'] ? ['ok' => true, 'data' => $r['data']] : ['ok' => false, 'message' => $r['message']];
+        $ids = array_column($acc['shops'], 'customer');
+        $wanted = strtoupper(trim($wanted));
+        if ($wanted !== '' && in_array($wanted, $ids, true)) {
+            return ['ok' => true, 'id' => $wanted];
+        }
+        if (count($ids) === 1) {
+            return ['ok' => true, 'id' => $ids[0]];
+        }
+        return ['ok' => false, 'choose_shop' => true, 'shops' => $acc['shops'], 'message' => 'لهذا الرقم أكثر من محل؛ اسأل الزبون أي محل يقصد ثم أعد الطلب برقم المحل في customer.'];
     }
 
-    private static function erpPublic(string $route): array
+    private static function erpMyAccount(array $chat): array
+    {
+        $acc = self::erpShops($chat, true);
+        return $acc['ok'] ? ['ok' => true, 'data' => $acc['data']] : $acc;
+    }
+
+    private static function erpFor(array $chat, string $route, string $wanted): array
+    {
+        $c = self::erpCustomer($chat, $wanted);
+        if (!$c['ok']) {
+            return $c;
+        }
+        $r = MadixCloud::call($route, ['customer' => $c['id'], 'limit' => 20]);
+        return $r['ok'] ? ['ok' => true, 'customer' => $c['id'], 'data' => $r['data']] : self::erpFail($r);
+    }
+
+    private static function erpPublic(string $route, array $query = []): array
     {
         if (!MadixCloud::enabled()) {
             return self::erpOff();
         }
-        $r = MadixCloud::call($route);
-        return $r['ok'] ? ['ok' => true, 'data' => $r['data']] : ['ok' => false, 'message' => $r['message']];
+        $r = MadixCloud::call($route, $query);
+        return $r['ok'] ? ['ok' => true, 'data' => $r['data']] : self::erpFail($r);
     }
 
     /** آخر رسائل المحادثة نصاً، لتُرفق بالتذكرة */
     private static function excerpt(int $chatId): string
     {
-        $rows = array_reverse(DB::rows("SELECT role, body FROM bot_messages WHERE chat_id = ? AND role IN ('user','bot','staff') ORDER BY id DESC LIMIT 8", [$chatId]));
+        $rows = array_reverse(DB::rows("SELECT role, body FROM bot_messages WHERE chat_id = ? AND role IN ('user','bot','staff') ORDER BY id DESC LIMIT 12", [$chatId]));
         $who = ['user' => 'الزبون', 'bot' => 'المساعد', 'staff' => 'الموظف'];
-        return mb_substr(implode("\n", array_map(static fn ($r) => $who[$r['role']] . ': ' . $r['body'], $rows)), 0, 3000);
+        return mb_substr(implode("\n", array_map(static fn ($r) => $who[$r['role']] . ': ' . $r['body'], $rows)), 0, 8000);
     }
 
-    private static function erpTicket(array $chat, string $subject, string $message): array
+    private static function erpTicket(array $chat, array $in): array
     {
-        if (!MadixCloud::enabled()) {
-            return self::erpOff();
+        $c = self::erpCustomer($chat, (string) ($in['customer'] ?? ''));
+        if (!$c['ok']) {
+            return $c;
         }
-        $subject = mb_substr(trim($subject), 0, 150);
-        $message = mb_substr(trim($message), 0, 3000);
-        if ($subject === '' || $message === '') {
-            return ['ok' => false, 'message' => 'اكتب موضوع التذكرة ووصف المشكلة.'];
+        $subject = mb_substr(trim((string) ($in['subject'] ?? '')), 0, 200);
+        $message = mb_substr(trim((string) ($in['message'] ?? '')), 0, 5000);
+        if ($subject === '' || mb_strlen($message) < 5) {
+            return ['ok' => false, 'message' => 'اكتب موضوع التذكرة ووصفاً واضحاً للمشكلة.'];
         }
-        if (!Throttle::rate('bot:ticket:' . $chat['id'], 3, 86400)) {
+        if (!Throttle::rate('bot:ticket:' . $chat['id'], 5, 86400)) {
             return ['ok' => false, 'message' => 'فُتحت تذاكر كثيرة من هذه المحادثة اليوم؛ الفريق سيتابعها.'];
         }
-        $acc = $chat['channel'] === 'whatsapp' ? self::erpAccount($chat) : ['ok' => false];
-        $body = [
-            'customer' => $acc['ok'] ? $acc['id'] : null,
-            'phone' => $chat['channel'] === 'whatsapp' ? '+' . $chat['external_id'] : ($chat['phone'] ?: null),
-            'name' => $chat['name'] ?: null,
-            'subject' => $subject, 'message' => $message,
-            'channel' => in_array($chat['channel'], ['whatsapp', 'telegram', 'web'], true) ? $chat['channel'] : 'web',
-            'excerpt' => self::excerpt((int) $chat['id']),
-        ];
-        $r = MadixCloud::call('ticket', [], array_filter($body, static fn ($v) => $v !== null));
+        $category = (string) ($in['category'] ?? '');
+        $device = trim((string) ($in['device'] ?? ''));
+        $r = MadixCloud::call('ticket', [], array_filter([
+            'customer' => $c['id'], 'subject' => $subject, 'message' => $message, 'channel' => 'whatsapp',
+            'transcript' => self::excerpt((int) $chat['id']),
+            'contact_name' => $chat['name'] ?: null, 'contact' => '+' . $chat['external_id'],
+            'category' => in_array($category, ['problem', 'question', 'billing', 'feature', 'other'], true) ? $category : null,
+            'device' => $device !== '' ? mb_substr($device, 0, 40) : null,
+        ], static fn ($v) => $v !== null));
         if (!$r['ok']) {
-            return ['ok' => false, 'message' => $r['message']];
+            return self::erpFail($r);
         }
         $d = is_array($r['data']) ? $r['data'] : [];
-        $id = (string) ($d['id'] ?? ($d['ticket']['id'] ?? ($d['ticket_id'] ?? '')));
+        $id = isset($d['id']) && is_scalar($d['id']) ? (string) $d['id'] : '';
         if ($id !== '') {
-            $chatNow = BotAgent::find((int) $chat['id']) ?? $chat;
-            $meta = BotAgent::meta($chatNow);
-            $meta['tickets'] = array_slice(array_values(array_unique(array_merge($meta['tickets'] ?? [], [$id]))), -10);
+            $meta = BotAgent::meta(BotAgent::find((int) $chat['id']) ?? $chat);
+            $mine = array_values(array_filter($meta['tickets'] ?? [], static fn ($t) => is_array($t) && ($t['id'] ?? '') !== $id));
+            $mine[] = ['id' => $id, 'customer' => $c['id']];
+            $meta['tickets'] = array_slice($mine, -10);
             BotAgent::setMeta((int) $chat['id'], $meta);
-            BotAgent::store($chat, 'note', 'فُتحت تذكرة دعم في MADIX Cloud رقم ' . $id . ': ' . $subject);
+            BotAgent::store($chat, 'note', 'فُتحت تذكرة دعم في MADIX Cloud رقم ' . $id . ' للمحل ' . $c['id'] . ': ' . $subject);
         }
         return ['ok' => true, 'ticket' => $id !== '' ? $id : null, 'data' => $r['data']];
     }
@@ -354,35 +397,49 @@ final class BotTools
         if (!MadixCloud::enabled()) {
             return self::erpOff();
         }
-        $mine = BotAgent::meta($chat)['tickets'] ?? [];
+        $mine = array_values(array_filter(BotAgent::meta($chat)['tickets'] ?? [], 'is_array'));
         if (!$mine) {
             return ['ok' => false, 'message' => 'لم تُفتح أي تذكرة من هذه المحادثة.'];
         }
+        // تذاكر هذه المحادثة فقط، وتُطلب دائماً مع رقم المحل فلا تُكشف تذكرة زبون لآخر
         $id = trim($id, " #\t");
-        // تذاكر هذه المحادثة فقط
-        if ($id === '' || !in_array($id, $mine, true)) {
-            $id = (string) end($mine);
+        $pick = end($mine);
+        foreach ($mine as $t) {
+            if ((string) ($t['id'] ?? '') === $id) {
+                $pick = $t;
+            }
         }
-        $r = MadixCloud::call('ticket', ['id' => $id]);
-        return $r['ok'] ? ['ok' => true, 'ticket' => $id, 'data' => $r['data']] : ['ok' => false, 'message' => $r['message']];
+        $r = MadixCloud::call('ticket', ['id' => (string) $pick['id'], 'customer' => (string) ($pick['customer'] ?? '')]);
+        return $r['ok'] ? ['ok' => true, 'ticket' => (string) $pick['id'], 'data' => $r['data']] : self::erpFail($r);
     }
 
-    private static function erpRenewal(array $chat, string $plan, string $note): array
+    private static function erpRenewal(array $chat, array $in): array
     {
-        $acc = self::erpAccount($chat);
-        if (!$acc['ok']) {
-            return $acc;
+        $c = self::erpCustomer($chat, (string) ($in['customer'] ?? ''));
+        if (!$c['ok']) {
+            return $c;
         }
-        if (!Throttle::rate('bot:renew:' . $chat['id'], 2, 86400)) {
-            return ['ok' => false, 'message' => 'طلب التجديد مسجّل اليوم، والفريق سيتواصل معه.'];
+        if (!Throttle::rate('bot:renew:' . $chat['id'], 4, 86400)) {
+            return ['ok' => false, 'message' => 'طلبات التجديد مسجّلة اليوم، والفريق سيتواصل مع الزبون.'];
         }
+        $plan = (string) ($in['plan'] ?? '');
+        $device = trim((string) ($in['device'] ?? ''));
         $r = MadixCloud::call('renewal_request', [], array_filter([
-            'customer' => $acc['id'], 'plan' => in_array($plan, ['month', 'year'], true) ? $plan : null,
-            'note' => mb_substr(trim($note), 0, 500) ?: null, 'channel' => 'whatsapp', 'phone' => '+' . $chat['external_id'],
+            'customer' => $c['id'], 'device' => $device !== '' ? mb_substr($device, 0, 40) : null,
+            'plan' => in_array($plan, ['month', 'year', 'life'], true) ? $plan : null,
+            'channel' => 'whatsapp', 'note' => mb_substr(trim((string) ($in['note'] ?? '')), 0, 1000) ?: null,
         ], static fn ($v) => $v !== null));
-        if ($r['ok']) {
-            BotAgent::store($chat, 'note', 'سُجّل طلب تجديد ترخيص MADIX ERP' . ($plan !== '' ? ' (' . $plan . ')' : '') . '.');
+        if (!$r['ok']) {
+            $fail = self::erpFail($r);
+            if (($r['code'] ?? '') === 'device_required') {
+                $fail['next'] = 'اعرض على الزبون أجهزته من erp_devices واسأله أيّها، ثم أعد الطلب مع device.';
+            }
+            return $fail;
         }
-        return $r['ok'] ? ['ok' => true, 'message' => 'سُجّل طلب التجديد، ويؤكده الفريق بعد الدفع.', 'data' => $r['data']] : ['ok' => false, 'message' => $r['message']];
+        $d = is_array($r['data']) ? $r['data'] : [];
+        if (empty($d['already_pending'])) {
+            BotAgent::store($chat, 'note', 'سُجّل طلب تجديد ترخيص MADIX ERP للمحل ' . $c['id'] . ($plan !== '' ? ' (' . $plan . ')' : '') . '.');
+        }
+        return ['ok' => true, 'message' => !empty($d['already_pending']) ? 'يوجد طلب تجديد سابق بانتظار الموافقة لهذا الجهاز.' : 'سُجّل طلب التجديد، ويؤكده الفريق بعد الدفع.', 'data' => $r['data']];
     }
 }

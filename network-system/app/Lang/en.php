@@ -4945,4 +4945,9 @@ return [
     'المحادثة غير متاحة.' => 'The chat is not available.',
     'اكتب رسالتك.' => 'Write your message.',
     'رسائل كثيرة خلال وقت قصير. انتظر دقيقة.' => 'Too many messages in a short time. Wait a minute.',
+    'منتهي الصلاحية.' => 'has expired.',
+    'عنوان هذا الخادم:' => 'this server\'s address:',
+    'عنوان هذا الخادم غير مسموح لمفتاح' => 'This server\'s address is not allowed for the key of',
+    'أضفه في «عناوين' => 'add it to «Allowed',
+    'المسموحة» أو اترك القائمة فارغة.' => 'addresses» or leave the list empty.',
 ];

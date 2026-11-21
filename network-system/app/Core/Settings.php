@@ -114,7 +114,7 @@ final class Settings
         'bot.wa_verify'               => '',
         'bot.wa_hook'                 => '',
         'bot.erp'                     => '0',
-        'bot.erp_url'                 => 'https://madixserver.gleeze.com',
+        'bot.erp_url'                 => 'https://cpanel.madix.org',
         'bot.erp_key'                 => '',
         'retention.bot_days'          => '180',
         'retention.power_days'        => '35',

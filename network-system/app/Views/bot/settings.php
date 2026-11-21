@@ -133,7 +133,7 @@ $tgCustomers = Settings::bool('telegram.customers');
       <div class="field col-12"><?= $switch('bot.erp', 'المساعد يجيب أصحاب المحلات عن ترخيص MADIX ERP وأجهزتهم ويفتح تذاكر الدعم') ?></div>
       <div class="field col-6">
         <label for="<?= e($name('bot.erp_url')) ?>">رابط MADIX Cloud</label>
-        <input class="input input-ltr" id="<?= e($name('bot.erp_url')) ?>" name="<?= e($name('bot.erp_url')) ?>" value="<?= e($s('bot.erp_url')) ?>" placeholder="https://madixserver.gleeze.com">
+        <input class="input input-ltr" id="<?= e($name('bot.erp_url')) ?>" name="<?= e($name('bot.erp_url')) ?>" value="<?= e($s('bot.erp_url')) ?>" placeholder="https://cpanel.madix.org">
         <?= error_html($name('bot.erp_url')) ?>
       </div>
       <div class="field col-6"><?= $secret('bot.erp_key', 'مفتاح بوت (API key)', 'mxk_…') ?></div>
