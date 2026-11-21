@@ -586,6 +586,15 @@ MaxKeepAliveRequests 500
 <IfModule mod_deflate.c>
     AddOutputFilterByType DEFLATE text/html text/plain text/css text/javascript application/javascript application/json application/manifest+json image/svg+xml
 </IfModule>
+# page timing for "madix speed": server build time (first byte) and total, for every page but not /assets files
+<IfModule logio_module>
+    LogIOTrackTTFB On
+    <IfModule setenvif_module>
+        SetEnvIf Request_URI "^/assets/" madix_static
+        SetEnvIf Request_URI "^/(favicon\\.ico|manifest\\.webmanifest)\$" madix_static
+    </IfModule>
+    GlobalLog \${APACHE_LOG_DIR}/madix-timing.log "%{%s}t %>s %D %^FB %m %U%q" env=!madix_static
+</IfModule>
 <IfModule mod_headers.c>
     # files with a version in the link (?v=…) never change: the browser keeps them without asking again
     <If "%{REQUEST_URI} =~ m#^/assets/# && %{QUERY_STRING} =~ /(^|&)v=[0-9a-f]+/">
@@ -1170,6 +1179,7 @@ install_tool() {
     mkdir -p /usr/local/lib/madix
     install -m 755 "$STAGE/deploy/vps/madix.sh" /usr/local/bin/madix
     install -m 644 "$STAGE/deploy/vps/agent.php" /usr/local/lib/madix/agent.php
+    [ -f "$STAGE/deploy/vps/speed.php" ] && install -m 644 "$STAGE/deploy/vps/speed.php" /usr/local/lib/madix/speed.php
 }
 
 maintenance() { # maintenance on|off

@@ -438,6 +438,8 @@ CREATE TABLE IF NOT EXISTS cards (
   UNIQUE KEY uq_cards_short (short_code),
   KEY idx_cards_batch (batch_id),
   KEY idx_cards_category_status (category_id, status),
+  KEY idx_cards_state (status, is_disabled),
+  KEY idx_cards_cat_state (category_id, status, is_disabled),
   KEY idx_cards_status (status),
   KEY idx_cards_distributor (distributor_id),
   KEY idx_cards_sale (sale_id),

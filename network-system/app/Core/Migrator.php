@@ -12,7 +12,7 @@ use Throwable;
 final class Migrator
 {
     /** نسخة البنية التي تتوقعها الشيفرة الحالية */
-    public const VERSION = 10;
+    public const VERSION = 11;
 
     private static bool $checked = false;
 
@@ -116,6 +116,11 @@ final class Migrator
                 // بوت خدمة الزبائن: المحادثات ورسائلها
                 self::createTables(['bot_chats', 'bot_messages']);
                 break;
+            case 11:
+                // سرعة لوحة التحكم والباقات: إجماليات الكروت تُقرأ من فهرس صغير بدل قراءة كل الكروت
+                self::addIndex('cards', 'idx_cards_state', '(status, is_disabled)');
+                self::addIndex('cards', 'idx_cards_cat_state', '(category_id, status, is_disabled)');
+                break;
         }
     }
 
@@ -138,6 +143,18 @@ final class Migrator
             if (!self::hasColumn($table, $column)) {
                 DB::query('ALTER TABLE `' . $table . '` ADD COLUMN `' . $column . '` ' . $type);
             }
+        }
+    }
+
+    /** إضافة فهرس غير موجود (يُبنى دون إيقاف القراءة والكتابة) */
+    private static function addIndex(string $table, string $name, string $columns): void
+    {
+        $exists = (int) DB::value(
+            'SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND INDEX_NAME = ?',
+            [$table, $name]
+        );
+        if (!$exists) {
+            DB::query('ALTER TABLE `' . $table . '` ADD INDEX `' . $name . '` ' . $columns);
         }
     }
 

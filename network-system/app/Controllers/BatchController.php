@@ -29,16 +29,30 @@ final class BatchController extends Controller
         $total = (int) DB::value("SELECT COUNT(*) FROM batches b WHERE $where", $params);
         $pager = Paginator::fromRequest($request, $total, 50);
         $rows = DB::rows(
-            "SELECT b.*, c.name AS category_name, c.color, e.name AS employee_name,
-                    (SELECT COUNT(*) FROM cards k WHERE k.batch_id = b.id) AS cards,
-                    (SELECT COUNT(*) FROM cards k WHERE k.batch_id = b.id AND k.status = 'new' AND k.is_disabled = 0) AS available,
-                    (SELECT COUNT(*) FROM cards k WHERE k.batch_id = b.id AND k.first_login_at IS NOT NULL) AS used,
-                    (SELECT COUNT(*) FROM cards k WHERE k.batch_id = b.id AND k.printed_at IS NOT NULL) AS printed,
-                    (SELECT COUNT(*) FROM cards k WHERE k.batch_id = b.id AND k.short_code IS NOT NULL) AS short_codes
+            "SELECT b.*, c.name AS category_name, c.color, e.name AS employee_name
              FROM batches b JOIN categories c ON c.id = b.category_id LEFT JOIN employees e ON e.id = b.created_by
              WHERE $where ORDER BY b.id DESC" . $pager->limitSql(),
             $params
         );
+        // أعداد كروت دفعات الصفحة بمرور واحد على الكروت بدل خمسة استعلامات لكل دفعة
+        $ids = array_map(static fn ($r) => (int) $r['id'], $rows);
+        $stats = [];
+        if ($ids) {
+            foreach (DB::rows(
+                "SELECT batch_id, COUNT(*) AS cards, COALESCE(SUM(status = 'new' AND is_disabled = 0), 0) AS available,
+                        COALESCE(SUM(first_login_at IS NOT NULL), 0) AS used, COALESCE(SUM(printed_at IS NOT NULL), 0) AS printed,
+                        COALESCE(SUM(short_code IS NOT NULL), 0) AS short_codes
+                 FROM cards WHERE batch_id IN (" . DB::in($ids) . ') GROUP BY batch_id',
+                $ids
+            ) as $s) {
+                $stats[(int) $s['batch_id']] = $s;
+            }
+        }
+        foreach ($rows as $i => $row) {
+            foreach (['cards', 'available', 'used', 'printed', 'short_codes'] as $k) {
+                $rows[$i][$k] = (int) ($stats[(int) $row['id']][$k] ?? 0);
+            }
+        }
         $categories = DB::pairs('SELECT id, name FROM categories ORDER BY sort, name');
         return view('batches/index', compact('rows', 'pager', 'categories'));
     }

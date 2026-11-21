@@ -504,6 +504,7 @@ case "${1:-help}" in
     repair)   fix_permissions; rm -f "$MAINT"; svc reload apache2 >/dev/null 2>&1 || true; agent tick; echo "Done." ;;
     restart)  svc restart "$(db_service)"; v=$(php_service); [ -n "$v" ] && svc restart "$v"; svc restart apache2; echo "Restarted." ;;
     update)   cmd_update "${2:-}" ;;
+    speed)    php /usr/local/lib/madix/speed.php "${2:-24}" ;;
     *)
         cat <<'EOF'
 madix status                 address, services, disk, last backup
@@ -518,6 +519,7 @@ madix logs                   recent errors
 madix repair                 fix file permissions and stuck states
 madix restart                restart the web and database servers
 madix update FILE-or-LINK    update with a new installer file
+madix speed [HOURS]          how long the server takes to build each page (default: last 24 hours)
 EOF
         ;;
 esac

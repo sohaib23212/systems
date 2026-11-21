@@ -37,13 +37,15 @@ final class CardController extends Controller
         [$where, $params] = CardQuery::fromArray($filters);
         $total = (int) DB::value("SELECT COUNT(*) FROM cards c WHERE $where", $params);
         $pager = Paginator::fromRequest($request, $total, 50);
-        $rows = DB::rows(
-            "SELECT c.*, cat.name AS category_name, cat.color AS category_color, b.name AS batch_name, d.name AS distributor_name
+        // أرقام الصفحة أولاً من الفهرس، ثم تفاصيلها: لا ترتيب لكل الكروت لعرض خمسين منها
+        $ids = array_map('intval', DB::column("SELECT c.id FROM cards c WHERE $where ORDER BY c.id DESC" . $pager->limitSql(), $params));
+        $rows = $ids ? DB::rows(
+            'SELECT c.*, cat.name AS category_name, cat.color AS category_color, b.name AS batch_name, d.name AS distributor_name
              FROM cards c JOIN categories cat ON cat.id = c.category_id JOIN batches b ON b.id = c.batch_id
              LEFT JOIN distributors d ON d.id = c.distributor_id
-             WHERE $where ORDER BY c.id DESC" . $pager->limitSql(),
-            $params
-        );
+             WHERE c.id IN (' . DB::in($ids) . ') ORDER BY c.id DESC',
+            $ids
+        ) : [];
         $counts = DB::pairs("SELECT c.status, COUNT(*) FROM cards c WHERE $where GROUP BY c.status", $params);
         return view('cards/index', [
             'rows' => $rows, 'pager' => $pager, 'filters' => $filters, 'counts' => $counts, 'total' => $total,
