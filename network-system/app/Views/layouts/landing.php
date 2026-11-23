@@ -13,6 +13,8 @@ use App\Platform\Landing;
 $flash = Session::pull('_flash', []) ?: [];
 // التصميم المختار من لوحة المسؤول: الجديد (landing.css) أو الكلاسيكي الداكن (landing-classic.css)
 $classic = Landing::style() === 'classic';
+// مساعد الموقع (إن فُعّل) في الزاوية المقابلة لزر واتساب العائم حتى لا يتراكبا
+$bot = \App\Controllers\BotPublicController::webOn();
 ?><!doctype html>
 <html <?= \App\Core\Lang::htmlAttrs() ?><?= Theme::attrs() ?>>
 <head>
@@ -39,14 +41,14 @@ $classic = Landing::style() === 'classic';
 <?= Theme::style() ?>
 <?= Brand::headTags() ?>
 </head>
-<body class="lp">
+<body class="lp<?= $bot ? ' lp-has-bot' : '' ?>">
 <?php foreach ($flash as $f): ?>
 <div class="lp-flash is-<?= e(($f['type'] ?? '') === 'error' ? 'error' : 'ok') ?>" role="status"><?= e((string) ($f['message'] ?? '')) ?></div>
 <?php endforeach; ?>
 <?= $content ?>
 <script src="<?= e(asset($classic ? 'js/landing-classic.js' : 'js/landing.js')) ?>" defer></script>
-<?php if (\App\Controllers\BotPublicController::webOn()): ?>
-<script src="<?= e(asset('widget/bot-widget.js')) ?>" data-endpoint="<?= e(\App\Controllers\BotPublicController::endpoint(false)) ?>" data-title="<?= e(\App\Services\BotAgent::name()) ?>" data-greeting="<?= e('أهلاً بك! اسألني عن ' . \App\Core\Platform::setting('platform.name') . ' وباقاتها، أو عن اشتراكك أو كرتك.') ?>" defer></script>
+<?php if ($bot): ?>
+<script src="<?= e(asset('widget/bot-widget.js')) ?>" data-side="<?= \App\Core\Lang::isEn() ? 'left' : 'right' ?>" data-endpoint="<?= e(\App\Controllers\BotPublicController::endpoint(false)) ?>" data-title="<?= e(\App\Services\BotAgent::name()) ?>" data-greeting="<?= e('أهلاً بك! اسألني عن ' . \App\Core\Platform::setting('platform.name') . ' وباقاتها، أو عن اشتراكك أو كرتك.') ?>" defer></script>
 <?php endif; ?>
 </body>
 </html>

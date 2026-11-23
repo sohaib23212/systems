@@ -324,6 +324,8 @@ html, a, button, summary, label, input, select, textarea, [role="button"], [tabi
 .lp-footer-col a:hover { color: #fff; }
 .lp-footer-col .icon { width: 16px; height: 16px; }
 .lp-footer-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-top: 40px; padding: 18px 0 calc(18px + env(safe-area-inset-bottom, 0px)); padding-inline-end: 78px; border-top: 1px solid var(--lp-line); font-size: 13px; }
+/* مساعد الموقع العائم في الزاوية الأخرى: مساحة له في آخر سطر من التذييل */
+.lp-has-bot .lp-footer-bar { padding-inline-start: 78px; }
 .lp-credit { display: inline-flex; align-items: center; gap: 5px; flex-wrap: wrap; }
 .lp-credit b { color: #fff; font-weight: 600; }
 .dev-name { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
