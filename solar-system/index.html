@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#04060c">
+  <meta name="description" content="محاكاة ثلاثية الأبعاد للنظام الشمسي بدقة علمية: مواقع حقيقية للكواكب حسب التاريخ، مقياس حقيقي ومرئي، وتفاصيل عالية الدقة.">
+  <title>النظام الشمسي — محاكاة ثلاثية الأبعاد</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='12' fill='%23ffc95c'/%3E%3Cellipse cx='32' cy='32' rx='28' ry='10' fill='none' stroke='%239fc3ff' stroke-width='3' transform='rotate(-20 32 32)'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- العربي: Tajawal — الإنجليزي: Great Vibes (التوقيع) + Cinzel (الأسماء) + Cormorant Garamond (باقي النص) -->
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Great+Vibes&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- three.js آخر إصدار مستقر عبر importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.187.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.187.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <div id="scene" aria-label="مشهد النظام الشمسي ثلاثي الأبعاد"></div>
+
+    <!-- =============================== شاشة التحميل =============================== -->
+    <div id="loader" role="status" aria-live="polite">
+      <div class="loader-inner">
+        <div class="loader-orrery" aria-hidden="true">
+          <span class="o o1"><i></i></span>
+          <span class="o o2"><i></i></span>
+          <span class="o o3"><i></i></span>
+          <span class="sun"></span>
+        </div>
+        <h1 class="loader-title">النظام الشمسي</h1>
+        <div class="en-title">The Solar System</div>
+        <p class="loader-sub">محاكاة ثلاثية الأبعاد بدقة علمية</p>
+        <div class="progress" aria-hidden="true"><div class="bar" id="loaderBar"></div></div>
+        <div class="pct"><span id="loaderPct">0</span>%</div>
+        <div class="status" id="loaderStatus">جاري التحضير…</div>
+        <div class="signature loader-signature" data-signature lang="en" dir="ltr">Py | Sohaib Qudeih</div>
+      </div>
+    </div>
+
+    <!-- =============================== الشريط العلوي =============================== -->
+    <header id="topbar">
+      <div class="brand">
+        <div class="brand-title">النظام الشمسي <span class="en-title small" lang="en">Solar System</span></div>
+        <div class="signature" data-signature lang="en" dir="ltr">Py | Sohaib Qudeih</div>
+      </div>
+      <div class="tools" role="toolbar" aria-label="أدوات العرض">
+        <button id="btnScale" class="pill scale-toggle" title="تبديل المقياس (S)">
+          <span class="opt" data-mode="visual">مرئي</span><span class="opt" data-mode="real">حقيقي</span>
+        </button>
+        <button id="btnLabels" class="icon-btn active" title="إظهار/إخفاء الأسماء (L)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h10M4 12h16M4 17h7"/></svg><span>الأسماء</span>
+        </button>
+        <button id="btnOrbits" class="icon-btn active" title="إظهار/إخفاء المدارات (O)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="9" ry="5"/><circle cx="12" cy="12" r="1.8" class="fill"/><circle cx="20.5" cy="11" r="1.3" class="fill"/></svg><span>المدارات</span>
+        </button>
+        <button id="btnFollow" class="icon-btn active" title="وضع التتبع (F)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>تتبع</span>
+        </button>
+        <button id="btnOverview" class="icon-btn" title="منظر عام (H)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.2" class="fill"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="9.5"/></svg><span>منظر عام</span>
+        </button>
+        <button id="btnSettings" class="icon-btn" title="الإعدادات">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>الإعدادات</span>
+        </button>
+        <button id="btnHelp" class="icon-btn" title="المساعدة (?)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9.3 9.2a2.8 2.8 0 0 1 5.4 1c0 1.9-2.7 2.4-2.7 4"/><circle cx="12" cy="17.4" r=".9" class="fill"/></svg><span>مساعدة</span>
+        </button>
+        <button id="btnFullscreen" class="icon-btn" title="ملء الشاشة">
+          <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg><span>ملء الشاشة</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- =============================== قائمة الأجرام =============================== -->
+    <aside id="bodiesPanel" class="glass" aria-label="قائمة الأجرام">
+      <button class="panel-head" id="bodiesToggle" aria-expanded="true">
+        <span>الأجرام</span>
+        <svg viewBox="0 0 24 24" class="chev"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <nav id="bodyList"></nav>
+    </aside>
+    <button id="bodiesFab" class="fab" aria-label="قائمة الأجرام">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" class="fill"/><ellipse cx="12" cy="12" rx="10" ry="4"/></svg>
+    </button>
+
+    <!-- =============================== بطاقة المعلومات =============================== -->
+    <section id="infoCard" class="glass hidden" aria-live="polite">
+      <button class="close" id="infoClose" aria-label="إغلاق">×</button>
+      <div id="infoContent"></div>
+    </section>
+
+    <!-- =============================== مؤشرات =============================== -->
+    <div id="hud">
+      <div id="hudFocus"></div>
+      <div id="hudAlt"></div>
+      <div id="hudFps" class="hidden"></div>
+    </div>
+    <div id="zoomCtl">
+      <button id="zoomIn" aria-label="تقريب" title="تقريب (+)">+</button>
+      <button id="zoomOut" aria-label="إبعاد" title="إبعاد (−)">−</button>
+    </div>
+
+    <!-- =============================== شريط الوقت =============================== -->
+    <footer id="timebar" class="glass">
+      <div class="date-display">
+        <div id="simDate">—</div>
+        <div id="simRate">—</div>
+      </div>
+      <div class="time-controls">
+        <button id="btnReverse" class="tbtn" title="رجوع للخلف بالزمن" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path d="M11 6L4 12l7 6zM20 6l-7 6 7 6z" class="fill"/></svg>
+        </button>
+        <button id="btnPlay" class="tbtn play" title="تشغيل/إيقاف (مسافة)">
+          <svg viewBox="0 0 24 24" class="i-pause"><rect x="6" y="5" width="4" height="14" rx="1" class="fill"/><rect x="14" y="5" width="4" height="14" rx="1" class="fill"/></svg>
+          <svg viewBox="0 0 24 24" class="i-play"><path d="M7 5l12 7-12 7z" class="fill"/></svg>
+        </button>
+        <div id="speedBtns" class="speeds" role="radiogroup" aria-label="سرعة الوقت"></div>
+        <button id="btnNow" class="tbtn text" title="العودة للوقت الحالي">الآن</button>
+      </div>
+      <div class="date-jump">
+        <input type="datetime-local" id="dateInput" step="1" aria-label="الانتقال لتاريخ">
+        <button id="btnGo" class="tbtn text accent">انتقال</button>
+      </div>
+    </footer>
+
+    <div id="credits"></div>
+
+    <!-- =============================== الإعدادات =============================== -->
+    <div id="settings" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="modal-card glass">
+        <button class="close" data-close aria-label="إغلاق">×</button>
+        <h2 id="settingsTitle">الإعدادات</h2>
+        <div class="setting">
+          <div class="label">الجودة</div>
+          <div class="seg" id="qualitySeg" role="radiogroup"></div>
+          <p class="hint" id="qualityHint"></p>
+        </div>
+        <div class="setting">
+          <label for="exposure" class="label">السطوع <span id="exposureVal"></span></label>
+          <input type="range" id="exposure" min="0.4" max="2.5" step="0.05" value="1">
+        </div>
+        <div class="setting">
+          <label for="starBright" class="label">سطوع النجوم <span id="starVal"></span></label>
+          <input type="range" id="starBright" min="0" max="1.6" step="0.05" value="0.6">
+        </div>
+        <div class="toggles">
+          <label class="switch"><input type="checkbox" id="optBloom" checked><span></span>توهج الشمس (Bloom)</label>
+          <label class="switch"><input type="checkbox" id="optAsteroids" checked><span></span>حزام الكويكبات</label>
+          <label class="switch"><input type="checkbox" id="optMoonOrbits" checked><span></span>مدارات الأقمار</label>
+          <label class="switch"><input type="checkbox" id="optClouds" checked><span></span>الغيوم</label>
+          <label class="switch"><input type="checkbox" id="optTilt" checked><span></span>إمالة نحو الأفق قرب السطح</label>
+          <label class="switch"><input type="checkbox" id="optFps"><span></span>عرض عدد الإطارات</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- =============================== المساعدة =============================== -->
+    <div id="help" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="modal-card glass">
+        <button class="close" data-close aria-label="إغلاق">×</button>
+        <h2 id="helpTitle">طريقة الاستخدام</h2>
+        <div class="help-grid">
+          <div><h3>الماوس</h3>
+            <ul>
+              <li><b>سحب</b>: لف 360° حول الجرم</li>
+              <li><b>العجلة</b>: تقريب/إبعاد (من مدار قمر صناعي لحد النظام كله)</li>
+              <li><b>نقرة على جرم</b>: اختياره والطيران إليه</li>
+            </ul>
+          </div>
+          <div><h3>اللمس</h3>
+            <ul>
+              <li><b>سحب بإصبع</b>: لف حول الجرم</li>
+              <li><b>إصبعين</b>: تكبير وتصغير</li>
+              <li><b>نقرة</b>: اختيار الجرم</li>
+            </ul>
+          </div>
+          <div><h3>لوحة المفاتيح</h3>
+            <ul>
+              <li><kbd>←</kbd> / <kbd>↓</kbd> الجرم التالي، <kbd>→</kbd> / <kbd>↑</kbd> السابق</li>
+              <li><kbd>مسافة</kbd> تشغيل/إيقاف الزمن</li>
+              <li><kbd>H</kbd> منظر عام، <kbd>F</kbd> تتبع، <kbd>S</kbd> المقياس</li>
+              <li><kbd>L</kbd> الأسماء، <kbd>O</kbd> المدارات، <kbd>T</kbd> منظر قمر صناعي</li>
+              <li><kbd>+</kbd> / <kbd>−</kbd> تقريب/إبعاد</li>
+            </ul>
+          </div>
+        </div>
+        <p class="hint">المواقع محسوبة من عناصر كبلر المدارية (JPL, J2000) حسب التاريخ الحقيقي، والاتجاهات ودوران الأجرام من نماذج IAU؛ لذلك الأرض تظهر بنهارها وليلها الحقيقيين لحظة فتح الصفحة.</p>
+      </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <div id="fatal" class="hidden"></div>
+  </div>
+
+  <noscript><div class="noscript">هذه المحاكاة تحتاج JavaScript.</div></noscript>
+  <script>
+    // فتح الملف مباشرة (file://) لا يسمح بتحميل الوحدات والصور — نعرض تعليمات واضحة
+    if (location.protocol === 'file:') {
+      document.addEventListener('DOMContentLoaded', function () {
+        var f = document.getElementById('fatal');
+        f.classList.remove('hidden');
+        f.innerHTML = '<h2>شغّل المحاكاة عبر سيرفر محلي</h2><p>المتصفح يمنع تحميل الملفات عند فتح الصفحة مباشرة (file://).</p>' +
+          '<p>افتح الطرفية داخل مجلد <b>solar-system</b> ثم اكتب:</p><pre dir="ltr">npx serve .</pre>' +
+          '<p>أو استخدم إضافة Live Server في VS Code، ثم افتح الرابط الذي يظهر (مثل http://localhost:3000).</p>';
+      });
+    }
+  </script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+# ملفات وسيطة من سكربت تحميل الصور
+textures/*.tif
+textures/*.part
+textures/*_src.jpg
