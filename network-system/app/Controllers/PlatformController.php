@@ -33,7 +33,7 @@ final class PlatformController extends Controller
         if (!\App\Platform\Landing::enabled()) {
             return redirect('/login');
         }
-        return view('platform/home', [], 'landing');
+        return view(\App\Platform\Landing::style() === 'classic' ? 'platform/home-classic' : 'platform/home', [], 'landing');
     }
 
     // ------------------------------------------------------------------

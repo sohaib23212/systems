@@ -87,6 +87,8 @@ window.__uiAudit = function (opts) {
   var offenders = new Set();
   all.forEach(function (el) {
     if (el.closest('script, style, noscript, template, svg defs, .toasts')) { return; }
+    // صور مربعات الخريطة هي الخريطة نفسها: العلامات والأسماء والحقوق تُرسم فوقها عمداً
+    if (el.tagName === 'IMG' && el.classList.contains('leaflet-tile')) { return; }
     if (el.closest('dialog') && !el.closest('dialog[open]')) { return; }
     if (opts.scope && !el.closest(opts.scope)) { return; } // فحص نافذة واحدة فقط
     var cs = getComputedStyle(el);
@@ -184,6 +186,9 @@ window.__uiAudit = function (opts) {
       var w = x.r - x.l, h = x.b - x.t;
       if (w < 3 || h < 3) { continue; }
       if (A.el.contains(B.el) || B.el.contains(A.el)) { continue; }
+      // قطع رسم توضيحي واحد مخفي عن قارئ الشاشة (مثل هاتف أمام حاسوب) تتراكب عمداً؛ تراكبها مع نص الصفحة أو أدواتها يبقى مفحوصاً
+      var decoA = A.el.closest('[aria-hidden="true"]');
+      if (decoA && decoA === B.el.closest('[aria-hidden="true"]')) { continue; }
       // label مرتبط بحقله (مثل زر التبديل المخفي فوق شكله المرسوم)
       if (A.el.tagName === 'LABEL' && A.el.control === B.el || B.el.tagName === 'LABEL' && B.el.control === A.el) { continue; }
       if ((A.el.tagName === 'INPUT' && (A.el.type === 'checkbox' || A.el.type === 'radio') && parseFloat(A.cs.opacity) < 0.05) ||

@@ -1,6 +1,8 @@
 <?php
 /** @var App\Core\View $v */
 use App\Core\Brand;
+use App\Core\I18n;
+use App\Core\Lang;
 use App\Core\Platform;
 use App\Platform\Billing;
 use App\Platform\Landing as L;
@@ -24,10 +26,27 @@ $signup = Platform::setting('platform.signup') === '1';
 $whatsapp = Platform::whatsappLink('مرحباً، أريد الاستفسار عن ' . Brand::NAME);
 $phone = trim(Platform::setting('platform.whatsapp'));
 $facebook = trim(Platform::setting('platform.facebook'));
+$video = L::video();
 $price = static fn ($x) => number_format((float) $x, abs((float) $x - round((float) $x)) < 0.005 ? 0 : 2, '.', ',');
+// جولة داخل النظام: لقطات حقيقية من النظام بلغة الصفحة
+$tour = [
+    ['map', 'map', 'خريطة الشبكة', 'شبكتك كلها على خريطة حيّة', 'الأبراج وأجهزة MikroTik والروابط ومواقع المشتركين، مع حالة كل جهاز لحظة بلحظة.', ['روابط لاسلكية وفايبر وكابل', 'حالة المشتركين بالألوان', 'خريطة القمر الصناعي وخرائط Google']],
+    ['design', 'printer', 'تصميم الكروت', 'صمّم كروتك واطبعها بنفسك', 'محرّر مرئي للكرت: الرقم وكلمة المرور والسعر والصلاحية ورمز QR وشعارك، بالمقاس الذي تريده.', ['قوالب جاهزة للطباعة', 'رقم مختصر لدخول أسرع', 'معاينة الصفحة قبل الطباعة']],
+    ['router', 'router', 'أجهزة MikroTik', 'كل جهاز MikroTik تحت عينك', 'المتصلون والمعالج والذاكرة والحرارة وحركة الإنترنت المباشرة، مع المزامنة وإعادة التشغيل بضغطة.', ['يدعم RouterOS 6 و 7', 'ربط آمن عبر نفق WireGuard', 'هوتسبوت و PPPoE']],
+    ['cables', 'cable', 'فحص الكابلات', 'اكتشف عطل الكابل قبل أن يتصل بك المشترك', 'فحص المنافذ عن بُعد: حالة الرابط وسرعته وأخطاؤه، وطول الكابل ومكان القطع في الأجهزة التي تدعم ذلك.', ['مكان القطع بالمتر لكل زوج', 'عدّادات الأخطاء ومرات الانقطاع', 'تنبيه عند تراجع جودة الرابط']],
+    ['power', 'zap', 'مراقبة الطاقة', 'بطاريات الأبراج تحت المراقبة', 'جهد كل برج على مدار الساعة مع حدود التحذير والخطر، وتقدير للوقت المتبقي قبل أن تنطفئ.', ['منحنى 24 ساعة لكل برج', 'تنبيهات فورية على تيليجرام', 'سجل للانقطاعات وأسبابها']],
+    ['reports', 'chart-column', 'التقارير', 'أرقامك واضحة كل يوم', 'المبيعات والتحصيل والتجديدات والمستحقات بالفترة التي تختارها، مع الطباعة والتصدير.', ['مبيعات الكروت والاشتراكات', 'المصاريف وصافي الربح', 'تقارير يومية على تيليجرام']],
+];
+$lang = Lang::isEn() ? 'en' : 'ar';
+$shot = static fn (string $n, bool $small = false) => asset('img/landing/' . $n . '-' . $lang . ($small ? '-sm' : '') . '.webp');
+// العنوان: آخر كلماته بلون الهوية المتدرّج (يُترجم أولاً ثم يُقسم، حتى تبقى الترجمة جملة كاملة)
+$title = I18n::t(L::get('hero_title'));
+$words = preg_split('/\s+/u', trim($title)) ?: [];
+$cut = count($words) >= 4 ? count($words) - (int) ceil(count($words) / 2.5) : count($words);
+$titleHtml = e(implode(' ', array_slice($words, 0, $cut))) . ($cut < count($words) ? ' <span class="lp-hl">' . e(implode(' ', array_slice($words, $cut))) . '</span>' : '');
 $links = array_filter([
     'features' => $features ? 'المميزات' : null,
-    'steps' => $steps ? 'كيف تبدأ' : null,
+    'tour' => 'جولة في النظام',
     'pricing' => $plans ? 'الباقات' : null,
     'apps' => $apps ? 'التطبيقات' : null,
     'faq' => $faq ? 'الأسئلة' : null,
@@ -35,79 +54,77 @@ $links = array_filter([
 $cta = $signup ? url('/signup') : url('/login');
 ?>
 <a class="lp-skip" href="#main">تخطَّ إلى المحتوى</a>
+<div class="lp-progress" aria-hidden="true"><i data-lp-progress></i></div>
 
 <header class="lp-nav" data-lp-nav>
   <div class="lp-nav-in">
-    <a class="lp-brand" href="<?= e(url('/')) ?>" aria-label="<?= e(Brand::NAME) ?>"><?= Brand::mark(34) ?><?= Brand::wordmark() ?></a>
+    <a class="lp-brand" href="<?= e(url('/')) ?>" aria-label="<?= e(Brand::NAME) ?>"><?= Brand::mark(36) ?><?= Brand::wordmark() ?></a>
     <nav class="lp-links" aria-label="أقسام الصفحة">
-      <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
+      <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>" data-lp-link><?= e($label) ?></a><?php endforeach; ?>
     </nav>
     <div class="lp-nav-cta">
-      <?php if (\App\Core\Lang::switchable()): ?><a class="lp-btn lp-btn-ghost lp-lang" href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>" title="Language / اللغة"><?= icon('globe') ?><?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
+      <?php if (Lang::switchable()): ?><a class="lp-btn lp-btn-ghost lp-lang" href="<?= e(Lang::switchUrl(Lang::isEn() ? 'ar' : 'en')) ?>" title="Language / اللغة"><?= icon('globe') ?><?= Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
       <a class="lp-btn lp-btn-ghost lp-nav-login" href="<?= e(url('/login')) ?>"><?= e(L::get('cta_secondary')) ?></a>
       <?php if ($signup): ?><a class="lp-btn lp-btn-primary lp-nav-signup" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
     </div>
-    <?php if ($links): ?>
     <details class="lp-menu" data-lp-menu>
       <summary aria-label="القائمة"><?= icon('menu') ?></summary>
       <nav class="lp-menu-panel" aria-label="أقسام الصفحة">
         <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
         <a href="<?= e(url('/login')) ?>"><?= icon('log-in') ?> <?= e(L::get('cta_secondary')) ?></a>
         <?php if ($signup): ?><a class="lp-btn lp-btn-primary" href="<?= e(url('/signup')) ?>"><?= e(L::get('cta_primary')) ?></a><?php endif; ?>
-        <?php if (\App\Core\Lang::switchable()): ?><a href="<?= e(\App\Core\Lang::switchUrl(\App\Core\Lang::isEn() ? 'ar' : 'en')) ?>"><?= icon('globe') ?> <?= \App\Core\Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
+        <?php if (Lang::switchable()): ?><a href="<?= e(Lang::switchUrl(Lang::isEn() ? 'ar' : 'en')) ?>"><?= icon('globe') ?> <?= Lang::isEn() ? '<span lang="ar">العربية</span>' : '<span lang="en" dir="ltr">English</span>' ?></a><?php endif; ?>
       </nav>
     </details>
-    <?php endif; ?>
   </div>
 </header>
 
 <main id="main">
 <section class="lp-hero">
-  <div class="lp-hero-bg" aria-hidden="true">
-    <span class="lp-aurora lp-aurora-a"></span><span class="lp-aurora lp-aurora-b"></span><span class="lp-aurora lp-aurora-c"></span>
-    <span class="lp-stars"></span>
-    <span class="lp-floor"><i></i></span>
+  <div class="lp-sky" aria-hidden="true">
+    <span class="lp-blob lp-blob-a"></span><span class="lp-blob lp-blob-b"></span><span class="lp-blob lp-blob-c"></span><span class="lp-blob lp-blob-d"></span>
+    <span class="lp-dots"></span>
+    <svg class="lp-net" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+      <g fill="none" stroke-width="1.6" stroke-dasharray="2 8" stroke-linecap="round">
+        <path d="M-20 150 C 260 60, 480 200, 720 120 S 1150 40, 1460 140"/>
+        <path d="M-40 780 C 240 700, 420 840, 700 810 S 1160 700, 1480 820"/>
+      </g>
+      <g class="lp-net-nodes"><circle cx="250" cy="96" r="5"/><circle cx="720" cy="120" r="4"/><circle cx="1150" cy="66" r="5"/><circle cx="420" cy="796" r="4.5"/><circle cx="1160" cy="736" r="5"/></g>
+    </svg>
+    <svg class="lp-spark lp-spark-a" viewBox="0 0 24 24"><path d="M12 0C13 7.4 16.6 11 24 12 16.6 13 13 16.6 12 24 11 16.6 7.4 13 0 12 7.4 11 11 7.4 12 0Z"/></svg>
+    <svg class="lp-spark lp-spark-b" viewBox="0 0 24 24"><path d="M12 0C13 7.4 16.6 11 24 12 16.6 13 13 16.6 12 24 11 16.6 7.4 13 0 12 7.4 11 11 7.4 12 0Z"/></svg>
+    <svg class="lp-spark lp-spark-c" viewBox="0 0 24 24"><path d="M12 0C13 7.4 16.6 11 24 12 16.6 13 13 16.6 12 24 11 16.6 7.4 13 0 12 7.4 11 11 7.4 12 0Z"/></svg>
+    <svg class="lp-flower lp-flower-a" viewBox="0 0 40 40"><g><ellipse cx="20" cy="9" rx="6" ry="8.5"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(72 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(144 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(216 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="4.5"/></svg>
+    <svg class="lp-flower lp-flower-b" viewBox="0 0 40 40"><g><ellipse cx="20" cy="9" rx="6" ry="8.5"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(72 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(144 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(216 20 20)"/><ellipse cx="20" cy="9" rx="6" ry="8.5" transform="rotate(288 20 20)"/></g><circle cx="20" cy="20" r="4.5"/></svg>
   </div>
   <div class="lp-wrap lp-hero-in">
     <div class="lp-hero-text">
       <span class="lp-eyebrow"><span class="lp-pulse"></span><?= e(L::get('hero_badge')) ?></span>
-      <h1 class="lp-title"><?= e(L::get('hero_title')) ?></h1>
+      <h1 class="lp-title"><?= $titleHtml ?></h1>
       <p class="lp-lead"><?= e(L::get('hero_text')) ?></p>
       <div class="lp-hero-cta">
         <a class="lp-btn lp-btn-primary lp-btn-lg lp-btn-shine" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?><?= icon('chevron-left', 'lp-arrow') ?></a>
-        <?php if ($signup): ?><a class="lp-btn lp-btn-glass lp-btn-lg" href="<?= e(url('/login')) ?>"><?= icon('log-in') ?><?= e(L::get('cta_secondary')) ?></a><?php endif; ?>
+        <?php if ($video !== ''): ?>
+        <a class="lp-btn lp-btn-soft lp-btn-lg" href="https://www.youtube.com/watch?v=<?= e($video) ?>" target="_blank" rel="noopener" data-lp-video="<?= e($video) ?>"><span class="lp-play"><?= icon('play') ?></span>شاهد العرض</a>
+        <?php elseif ($signup): ?>
+        <a class="lp-btn lp-btn-soft lp-btn-lg" href="<?= e(url('/login')) ?>"><?= icon('log-in') ?><?= e(L::get('cta_secondary')) ?></a>
+        <?php endif; ?>
       </div>
       <?php if ($signup): ?><div class="lp-note"><?= icon('circle-check') ?><span><?= e(L::get('trial_note')) ?></span></div><?php endif; ?>
     </div>
 
     <div class="lp-stage" aria-hidden="true" data-lp-tilt>
       <div class="lp-window">
-        <div class="lp-window-bar"><i></i><i></i><i></i><span class="lp-window-url" dir="ltr">madix.org / <b>nexus</b></span></div>
-        <div class="lp-app">
-          <div class="lp-app-side"><span class="lp-app-logo"><?= Brand::mark(22) ?></span><i class="on"></i><i></i><i></i><i></i><i></i></div>
-          <div class="lp-app-main">
-            <div class="lp-app-top"><b>لوحة التحكم</b><span class="lp-live"><i></i>مباشر الآن</span></div>
-            <div class="lp-kpis">
-              <div class="lp-kpi"><small>المتصلون الآن</small><b dir="ltr">248</b><em class="up" dir="ltr">+12%</em></div>
-              <div class="lp-kpi"><small>مبيعات اليوم</small><b dir="ltr">1,350 <?= e($currency) ?></b><em class="up" dir="ltr">+8%</em></div>
-              <div class="lp-kpi"><small>أجهزة MikroTik</small><b dir="ltr">6 / 6</b><em>متصلة</em></div>
-            </div>
-            <div class="lp-chart-card">
-              <div class="lp-chart-head"><span>مبيعات هذا الأسبوع</span><b dir="ltr">8,420 <?= e($currency) ?></b></div>
-              <svg class="lp-chart" viewBox="0 0 320 84" preserveAspectRatio="none">
-                <defs><linearGradient id="lp-area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="currentColor" stop-opacity=".38"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></linearGradient></defs>
-                <path d="M0 62 C26 58 38 40 64 44 S104 66 128 50 168 18 192 26 232 48 256 34 296 10 320 14 V84 H0 Z" fill="url(#lp-area)"/>
-                <path class="lp-chart-line" d="M0 62 C26 58 38 40 64 44 S104 66 128 50 168 18 192 26 232 48 256 34 296 10 320 14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" pathLength="1"/>
-              </svg>
-            </div>
-            <div class="lp-rows">
-              <?php foreach ([['برج الشمال', '26.4 V', 'متصل', 'ok'], ['السوق المركزي', '25.1 V', 'متصل', 'ok'], ['حي الجامعة', '24.2 V', 'تحذير', 'warn']] as [$n, $volt, $s, $c]): ?>
-              <div class="lp-row"><i class="<?= $c ?>"></i><span><?= e($n) ?></span><em dir="ltr"><?= e($volt) ?></em><b class="<?= $c ?>"><?= e($s) ?></b></div>
-              <?php endforeach; ?>
-            </div>
-          </div>
+        <div class="lp-window-bar"><i></i><i></i><i></i><span class="lp-window-url" dir="ltr">MADIX NEXUS · <b>Dashboard</b></span></div>
+        <img class="lp-shot" src="<?= e($shot('dash', true)) ?>" srcset="<?= e($shot('dash', true)) ?> 1080w, <?= e($shot('dash')) ?> 2160w" sizes="(min-width: 1000px) 640px, 94vw" width="2160" height="1350" alt="" fetchpriority="high" decoding="async">
+      </div>
+      <div class="lp-phone-mock">
+        <div class="lp-phone-screen">
+          <div class="lp-phone-status" dir="ltr"><span>9:41</span><em></em><s><b></b><b></b><b></b><b></b></s></div>
+          <img src="<?= e($shot('phone')) ?>" width="780" height="1328" alt="" decoding="async">
         </div>
       </div>
+      <div class="lp-float lp-float-live"><span class="lp-float-icon is-green"><?= icon('activity') ?></span><span><small>المتصلون الآن</small><b dir="ltr">124</b><em><i></i>مباشر الآن</em></span></div>
       <div class="lp-float lp-float-a"><span class="lp-float-icon"><?= icon('ticket') ?></span><span>بيع 50 كرتاً</span></div>
       <div class="lp-float lp-float-b"><span class="lp-float-icon is-warm"><?= icon('zap') ?></span><span>بطارية برج الشمال <b dir="ltr">26.4 V</b></span></div>
     </div>
@@ -128,7 +145,7 @@ $cta = $signup ? url('/signup') : url('/login');
   <div class="lp-wrap">
     <div class="lp-stats-in">
       <?php foreach ($stats as $i => [$num, $label]): ?>
-      <div class="lp-stat" data-lp-anim style="--i:<?= $i ?>"><b><?= e($num) ?></b><span><?= e($label) ?></span></div>
+      <div class="lp-stat" data-lp-anim style="--i:<?= $i ?>"><b data-lp-count><?= e($num) ?></b><span><?= e($label) ?></span></div>
       <?php endforeach; ?>
     </div>
   </div>
@@ -156,8 +173,38 @@ $cta = $signup ? url('/signup') : url('/login');
 </section>
 <?php endif; ?>
 
+<section class="lp-section lp-section-tint" id="tour">
+  <div class="lp-wrap">
+    <div class="lp-head">
+      <span class="lp-kicker"><?= icon('monitor') ?>جولة في النظام</span>
+      <h2>شاهد النظام من الداخل</h2>
+      <p>لقطات حقيقية من النظام كما يراها أصحاب الشبكات كل يوم.</p>
+    </div>
+    <div class="lp-tour" data-lp-tour>
+      <div class="lp-tabs" role="tablist" aria-label="جولة في النظام">
+        <?php foreach ($tour as $i => [$key, $ic, $tab]): ?>
+        <button type="button" class="lp-tab" role="tab" id="lp-tab-<?= $key ?>" aria-controls="lp-panel-<?= $key ?>" aria-selected="<?= $i === 0 ? 'true' : 'false' ?>"<?= $i === 0 ? '' : ' tabindex="-1"' ?>><?= icon($ic) ?><span><?= e($tab) ?></span></button>
+        <?php endforeach; ?>
+      </div>
+      <?php foreach ($tour as $i => [$key, $ic, $tab, $head, $text, $points]): ?>
+      <div class="lp-panel" role="tabpanel" id="lp-panel-<?= $key ?>" aria-labelledby="lp-tab-<?= $key ?>">
+        <div class="lp-panel-text">
+          <h3><?= e($head) ?></h3>
+          <p><?= e($text) ?></p>
+          <ul><?php foreach ($points as $pt): ?><li><?= icon('check') ?><span><?= e($pt) ?></span></li><?php endforeach; ?></ul>
+        </div>
+        <figure class="lp-panel-shot">
+          <div class="lp-window-bar"><i></i><i></i><i></i></div>
+          <img src="<?= e($shot($key, true)) ?>" srcset="<?= e($shot($key, true)) ?> 800w, <?= e($shot($key)) ?> 1600w" sizes="(min-width: 1000px) 760px, 94vw" width="1600" height="1000" alt="<?= e($head) ?>" loading="lazy" decoding="async">
+        </figure>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+
 <?php if ($steps): ?>
-<section class="lp-section lp-section-alt" id="steps">
+<section class="lp-section" id="steps">
   <div class="lp-wrap">
     <div class="lp-head">
       <span class="lp-kicker"><?= icon('zap') ?>طريقة العمل</span>
@@ -177,7 +224,7 @@ $cta = $signup ? url('/signup') : url('/login');
 <?php endif; ?>
 
 <?php if ($plans): ?>
-<section class="lp-section" id="pricing">
+<section class="lp-section lp-section-tint" id="pricing">
   <div class="lp-wrap">
     <div class="lp-head">
       <span class="lp-kicker"><?= icon('ticket') ?>الباقات والأسعار</span>
@@ -194,7 +241,7 @@ $cta = $signup ? url('/signup') : url('/login');
         <ul class="lp-plan-list">
           <?php foreach (array_merge(Billing::planLimits($p), Billing::planFeatures($p)) as $line): ?><li><?= icon('check') ?><span><?= e($line) ?></span></li><?php endforeach; ?>
         </ul>
-        <a class="lp-btn <?= $hot ? 'lp-btn-primary lp-btn-shine' : 'lp-btn-glass' ?> lp-btn-block" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?></a>
+        <a class="lp-btn <?= $hot ? 'lp-btn-primary lp-btn-shine' : 'lp-btn-soft' ?> lp-btn-block" href="<?= e($cta) ?>"><?= e($signup ? L::get('cta_primary') : L::get('cta_secondary')) ?></a>
       </article>
       <?php endforeach; ?>
     </div>
@@ -203,7 +250,7 @@ $cta = $signup ? url('/signup') : url('/login');
 <?php endif; ?>
 
 <?php if ($apps): ?>
-<section class="lp-section lp-section-alt" id="apps">
+<section class="lp-section" id="apps">
   <div class="lp-wrap lp-apps">
     <div class="lp-apps-text">
       <span class="lp-kicker"><?= icon('smartphone') ?>التطبيقات</span>
@@ -216,19 +263,13 @@ $cta = $signup ? url('/signup') : url('/login');
     </div>
     <div class="lp-devices" aria-hidden="true">
       <div class="lp-laptop">
-        <div class="lp-laptop-screen">
-          <div class="lp-mini-side"><i class="on"></i><i></i><i></i><i></i></div>
-          <div class="lp-mini-main"><div class="lp-mini-cards"><i></i><i></i><i></i></div><div class="lp-mini-chart"><?php foreach ([42, 60, 48, 74, 58, 86, 70, 92] as $h): ?><span style="--h:<?= $h ?>%"></span><?php endforeach; ?></div><div class="lp-mini-lines"><i></i><i></i><i></i></div></div>
-        </div>
+        <div class="lp-laptop-screen"><img src="<?= e($shot('dash', true)) ?>" width="1080" height="675" alt="" loading="lazy" decoding="async"></div>
         <div class="lp-laptop-base"></div>
       </div>
-      <div class="lp-phone">
+      <div class="lp-phone-mock lp-phone-sm">
         <div class="lp-phone-screen">
-          <?= Brand::mark(44) ?>
-          <b dir="ltr">MADIX NEXUS</b>
-          <i></i><i></i>
-          <span class="lp-phone-btn"></span>
-          <span class="lp-phone-bio"><?= icon('fingerprint') ?></span>
+          <div class="lp-phone-status" dir="ltr"><span>9:41</span><em></em><s><b></b><b></b><b></b><b></b></s></div>
+          <img src="<?= e($shot('phone')) ?>" width="780" height="1328" alt="" loading="lazy" decoding="async">
         </div>
       </div>
     </div>
@@ -237,7 +278,7 @@ $cta = $signup ? url('/signup') : url('/login');
 <?php endif; ?>
 
 <?php if ($faq): ?>
-<section class="lp-section" id="faq">
+<section class="lp-section lp-section-tint" id="faq">
   <div class="lp-wrap lp-faq-wrap">
     <div class="lp-head">
       <span class="lp-kicker"><?= icon('message-circle') ?>الأسئلة الشائعة</span>
@@ -259,6 +300,7 @@ $cta = $signup ? url('/signup') : url('/login');
   <div class="lp-wrap">
     <div class="lp-cta">
       <span class="lp-cta-glow" aria-hidden="true"></span>
+      <svg class="lp-spark lp-cta-spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C13 7.4 16.6 11 24 12 16.6 13 13 16.6 12 24 11 16.6 7.4 13 0 12 7.4 11 11 7.4 12 0Z"/></svg>
       <div class="lp-cta-text">
         <h2><?= e(L::get('cta_title')) ?></h2>
         <p><?= e(L::get('cta_text')) ?></p>
@@ -278,12 +320,10 @@ $cta = $signup ? url('/signup') : url('/login');
       <a class="lp-brand" href="<?= e(url('/')) ?>"><?= Brand::mark(34) ?><?= Brand::wordmark() ?></a>
       <p><?= e(L::get('footer_text')) ?></p>
     </div>
-    <?php if ($links): ?>
     <nav class="lp-footer-col" aria-label="روابط">
       <h4>الصفحة</h4>
       <?php foreach ($links as $id => $label): ?><a href="#<?= $id ?>"><?= e($label) ?></a><?php endforeach; ?>
     </nav>
-    <?php endif; ?>
     <div class="lp-footer-col">
       <h4>الحساب</h4>
       <a href="<?= e(url('/login')) ?>"><?= e(L::get('cta_secondary')) ?></a>
@@ -303,3 +343,10 @@ $cta = $signup ? url('/signup') : url('/login');
 </footer>
 
 <a class="lp-wa" href="<?= e($whatsapp) ?>" target="_blank" rel="noopener" aria-label="تواصل عبر واتساب"><?= icon('message-circle') ?></a>
+<a class="lp-top" href="#main" aria-label="العودة إلى الأعلى" data-lp-top><?= icon('arrow-up') ?></a>
+<?php if ($video !== ''): ?>
+<dialog class="lp-video" data-lp-video-dialog aria-label="شاهد العرض">
+  <button type="button" class="lp-video-close" data-lp-video-close aria-label="إغلاق"><?= icon('x') ?></button>
+  <div class="lp-video-frame" data-lp-video-frame></div>
+</dialog>
+<?php endif; ?>

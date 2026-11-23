@@ -50,6 +50,9 @@ final class Landing
     ];
 
     public const LIST_FIELDS = ['features' => 'المميزات', 'steps' => 'الخطوات', 'stats' => 'الأرقام', 'faq' => 'الأسئلة الشائعة'];
+    /** تصميم الصفحة: الجديد (سماء الباستيل ولقطات حقيقية) أو الكلاسيكي الداكن؛ يُبدَّل بينهما من لوحة المسؤول */
+    public const STYLES = ['pastel' => 'الجديد — سماء الباستيل', 'classic' => 'الكلاسيكي — الداكن'];
+
     public const SECTIONS = ['stats' => 'الأرقام', 'features' => 'المميزات', 'steps' => 'الخطوات', 'pricing' => 'الباقات والأسعار', 'apps' => 'التطبيقات', 'faq' => 'الأسئلة الشائعة'];
 
     /**
@@ -78,6 +81,39 @@ final class Landing
     public static function enabled(): bool
     {
         return Platform::setting('landing.enabled', '1') !== '0';
+    }
+
+    /** التصميم المختار للصفحة (الجديد ما لم يُختر الكلاسيكي) */
+    public static function style(): string
+    {
+        $style = Platform::setting('landing.style', 'pastel');
+        return isset(self::STYLES[$style]) ? $style : 'pastel';
+    }
+
+    /** معرّف فيديو العرض على YouTube (يظهر زر «شاهد العرض» في الواجهة متى وُجد)، أو نص فارغ */
+    public static function video(): string
+    {
+        $id = Platform::setting('landing.video', '');
+        return preg_match('/^[A-Za-z0-9_-]{11}$/', $id) ? $id : '';
+    }
+
+    /** معرّف الفيديو من رابط YouTube بأشكاله (watch وyoutu.be وshorts وembed) أو من المعرّف نفسه؛ null لغير ذلك */
+    public static function videoId(string $input): ?string
+    {
+        $input = trim($input);
+        if (preg_match('/^[A-Za-z0-9_-]{11}$/', $input)) {
+            return $input;
+        }
+        $patterns = [
+            '#^(?:https?://)?(?:www\.|m\.|music\.)?youtube(?:-nocookie)?\.com/(?:watch\?(?:.*&)?v=|embed/|shorts/|live/|v/)([A-Za-z0-9_-]{11})(?:[?&\#/].*)?$#i',
+            '#^(?:https?://)?youtu\.be/([A-Za-z0-9_-]{11})(?:[?&\#/].*)?$#i',
+        ];
+        foreach ($patterns as $re) {
+            if (preg_match($re, $input, $m)) {
+                return $m[1];
+            }
+        }
+        return null;
     }
 
     /** عناصر قائمة بلغة محددة (للتحرير) */

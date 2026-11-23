@@ -256,8 +256,20 @@ async function chromeChecks(page, w) {
     // نقرة حقيقية: إن غطّى الزرَّ عنصرٌ آخر فهذه مشكلة يراها المستخدم
     tapped = await toggle.click({ timeout: 3000 }).then(() => true).catch(e => { out.push({ type: 'blocked-tap', sel: 'menu-toggle', detail: (e.message.match(/<[^>]+> from <[^>]+>[^\n]*intercepts/) || [e.message.split('\n')[0]])[0].slice(0, 160) }); return false; });
   }
+  // القائمة تُقاس بعد أن تستقر فعلاً لا بعد مدة ثابتة: حين يكون المتصفح مشغولاً بصفحة أخرى تتأخر حركتها
+  const drawerSettled = open => page.evaluate(want => new Promise(res => {
+    const t0 = performance.now();
+    let last = '', same = 0;
+    (function tick() {
+      const r = document.querySelector('.sidebar').getBoundingClientRect();
+      const k = Math.round(r.left) + ',' + Math.round(r.right);
+      same = k === last ? same + 1 : 0; last = k;
+      if (document.body.classList.contains('sidebar-open') === want && same >= 4 || performance.now() - t0 > 2500) { res(); } else { requestAnimationFrame(tick); }
+    })();
+  }), open).catch(() => {});
   if (tapped) {
     await page.waitForTimeout(450);
+    await drawerSettled(true);
     const m = await page.evaluate(() => {
       const s = document.querySelector('.sidebar').getBoundingClientRect();
       const b = document.querySelector('.backdrop');
@@ -273,6 +285,7 @@ async function chromeChecks(page, w) {
     inner.filter(i => /sidebar|backdrop/.test(i.sel)).forEach(i => out.push(Object.assign(i, { type: 'drawer-' + i.type })));
     await page.keyboard.press('Escape');
     await page.waitForTimeout(400);
+    await drawerSettled(false);
   }
   // كل القوائم المنسدلة في الشريط العلوي داخل الشاشة
   const n = await page.locator('.topbar [data-dropdown]').count();

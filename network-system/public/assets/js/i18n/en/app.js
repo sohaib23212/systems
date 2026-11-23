@@ -557,7 +557,7 @@
   }
 
   // أشرطة التبويبات التي تنقل بين Pages (Links ?tab=): يُحفظ موضع تمرير الشريط للجلسة ويُستعاد فور Open Page التالية,
-  // then يُتأكد أن التبويب Selected ظاهر كاملاً, فلا يرجع الشريط to أول التبويبات عند الاختيار and no yet Refresh Page
+  // then يُتأكد أن التبويب Selected Shown كاملاً, فلا يرجع الشريط to أول التبويبات عند الاختيار and no yet Refresh Page
   (function () {
     $$('.tabs').forEach(function (g, i) {
       var key = 'sn-tabs:' + location.pathname + ':' + i, timer = null;

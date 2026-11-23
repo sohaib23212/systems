@@ -56,10 +56,34 @@ $enabled = Landing::enabled();
     </div>
     <div class="stack design-side">
       <div class="panel">
+        <div class="panel-head"><h3><?= icon('palette') ?>تصميم الصفحة</h3></div>
+        <div class="panel-body stack" style="gap:10px">
+          <div class="choice-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            <?php $style = (string) old('style', Landing::style()); foreach (Landing::STYLES as $k => $label): ?>
+              <label class="choice"><input type="radio" name="style" value="<?= e($k) ?>"<?= checked($style === $k) ?>>
+                <span class="choice-card" style="padding:8px"><img src="<?= e(asset('img/landing/style-' . $k . '.webp')) ?>" width="560" height="350" alt="" loading="lazy" style="display:block;width:100%;height:auto;border-radius:8px"><small><?= e($label) ?></small></span>
+              </label>
+            <?php endforeach; ?>
+          </div>
+          <p class="hint" style="margin:0">النصوص والأقسام نفسها في التصميمين، وتبدّل بينهما متى شئت. جولة النظام وفيديو العرض في التصميم الجديد.</p>
+        </div>
+      </div>
+      <div class="panel">
         <div class="panel-head"><h3><?= icon('globe') ?>حالة الصفحة</h3><?= $enabled ? '<span class="badge badge-success">مفعّلة</span>' : '<span class="badge badge-outline">موقوفة</span>' ?></div>
         <div class="panel-body stack" style="gap:10px">
           <label class="switch"><input type="checkbox" name="enabled" value="1"<?= checked($enabled) ?>><span class="track"></span><span>تفعيل صفحة الهبوط</span></label>
           <p class="hint" style="margin:0">عند الإيقاف يفتح رابط المنصة صفحة تسجيل الدخول مباشرة.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3><?= icon('play') ?>فيديو العرض</h3><?= Landing::video() !== '' ? '<span class="badge badge-success">ظاهر</span>' : '' ?></div>
+        <div class="panel-body stack" style="gap:8px">
+          <div class="field">
+            <label for="lf-video">رابط الفيديو على YouTube</label>
+            <input class="input" id="lf-video" name="video" dir="ltr" value="<?= e((string) old('video', Landing::video() !== '' ? 'https://youtu.be/' . Landing::video() : '')) ?>" placeholder="https://youtu.be/..." maxlength="200" inputmode="url">
+            <?= error_html('video') ?>
+          </div>
+          <p class="hint" style="margin:0">يظهر زر «شاهد العرض» في أعلى الصفحة ويُفتح الفيديو داخلها. اتركه فارغاً لإخفاء الزر.</p>
         </div>
       </div>
       <div class="panel">

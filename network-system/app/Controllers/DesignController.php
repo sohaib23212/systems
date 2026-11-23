@@ -90,13 +90,20 @@ final class DesignController extends Controller
                 $values[$prefix . $k] = implode("\n", array_slice($lines, 0, 12));
             }
         }
+        $video = trim($request->str('video'));
+        $videoId = $video === '' ? '' : Landing::videoId($video);
+        if ($videoId === null) {
+            return $this->backWithErrors($request, ['video' => 'رابط فيديو العرض غير صحيح. الصق رابط الفيديو من YouTube.'], '/admin/landing');
+        }
+        $values['landing.video'] = $videoId;
+        $values['landing.style'] = isset(Landing::STYLES[$request->str('style')]) ? $request->str('style') : 'pastel';
         $values['landing.enabled'] = $request->bool('enabled') ? '1' : '0';
         foreach (array_keys(Landing::SECTIONS) as $k) {
             $values['landing.show_' . $k] = $request->bool('show_' . $k) ? '1' : '0';
         }
         foreach ($values as $k => $v) {
             // العربية الفارغة تعود إلى النص الافتراضي؛ الإنجليزية الفارغة تعني الترجمة التلقائية من القاموس
-            if ($v === '' && str_starts_with($k, 'landing.') && !str_starts_with($k, 'landing.show_')) {
+            if ($v === '' && str_starts_with($k, 'landing.') && !str_starts_with($k, 'landing.show_') && $k !== 'landing.video') {
                 $values[$k] = Landing::DEFAULTS[$k] ?? '';
             }
         }
