@@ -29,6 +29,7 @@ final class Notifier
         'tamper'       => 'تنبيهات التلاعب',
         'cable'        => 'خلل في كابل أو منفذ',
         'system'       => 'النظام',
+        'messages'     => 'رسائل المشتركين',
     ];
 
     /**

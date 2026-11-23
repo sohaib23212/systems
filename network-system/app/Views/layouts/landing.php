@@ -28,6 +28,7 @@ $classic = Landing::style() === 'classic';
 <meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="<?= $classic ? '#05070f' : '#f7f6ff' ?>">
 <title><?= e(Brand::NAME . ' — ' . Brand::TAGLINE) ?></title>
+<?= $v->partial('rum', ['area' => 'landing']) ?>
 <?php if ($classic): ?>
 <link rel="stylesheet" href="<?= e(asset('css/landing-classic.css')) ?>">
 <?php else: $shotLang = \App\Core\Lang::isEn() ? 'en' : 'ar'; ?>
@@ -44,5 +45,8 @@ $classic = Landing::style() === 'classic';
 <?php endforeach; ?>
 <?= $content ?>
 <script src="<?= e(asset($classic ? 'js/landing-classic.js' : 'js/landing.js')) ?>" defer></script>
+<?php if (\App\Controllers\BotPublicController::webOn()): ?>
+<script src="<?= e(asset('widget/bot-widget.js')) ?>" data-endpoint="<?= e(\App\Controllers\BotPublicController::endpoint(false)) ?>" data-title="<?= e(\App\Services\BotAgent::name()) ?>" data-greeting="<?= e('أهلاً بك! اسألني عن ' . \App\Core\Platform::setting('platform.name') . ' وباقاتها، أو عن اشتراكك أو كرتك.') ?>" defer></script>
+<?php endif; ?>
 </body>
 </html>

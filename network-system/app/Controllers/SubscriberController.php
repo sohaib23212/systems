@@ -98,14 +98,19 @@ final class SubscriberController extends Controller
         [$where, $params] = self::listWhere($f);
         $total = (int) DB::value("SELECT COUNT(*) FROM subscribers s WHERE $where", $params);
         $pager = Paginator::fromRequest($request, $total, 50);
-        $rows = DB::rows(
-            "SELECT s.*, p.name AS plan_name, p.service, p.price AS plan_price, a.name AS area_name, r.name AS router_name,
-                    (SELECT COUNT(*) FROM sessions x WHERE x.subscriber_id = s.id AND x.stopped_at IS NULL) AS online
+        // أرقام الصفحة أولاً من الفهرس، ثم تفاصيلها واتصالها: لا جدول مؤقت لكل المشتركين ولا عدّ للجلسات لكل واحد منهم
+        $ids = array_map('intval', DB::column("SELECT s.id FROM subscribers s WHERE $where ORDER BY s.id DESC" . $pager->limitSql(), $params));
+        $rows = $ids ? DB::rows(
+            'SELECT s.*, p.name AS plan_name, p.service, p.price AS plan_price, a.name AS area_name, r.name AS router_name
              FROM subscribers s JOIN plans p ON p.id = s.plan_id
              LEFT JOIN areas a ON a.id = s.area_id LEFT JOIN routers r ON r.id = s.router_id
-             WHERE $where ORDER BY s.id DESC" . $pager->limitSql(),
-            $params
-        );
+             WHERE s.id IN (' . DB::in($ids) . ') ORDER BY s.id DESC',
+            $ids
+        ) : [];
+        $online = $ids ? DB::pairs('SELECT subscriber_id, COUNT(*) FROM sessions WHERE stopped_at IS NULL AND subscriber_id IN (' . DB::in($ids) . ') GROUP BY subscriber_id', $ids) : [];
+        foreach ($rows as $i => $row) {
+            $rows[$i]['online'] = (int) ($online[$row['id']] ?? 0);
+        }
         // عدد كل حالة لعرضه على التبويبات
         [$baseWhere, $baseParams] = self::listWhere($f, false);
         $counts = [];

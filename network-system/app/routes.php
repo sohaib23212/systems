@@ -69,6 +69,8 @@ return static function (Router $r): void {
     }
     $r->get('/manifest.webmanifest', [BrandController::class, 'manifest'], ['auth' => false, 'csrf' => false]);
     $r->get('/lang/{code:ar|en}', [\App\Controllers\LangController::class, 'switch'], ['auth' => false, 'csrf' => false]);
+    // قياس سرعة الصفحات من جهاز المستخدم (في وضع المنصة يستقبله مسار المنصة الجذري)
+    $r->post('/api/rum', [\App\Controllers\RumController::class, 'store'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/webhook/{secret:[a-f0-9]{32}}', [TelegramController::class, 'webhook'], ['auth' => false, 'csrf' => false]);
     $r->post('/telegram/customer/{secret:[a-f0-9]{32}}', [TelegramController::class, 'customerWebhook'], ['auth' => false, 'csrf' => false]);
 
@@ -154,6 +156,13 @@ return static function (Router $r): void {
         $r->get('/support/{id}', [\App\Controllers\SupportController::class, 'show'], ['perm' => 'support.use']);
         $r->post('/support/{id}/reply', [\App\Controllers\SupportController::class, 'reply'], ['perm' => 'support.use']);
         $r->post('/support/{id}/close', [\App\Controllers\SupportController::class, 'close'], ['perm' => 'support.use']);
+        // رسائل المشتركين على واتساب المنصة التي حوّلها مساعد المنصة لصاحب الشبكة
+        $r->get('/inbox', [\App\Controllers\InboxController::class, 'index'], ['perm' => 'subscribers.messages']);
+        $r->get('/inbox/{id}', [\App\Controllers\InboxController::class, 'show'], ['perm' => 'subscribers.messages']);
+        $r->get('/inbox/{id}/poll', [\App\Controllers\InboxController::class, 'poll'], ['perm' => 'subscribers.messages']);
+        $r->post('/inbox/{id}/reply', [\App\Controllers\InboxController::class, 'reply'], ['perm' => 'subscribers.messages']);
+        $r->post('/inbox/{id}/mode', [\App\Controllers\InboxController::class, 'mode'], ['perm' => 'subscribers.messages']);
+        $r->post('/inbox/{id}/close', [\App\Controllers\InboxController::class, 'close'], ['perm' => 'subscribers.messages']);
     }
     $r->get('/install', [InstallController::class, 'done'], ['auth' => false]);
     $r->get('/account', [AccountController::class, 'show']);

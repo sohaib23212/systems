@@ -15,6 +15,7 @@ $flash = Session::pull('_flash', []);
 $path = Request::current() ? Request::current()->path : '/admin';
 $pendingTransfers = (int) \App\Core\DB::value("SELECT COUNT(*) FROM transfer_requests WHERE status = 'pending'");
 $openTickets = (int) \App\Core\DB::value('SELECT COUNT(*) FROM support_tickets WHERE admin_unread = 1');
+$botWaiting = \App\Services\BotAgent::waiting();
 // كل عنصر: [الاسم، الرابط، الأيقونة، العدّاد، الصلاحية (أو 'owner' لمالك المنصة، أو null للجميع)]
 $tv = ['tenants.view', 'tenants.manage', 'tenants.access'];
 $bv = ['billing.view', 'billing.manage'];
@@ -39,6 +40,7 @@ $nav = [
     ]],
     ['التواصل', [
         ['تذاكر الدعم', '/admin/tickets', 'message-circle', $openTickets, 'support.manage'],
+        ['محادثات البوت', '/admin/bot', 'bot-message-square', $botWaiting, ['bot.chats', 'bot.manage']],
         ['إعلانات للزبائن', '/admin/announcements', 'megaphone', 0, 'support.manage'],
         ['الرسائل النصية', '/admin/sms', 'send', 0, $ms],
         ['البريد الإلكتروني', '/admin/mail', 'mail', 0, $ms],
@@ -80,6 +82,7 @@ $initial = mb_substr(trim((string) $admin['name']), 0, 1);
 <meta name="robots" content="noindex, nofollow">
 <title><?= e(($v->title !== '' ? $v->title . ' · ' : '') . 'لوحة المسؤول') ?></title>
 <?= $v->partial('prefetch-fresh') ?>
+<?= $v->partial('rum', ['area' => 'admin']) ?>
 <script>
 (function () {
   var p = 'system';

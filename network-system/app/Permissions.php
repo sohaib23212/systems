@@ -61,6 +61,7 @@ final class Permissions
             'subscribers.renew'      => 'تجديد الاشتراكات',
             'subscribers.payments'   => 'تسجيل الدفعات والقيود المالية',
             'subscribers.status'     => 'إيقاف المشتركين وتفعيلهم',
+            'subscribers.messages'   => 'رسائل المشتركين على واتساب المنصة والرد عليها',
             'plans.view'             => 'عرض باقات الاشتراك',
             'plans.manage'           => 'إدارة باقات الاشتراك',
         ],

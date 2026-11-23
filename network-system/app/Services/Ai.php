@@ -201,6 +201,272 @@ final class Ai
         return round(($input * $p[1] + $output * $p[2]) / 1000000, 6);
     }
 
+    /** سعر قراءة الذاكرة المؤقتة لكل مليون رمز (غير المذكور: عُشر سعر الإدخال) */
+    private const CACHE_READ = ['claude-opus-5-5' => 0.20, 'claude-sonnet-5-5' => 0.10, 'claude-fable-5-2' => 0.20];
+
+    /** التكلفة مع الذاكرة المؤقتة: الكتابة فيها بـ 1.25 من سعر الإدخال، والقراءة منها بسعرها المخفّض */
+    public static function cachedCost(string $model, int $input, int $output, int $cacheWrite, int $cacheRead): float
+    {
+        if (!isset(self::MODELS[$model])) {
+            return self::cost($model, $input + $cacheWrite + $cacheRead, $output);
+        }
+        $p = self::MODELS[$model];
+        $read = self::CACHE_READ[$model] ?? $p[1] / 10;
+        return round(($input * $p[1] + $cacheWrite * $p[1] * 1.25 + $cacheRead * $read + $output * $p[2]) / 1000000, 6);
+    }
+
+    /**
+     * محادثة بأدوات: يطلب النموذج أداة فينفّذها النظام ويعيد نتيجتها، حتى يكتب الرد النهائي.
+     * معلومات النظام تُخزَّن مؤقتاً لدى المزوّد فلا تُحتسب كاملة في كل رسالة، والاستهلاك يُسجَّل مرة واحدة للرد كله.
+     * $system نص، أو [الثابت، المتغيّر]: الثابت وحده يُخزَّن مؤقتاً، والمتغيّر (الوقت وبيانات الزبون) يأتي بعده.
+     * @param array<int, array{role:string, content:string}> $messages
+     * @param list<array{name:string, description:string, input_schema:array}> $tools
+     * @param callable(string, array): mixed $run تنفيذ أداة باسمها ومدخلاتها، ويرجع مصفوفة أو نصاً
+     * @param array{effort?:string, max_tokens?:int, timeout?:int, actor?:string, steps?:int} $opts
+     * @return array{ok:bool, state:string, text:string, message:string, tools:list<string>, model?:string, input?:int, output?:int, cost?:float}
+     */
+    public static function converse(string $feature, string|array $system, array $messages, array $tools, callable $run, array $opts = []): array
+    {
+        $state = self::status();
+        if ($state !== 'ok') {
+            return ['ok' => false, 'state' => $state, 'text' => '', 'message' => self::stateLabel($state), 'tools' => []];
+        }
+        $opts['steps'] = max(1, min(8, (int) ($opts['steps'] ?? 5)));
+        $system = array_values(array_filter(is_array($system) ? array_map('strval', $system) : [$system], static fn ($s) => trim($s) !== ''));
+        return self::provider() === 'gemini'
+            ? self::converseGemini($feature, $system, $messages, $tools, $run, $opts)
+            : self::converseClaude($feature, $system, $messages, $tools, $run, $opts);
+    }
+
+    /** تنفيذ أداة بأمان: الخطأ يرجع للنموذج نصاً بدل أن يوقف الرد */
+    private static function runTool(callable $run, string $name, array $input): array
+    {
+        try {
+            $out = $run($name, $input);
+            return [is_string($out) ? $out : (string) json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE), false];
+        } catch (Throwable $e) {
+            log_message('warning', 'ai tool ' . $name . ': ' . self::scrub($e->getMessage()));
+            return ['تعذّر تنفيذ هذه الأداة الآن.', true];
+        }
+    }
+
+    /** الكائن الفارغ يبقى كائناً في JSON (المدخلات والخصائص) */
+    private static function objectify(array $schema): array
+    {
+        if (array_key_exists('properties', $schema) && $schema['properties'] === []) {
+            $schema['properties'] = new \stdClass();
+        }
+        return $schema;
+    }
+
+    private static function converseClaude(string $feature, array $system, array $messages, array $tools, callable $run, array $opts): array
+    {
+        $model = self::model();
+        $effort = in_array($opts['effort'] ?? '', self::EFFORTS, true) ? $opts['effort'] : 'low';
+        $base = [
+            'model' => $model,
+            'max_tokens' => max(512, min(32000, (int) ($opts['max_tokens'] ?? 4000))),
+            'output_config' => ['effort' => $effort],
+        ];
+        if ($system) {
+            $base['system'] = [];
+            foreach ($system as $i => $part) {
+                $base['system'][] = ['type' => 'text', 'text' => $part] + ($i === 0 ? ['cache_control' => ['type' => 'ephemeral']] : []);
+            }
+        }
+        if ($tools) {
+            $base['tools'] = array_map(static fn (array $t) => [
+                'name' => $t['name'], 'description' => $t['description'], 'input_schema' => self::objectify($t['input_schema']),
+            ], $tools);
+        }
+        $timeout = max(10, min(300, (int) ($opts['timeout'] ?? 90)));
+        @set_time_limit($timeout * ($opts['steps'] + 1) + 30);
+        $tenantId = Tenant::id();
+        $actor = isset($opts['actor']) ? mb_substr((string) $opts['actor'], 0, 120) : null;
+        $msgs = array_values($messages);
+        $used = [];
+        $in = $out = $cw = $cr = 0;
+        $served = $model;
+        $text = '';
+        $refused = false;
+        for ($step = 0; $step < $opts['steps']; $step++) {
+            $body = $base + ['messages' => $msgs];
+            if ($tools && $step === $opts['steps'] - 1) {
+                // آخر خطوة: لا أدوات، يكتب الرد بما جمعه
+                $body['tool_choice'] = ['type' => 'none'];
+            }
+            $res = self::request($body, $timeout);
+            if ($res['status'] === 0 || $res['status'] === 429 || $res['status'] >= 500) {
+                usleep(1200000);
+                $res = self::request($body, $timeout);
+            }
+            $data = $res['data'];
+            if ($res['status'] !== 200 || !is_array($data)) {
+                log_message('warning', 'ai ' . $feature . ': HTTP ' . $res['status'] . ' ' . self::scrub($res['error']));
+                self::record($tenantId, $feature, $served, $in + $cw + $cr, $out, false, $actor);
+                return ['ok' => false, 'state' => 'error', 'text' => '', 'message' => self::errorMessage($res), 'tools' => $used];
+            }
+            $usage = is_array($data['usage'] ?? null) ? $data['usage'] : [];
+            $in += (int) ($usage['input_tokens'] ?? 0);
+            $cw += (int) ($usage['cache_creation_input_tokens'] ?? 0);
+            $cr += (int) ($usage['cache_read_input_tokens'] ?? 0);
+            $out += (int) ($usage['output_tokens'] ?? 0);
+            $served = isset(self::MODELS[$data['model'] ?? '']) ? (string) $data['model'] : $served;
+            $content = array_values(array_filter((array) ($data['content'] ?? []), 'is_array'));
+            $stop = (string) ($data['stop_reason'] ?? '');
+            if ($stop === 'refusal') {
+                $refused = true;
+                break;
+            }
+            $calls = array_values(array_filter($content, static fn ($b) => ($b['type'] ?? '') === 'tool_use'));
+            if ($stop === 'tool_use' && $calls) {
+                // الرد يُعاد كما هو (ومعه كتل التفكير) ثم نتائج كل الأدوات في رسالة واحدة
+                foreach ($content as $i => $b) {
+                    if (($b['type'] ?? '') === 'tool_use' && ($b['input'] ?? []) === []) {
+                        $content[$i]['input'] = new \stdClass();
+                    }
+                }
+                $msgs[] = ['role' => 'assistant', 'content' => $content];
+                $results = [];
+                foreach ($calls as $c) {
+                    $name = (string) ($c['name'] ?? '');
+                    $used[] = $name;
+                    [$result, $isError] = self::runTool($run, $name, is_array($c['input'] ?? null) ? $c['input'] : []);
+                    $block = ['type' => 'tool_result', 'tool_use_id' => (string) ($c['id'] ?? ''), 'content' => $result];
+                    if ($isError) {
+                        $block['is_error'] = true;
+                    }
+                    $results[] = $block;
+                }
+                $msgs[] = ['role' => 'user', 'content' => $results];
+                continue;
+            }
+            foreach ($content as $b) {
+                if (($b['type'] ?? '') === 'text') {
+                    $text .= (string) ($b['text'] ?? '');
+                }
+            }
+            break;
+        }
+        $text = trim($text);
+        $ok = !$refused && $text !== '';
+        $cost = self::cachedCost($served, $in, $out, $cw, $cr);
+        self::record($tenantId, $feature, $served, $in + $cw + $cr, $out, $ok, $actor, $cost);
+        if (!$ok) {
+            return ['ok' => false, 'state' => 'error', 'text' => '', 'message' => $refused ? 'اعتذر النموذج عن الإجابة على هذا الطلب.' : 'لم يصل رد من النموذج.', 'tools' => $used];
+        }
+        return ['ok' => true, 'state' => 'ok', 'text' => $text, 'message' => '', 'tools' => $used, 'model' => $served, 'input' => $in + $cw + $cr, 'output' => $out, 'cost' => $cost];
+    }
+
+    /** مخطط مدخلات الأداة بصيغة Gemini (مجموعة جزئية من OpenAPI) */
+    private static function geminiSchema(array $s): array
+    {
+        $out = [];
+        if (isset($s['type'])) {
+            $out['type'] = strtoupper((string) $s['type']);
+        }
+        foreach (['description', 'enum', 'format'] as $k) {
+            if (isset($s[$k])) {
+                $out[$k] = $s[$k];
+            }
+        }
+        if (!empty($s['properties']) && is_array($s['properties'])) {
+            $out['properties'] = [];
+            foreach ($s['properties'] as $name => $p) {
+                $out['properties'][$name] = self::geminiSchema((array) $p);
+            }
+            if (!empty($s['required'])) {
+                $out['required'] = array_values((array) $s['required']);
+            }
+        }
+        if (isset($s['items']) && is_array($s['items'])) {
+            $out['items'] = self::geminiSchema($s['items']);
+        }
+        return $out;
+    }
+
+    private static function converseGemini(string $feature, array $system, array $messages, array $tools, callable $run, array $opts): array
+    {
+        $model = self::model();
+        $contents = self::geminiContents($messages);
+        $base = ['generationConfig' => ['maxOutputTokens' => max(512, min(32000, (int) ($opts['max_tokens'] ?? 4000)))]];
+        if ($system) {
+            $base['systemInstruction'] = ['parts' => array_map(static fn ($t) => ['text' => $t], $system)];
+        }
+        if ($tools) {
+            $base['tools'] = [['functionDeclarations' => array_map(static function (array $t): array {
+                $d = ['name' => $t['name'], 'description' => $t['description']];
+                if (!empty($t['input_schema']['properties'])) {
+                    $d['parameters'] = self::geminiSchema($t['input_schema']);
+                }
+                return $d;
+            }, $tools)]];
+        }
+        $timeout = max(10, min(300, (int) ($opts['timeout'] ?? 90)));
+        @set_time_limit($timeout * ($opts['steps'] + 1) + 30);
+        $tenantId = Tenant::id();
+        $actor = isset($opts['actor']) ? mb_substr((string) $opts['actor'], 0, 120) : null;
+        $url = self::geminiBase() . '/v1beta/models/' . rawurlencode($model) . ':generateContent';
+        $used = [];
+        $in = $out = 0;
+        $served = $model;
+        $text = '';
+        $blocked = false;
+        for ($step = 0; $step < $opts['steps']; $step++) {
+            $body = $base + ['contents' => $contents];
+            if ($tools && $step === $opts['steps'] - 1) {
+                $body['toolConfig'] = ['functionCallingConfig' => ['mode' => 'NONE']];
+            }
+            $res = self::geminiHttp('POST', $url, $body, $timeout);
+            if ($res['status'] === 0 || $res['status'] === 429 || $res['status'] >= 500) {
+                usleep(1200000);
+                $res = self::geminiHttp('POST', $url, $body, $timeout);
+            }
+            $data = $res['data'];
+            if ($res['status'] !== 200 || !is_array($data)) {
+                log_message('warning', 'ai ' . $feature . ' (gemini): HTTP ' . $res['status'] . ' ' . self::scrub($res['error']));
+                self::record($tenantId, $feature, $served, $in, $out, false, $actor);
+                return ['ok' => false, 'state' => 'error', 'text' => '', 'message' => self::geminiError($res), 'tools' => $used];
+            }
+            $usage = is_array($data['usageMetadata'] ?? null) ? $data['usageMetadata'] : [];
+            $in += (int) ($usage['promptTokenCount'] ?? 0);
+            $out += (int) ($usage['candidatesTokenCount'] ?? 0) + (int) ($usage['thoughtsTokenCount'] ?? 0);
+            $served = self::cleanGeminiModel((string) ($data['modelVersion'] ?? '')) ?: $served;
+            $cand = (array) ($data['candidates'][0] ?? []);
+            $parts = array_values(array_filter((array) ($cand['content']['parts'] ?? []), 'is_array'));
+            $blocked = ($data['promptFeedback']['blockReason'] ?? '') !== ''
+                || in_array((string) ($cand['finishReason'] ?? ''), ['SAFETY', 'PROHIBITED_CONTENT', 'BLOCKLIST', 'SPII', 'RECITATION'], true);
+            $calls = array_values(array_filter($parts, static fn ($p) => isset($p['functionCall']['name'])));
+            if ($calls && !$blocked) {
+                // أجزاء رد النموذج تُعاد كما هي (مع بصمات التفكير) ثم نتائج الأدوات
+                $contents[] = ['role' => 'model', 'parts' => $parts];
+                $responses = [];
+                foreach ($calls as $c) {
+                    $name = (string) $c['functionCall']['name'];
+                    $used[] = $name;
+                    [$result] = self::runTool($run, $name, is_array($c['functionCall']['args'] ?? null) ? $c['functionCall']['args'] : []);
+                    $decoded = json_decode($result, true);
+                    $responses[] = ['functionResponse' => ['name' => $name, 'response' => ['result' => $decoded ?? $result]]];
+                }
+                $contents[] = ['role' => 'user', 'parts' => $responses];
+                continue;
+            }
+            foreach ($parts as $p) {
+                if (!($p['thought'] ?? false) && isset($p['text'])) {
+                    $text .= (string) $p['text'];
+                }
+            }
+            break;
+        }
+        $text = trim($text);
+        $ok = $text !== '';
+        self::record($tenantId, $feature, $served, $in, $out, $ok, $actor);
+        if (!$ok) {
+            return ['ok' => false, 'state' => 'error', 'text' => '', 'message' => $blocked ? 'اعتذر النموذج عن الإجابة على هذا الطلب.' : 'لم يصل رد من النموذج.', 'tools' => $used];
+        }
+        return ['ok' => true, 'state' => 'ok', 'text' => $text, 'message' => '', 'tools' => $used, 'model' => $served, 'input' => $in, 'output' => $out, 'cost' => self::cost($served, $in, $out)];
+    }
+
     /**
      * سؤال النموذج.
      * @param array<int, array{role:string, content:mixed}> $messages
@@ -369,6 +635,17 @@ final class Ai
     private static function runGemini(string $feature, string $system, array $messages, array $opts): array
     {
         $model = self::model();
+        $contents = self::geminiContents($messages);
+        $body = [
+            'contents' => $contents,
+            'generationConfig' => ['maxOutputTokens' => max(256, min(32000, (int) ($opts['max_tokens'] ?? 16000)))],
+        ];
+        return self::finishGemini($feature, $system, $model, $body, $opts);
+    }
+
+    /** رسائل المحادثة بصيغة Gemini (النص والصور) */
+    private static function geminiContents(array $messages): array
+    {
         $contents = [];
         foreach ($messages as $m) {
             $parts = [];
@@ -391,10 +668,11 @@ final class Ai
                 $contents[] = ['role' => ($m['role'] ?? 'user') === 'assistant' ? 'model' : 'user', 'parts' => $parts];
             }
         }
-        $body = [
-            'contents' => $contents,
-            'generationConfig' => ['maxOutputTokens' => max(256, min(32000, (int) ($opts['max_tokens'] ?? 16000)))],
-        ];
+        return $contents;
+    }
+
+    private static function finishGemini(string $feature, string $system, string $model, array $body, array $opts): array
+    {
         if ($system !== '') {
             $body['systemInstruction'] = ['parts' => [['text' => $system]]];
         }
@@ -528,12 +806,12 @@ final class Ai
         return $stable ? end($stable) : ($flash ? end($flash) : self::GEMINI_DEFAULT);
     }
 
-    private static function record(?int $tenantId, string $feature, string $model, int $in, int $out, bool $ok, ?string $actor): void
+    private static function record(?int $tenantId, string $feature, string $model, int $in, int $out, bool $ok, ?string $actor, ?float $cost = null): void
     {
         try {
             Platform::exec(
                 'INSERT INTO ai_usage (tenant_id, feature, model, input_tokens, output_tokens, cost, ok, actor, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                [$tenantId, mb_substr($feature, 0, 40), $model, $in, $out, $ok ? self::cost($model, $in, $out) : 0, $ok ? 1 : 0, $actor, date('Y-m-d H:i:s')]
+                [$tenantId, mb_substr($feature, 0, 40), $model, $in, $out, $ok ? ($cost ?? self::cost($model, $in, $out)) : 0, $ok ? 1 : 0, $actor, date('Y-m-d H:i:s')]
             );
         } catch (Throwable $e) {
             log_message('error', 'ai usage: ' . self::scrub($e->getMessage()));

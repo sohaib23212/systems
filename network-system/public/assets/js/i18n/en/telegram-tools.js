@@ -2,7 +2,7 @@
 /*
  * أدوات Telegram bot in pages Setup:
  *   [data-tg-test="Link"]   Test message بما كُتب in Model (or المحفوظ إن كان الحقل فارغاً)
- *   [data-tg-detect="Link"] المحادثات التي راسلت Bot مؤخراً, وتعبئة Chat ID منها
+ *   [data-tg-detect="Link"] Conversations التي راسلت Bot مؤخراً, وتعبئة Chat ID منها
  * الحقلان: data-tg-token و data-tg-chat (محدّدا CSS), والنتائج in [data-tg-found="محدّد Field Chat"].
  */
 (function (document) {

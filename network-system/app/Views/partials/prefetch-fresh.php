@@ -13,7 +13,12 @@ $generated = (int) round(microtime(true) * 1000);
     var nav = performance.getEntriesByType('navigation')[0];
     if (nav && nav.deliveryType === 'navigational-prefetch') {
       var skew = parseFloat(sessionStorage.getItem(key));
-      if (!isNaN(skew) && Date.now() - gen - skew > 10000) { location.replace(location.href); }
+      if (!isNaN(skew) && Date.now() - gen - skew > 10000) {
+        // قياس السرعة: الصفحة الجديدة تُقاس من لمس الرابط، وتُعلَّم أنها طُلبت مرتين
+        window.__mnxRefetch = true;
+        try { sessionStorage.setItem('mnx-rum-refetch', '1'); } catch (e) {}
+        location.replace(location.href);
+      }
     } else {
       sessionStorage.setItem(key, String(Date.now() - gen));
     }

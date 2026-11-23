@@ -45,6 +45,7 @@ $tools = static function (string $cls) {
 <meta name="icons-url" content="<?= e(asset('img/icons.svg')) ?>">
 <meta name="robots" content="noindex, nofollow">
 <title><?= e(($v->title !== '' ? $v->title . ' · ' : '') . $paneTitle) ?></title>
+<?= $v->partial('rum', ['area' => 'login']) ?>
 <script>
 (function () {
   var p = 'system';

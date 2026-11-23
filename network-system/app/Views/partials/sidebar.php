@@ -41,6 +41,7 @@ $nav = [
     ['المشتركون', [
         ['المشتركون', '/subscribers', 'users', 'subscribers.view'],
         ['باقات الاشتراك', '/plans', 'package', 'plans.view'],
+        ['رسائل المشتركين', '/inbox', 'message-square', 'subscribers.messages', 'inbox'],
         ['إعدادات المشتركين', '/subscribers/settings', 'settings', 'settings.manage'],
     ]],
     ['المبيعات والمالية', [
@@ -88,6 +89,9 @@ if (!\App\Core\Platform::enabled() && \App\Core\Auth::isOwner() && \App\Core\Ser
     }
 }
 
+// رسائل المشتركين: تظهر حين يعمل بوت المنصة، وشارتها عدد المحادثات التي تنتظر رد الشبكة
+$inboxOn = can('subscribers.messages') && \App\Controllers\InboxController::available();
+$inboxWaiting = $inboxOn ? \App\Controllers\InboxController::waiting() : 0;
 $path = Request::current() ? Request::current()->path : '/';
 $active = null;
 $bestLen = -1;
@@ -128,7 +132,7 @@ $allowed = static function ($perm): bool {
   <div class="sidebar-body" data-nav-body>
   <nav class="sidebar-nav" data-nav-scroll>
     <?php foreach ($nav as [$groupTitle, $items]):
-        $visible = array_filter($items, static fn ($i) => $allowed($i[3]) && (($i[4] ?? null) !== 'tunnel' || \App\Services\Tunnel::available()) && (($i[4] ?? null) !== 'outages' || can('outages.view')));
+        $visible = array_filter($items, static fn ($i) => $allowed($i[3]) && (($i[4] ?? null) !== 'tunnel' || \App\Services\Tunnel::available()) && (($i[4] ?? null) !== 'outages' || can('outages.view')) && (($i[4] ?? null) !== 'inbox' || $inboxOn));
         if (!$visible) { continue; } ?>
       <div class="nav-group"<?= $groupTitle ? ' data-nav-group="' . e($groupTitle) . '"' : '' ?>>
         <?php if ($groupTitle): ?><button type="button" class="nav-group-title" data-nav-toggle aria-expanded="true"><span><?= e($groupTitle) ?></span><?= icon('chevron-down', 'nav-chevron') ?></button><?php endif; ?>
@@ -137,6 +141,7 @@ $allowed = static function ($perm): bool {
           <a class="nav-link<?= $item[1] === $active ? ' is-active' : '' ?>" href="<?= e(url($item[1])) ?>"<?= $item[1] === $active ? ' aria-current="page"' : '' ?>>
             <?= icon($item[2]) ?><span class="nav-text"><?= e($item[0]) ?></span>
             <?php if (($item[4] ?? null) === 'ai'): ?><span class="nav-badge is-ai">AI</span><?php endif; ?>
+            <?php if (($item[4] ?? null) === 'inbox' && $inboxWaiting > 0): ?><span class="nav-badge is-danger" title="بانتظار ردك"><?= $inboxWaiting > 99 ? '99+' : $inboxWaiting ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'maintenance' && ($myTasks = \App\Services\Maintenance::mineOpen()) > 0): ?><span class="nav-badge is-danger" title="مهامي المفتوحة"><?= $myTasks > 99 ? '99+' : $myTasks ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'alerts' && $unreadAlerts > 0): ?><span class="nav-badge is-danger"><?= $unreadAlerts > 99 ? '99+' : $unreadAlerts ?></span><?php endif; ?>
             <?php if (($item[4] ?? null) === 'support' && ($supportUnread ?? 0) > 0): ?><span class="nav-badge is-danger"><?= (int) $supportUnread ?></span><?php endif; ?>
