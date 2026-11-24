@@ -44,27 +44,34 @@ export class TextureManager {
       while ((m = re.exec(text))) { try { names.add(decodeURIComponent(m[1]).split('/').pop()); } catch (e) { names.add(m[1]); } }
       return names;
     };
-    try {
-      const res = await fetch(TEXTURES.basePath, { cache: 'no-store' });
-      if (res.ok) {
+    const tryListing = async () => {
+      try {
+        const res = await fetch(TEXTURES.basePath, { cache: 'no-store' });
+        if (!res.ok) return false;
         const text = await res.text();
         const ownPage = text.includes('id="scene"');
-        if (!ownPage && /(Index of|Directory listing|Files within|<a\s)/i.test(text)) {
-          this.available = collect(text);
-          this.discovery = 'listing';
-          return this.available;
-        }
-      }
-    } catch (e) { /* لا توجد قائمة */ }
-    try {
-      const res = await fetch(TEXTURES.basePath + 'manifest.json', { cache: 'no-store' });
-      if (res.ok) {
+        if (ownPage || !/(Index of|Directory listing|Files within|<a\s)/i.test(text)) return false;
+        this.available = collect(text);
+        this.discovery = 'listing';
+        return true;
+      } catch (e) { return false; }
+    };
+    const tryManifest = async () => {
+      try {
+        const res = await fetch(TEXTURES.basePath + 'manifest.json', { cache: 'no-store' });
+        if (!res.ok) return false;
         const j = await res.json();
         this.available = new Set((Array.isArray(j) ? j : j.files || []).map((x) => String(x)));
         this.discovery = 'manifest';
-        return this.available;
-      }
-    } catch (e) { /* لا يوجد ملف */ }
+        return true;
+      } catch (e) { return false; }
+    };
+    // سيرفر محلي (npx serve / Live Server / python) يعرض قائمة المجلد؛
+    // الاستضافة أونلاين (GitHub Pages…) لا تعرضها، فنقرأ manifest.json أولاً
+    const h = location.hostname;
+    const local = h === '' || h === 'localhost' || h === '[::1]' || /^(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.)/.test(h);
+    const order = local ? [tryListing, tryManifest] : [tryManifest, tryListing];
+    for (const step of order) if (await step()) return this.available;
     this.discovery = 'probe';
     return null;
   }
